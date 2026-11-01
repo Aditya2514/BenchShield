@@ -17,6 +17,7 @@ import csv
 import hashlib
 import io
 import json
+import uuid
 from typing import Any
 
 from pydantic import ValidationError
@@ -521,10 +522,8 @@ class BenchmarkIntakeService:
             if row_errors:
                 errors.extend(row_errors)
             else:
-                # Compute salted answer revision binding: prevents rainbow-table attack on low-entropy answers
-                salt = f"benchshield:v1:answer_binding:{workspace_id}:{ext_id_str}"
-                answer_binding_hash = _compute_sha256(f"{salt}:{resolved_gold_text}")
-                answer_binding_version = f"abv_{answer_binding_hash[:16]}"
+                # Opaque random answer revision ID: NEVER derived from answer text
+                answer_revision_id = f"anr_{uuid.uuid4().hex[:16]}"
 
                 intake = ItemIntake(
                     external_id=ext_id_str,
@@ -535,13 +534,14 @@ class BenchmarkIntakeService:
                     metadata=validated_meta,
                 )
                 valid_intakes.append(
-                    (intake, resolved_gold_text, resolved_gold_choice_id, answer_binding_version)
+                    (intake, resolved_gold_text, resolved_gold_choice_id, answer_revision_id)
                 )
 
         # Atomic Rejection: if any error exists, reject entire import batch
         if errors:
             return (
                 BenchmarkImportResponse(
+                    benchmark_id=None,
                     benchmark_version_id=None,
                     total_rows=total_rows,
                     valid_rows=len(valid_intakes),
@@ -552,37 +552,17 @@ class BenchmarkIntakeService:
                 [],
             )
 
-        # Build immutable benchmark version ID binding to all items AND their exact answer revisions
-        canonical_items = [
-            {
-                "external_id": it[0].external_id,
-                "task_type": it[0].task_type.value,
-                "question": it[0].question,
-                "choices": [c.model_dump() for c in it[0].choices] if it[0].choices else None,
-                "answer_binding_version": it[3],
-                "metadata": it[0].metadata.model_dump(),
-            }
-            for it in valid_intakes
-        ]
-        benchmark_payload = {
-            "workspace_id": workspace_id,
-            "benchmark_name": benchmark_name,
-            "items": canonical_items,
-        }
-        benchmark_hash = _compute_sha256(json.dumps(benchmark_payload, sort_keys=True))
-        benchmark_version_id = f"bmv_{benchmark_hash[:16]}"
+        # Generate opaque random benchmark version ID
+        benchmark_version_id = f"bmv_{uuid.uuid4().hex[:16]}"
 
         public_items: list[ItemVersion] = []
         gold_vault_records: list[GoldVaultRecord] = []
 
-        for intake, res_gold_text, res_choice_id, answer_binding_version in valid_intakes:
-            # Item version ID binds to workspace, external_id, question, and the exact answer revision
-            item_hash = _compute_sha256(
-                f"{workspace_id}:{intake.external_id}:{intake.question}:{answer_binding_version}"
-            )
-            item_version_id = f"itv_{item_hash[:16]}"
+        for intake, res_gold_text, res_choice_id, answer_revision_id in valid_intakes:
+            # Opaque random item version ID
+            item_version_id = f"itv_{uuid.uuid4().hex[:16]}"
 
-            # Public item version (STRICTLY NO GOLD ANSWER, allowlisted metadata only)
+            # Public item version (STRICTLY NO GOLD ANSWER, allowlisted metadata only, opaque answer_revision_id)
             public_items.append(
                 ItemVersion(
                     item_version_id=item_version_id,
@@ -591,23 +571,20 @@ class BenchmarkIntakeService:
                     task_type=intake.task_type,
                     question=intake.question,
                     choices=intake.choices,
-                    answer_binding_version=answer_binding_version,
+                    answer_revision_id=answer_revision_id,
                     metadata=intake.metadata,
                 )
             )
 
             # Vault record (Stored in isolated gold boundary)
-            vault_hash = _compute_sha256(
-                f"vault:{workspace_id}:{item_version_id}:{answer_binding_version}"
-            )
-            vault_item_id = f"gld_{vault_hash[:16]}"
+            vault_item_id = f"gld_{uuid.uuid4().hex[:16]}"
             gold_vault_records.append(
                 GoldVaultRecord(
                     vault_item_id=vault_item_id,
                     benchmark_version_id=benchmark_version_id,
                     item_version_id=item_version_id,
                     external_id=intake.external_id,
-                    answer_binding_version=answer_binding_version,
+                    answer_revision_id=answer_revision_id,
                     gold_answer_text=res_gold_text,
                     gold_choice_id=res_choice_id,
                     content_hash=_compute_sha256(res_gold_text),
@@ -615,6 +592,7 @@ class BenchmarkIntakeService:
             )
 
         response = BenchmarkImportResponse(
+            benchmark_id=f"bmk_{uuid.uuid4().hex[:16]}",
             benchmark_version_id=benchmark_version_id,
             total_rows=total_rows,
             valid_rows=total_rows,

@@ -37,7 +37,7 @@ def test_public_response_serialization_excludes_gold_answers():
             ChoiceOption(id="A", text="North Station"),
             ChoiceOption(id="B", text="East Station"),
         ],
-        answer_binding_version="abv_0123456789abcdef",
+        answer_revision_id="anr_0123456789abcdef",
     )
     json_str = item.model_dump_json()
     assert "gold" not in json_str.lower()

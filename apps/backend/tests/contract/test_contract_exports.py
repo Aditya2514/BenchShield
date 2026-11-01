@@ -103,21 +103,21 @@ def test_fixtures_manifest_structure_and_validity():
 
 
 def test_contract_app_placeholder_endpoints_return_501_error_response():
-    """Verify that contract-only app returns 501 matching declared ErrorResponse."""
+    """Verify that deferred endpoints return 501 matching declared ErrorResponse."""
     res = client.post(
-        "/api/v1/benchmarks",
+        "/api/v1/investigations",
         json={
             "workspace_id": "ws",
-            "name": "Test",
-            "items": [
-                {
-                    "external_id": "1",
-                    "task_type": "exact_short_answer",
-                    "question": "Q?",
-                    "gold_answer": "A",
-                }
-            ],
+            "policy_version_id": "polv_1",
+            "benchmark_version_id": "bmv_1",
+            "budget_limits": {
+                "max_queries": 10,
+                "max_fetches": 10,
+                "max_duration_seconds": 60,
+                "cost_ceiling_usd": 5.0,
+            },
         },
+        headers={"Idempotency-Key": "idemp_test_123"},
     )
     assert res.status_code == 501
     err = ErrorResponse.model_validate(res.json())

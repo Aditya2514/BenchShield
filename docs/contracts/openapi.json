@@ -35,14 +35,19 @@
             "type": "string"
           },
           "workspace_id": {
-            "description": "Tenant workspace ID",
-            "minLength": 1,
-            "title": "Workspace Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional tenant workspace ID; authenticated actor workspace takes precedence",
+            "title": "Workspace Id"
           }
         },
         "required": [
-          "workspace_id",
           "name",
           "items"
         ],
@@ -53,6 +58,18 @@
         "additionalProperties": false,
         "description": "Result of benchmark intake validation.\n\nIf validation fails for ANY row, status is 'rejected', benchmark_version_id is None,\nand row-level errors are provided. The import is strictly atomic.",
         "properties": {
+          "benchmark_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Parent benchmark ID if accepted",
+            "title": "Benchmark Id"
+          },
           "benchmark_version_id": {
             "anyOf": [
               {
@@ -101,6 +118,168 @@
           "status"
         ],
         "title": "BenchmarkImportResponse",
+        "type": "object"
+      },
+      "BenchmarkRecord": {
+        "additionalProperties": false,
+        "description": "Parent benchmark entity containing metadata and latest version.",
+        "properties": {
+          "benchmark_id": {
+            "description": "Benchmark entity ID",
+            "minLength": 1,
+            "title": "Benchmark Id",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "Creation timestamp",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional description",
+            "title": "Description"
+          },
+          "latest_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Latest benchmark version ID",
+            "title": "Latest Version Id"
+          },
+          "name": {
+            "description": "Benchmark name",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "description": "Update timestamp",
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version_count": {
+            "default": 1,
+            "description": "Number of versions created",
+            "minimum": 1.0,
+            "title": "Version Count",
+            "type": "integer"
+          },
+          "workspace_id": {
+            "description": "Tenant workspace ID",
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "benchmark_id",
+          "workspace_id",
+          "name"
+        ],
+        "title": "BenchmarkRecord",
+        "type": "object"
+      },
+      "BenchmarkVersion": {
+        "additionalProperties": false,
+        "description": "Immutable benchmark version representation.",
+        "properties": {
+          "benchmark_id": {
+            "default": "",
+            "description": "Parent benchmark entity ID",
+            "title": "Benchmark Id",
+            "type": "string"
+          },
+          "benchmark_version_id": {
+            "description": "Unique immutable benchmark version ID",
+            "minLength": 1,
+            "title": "Benchmark Version Id",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "Timestamp of version creation",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "item_count": {
+            "description": "Total number of items in this version",
+            "minimum": 0.0,
+            "title": "Item Count",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Benchmark name",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "task_types": {
+            "description": "Task types in version",
+            "items": {
+              "$ref": "#/components/schemas/TaskType"
+            },
+            "title": "Task Types",
+            "type": "array"
+          },
+          "version_number": {
+            "default": 1,
+            "description": "Monotonic version sequence number",
+            "minimum": 1.0,
+            "title": "Version Number",
+            "type": "integer"
+          },
+          "workspace_id": {
+            "description": "Tenant workspace ID",
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "benchmark_version_id",
+          "workspace_id",
+          "name",
+          "item_count"
+        ],
+        "title": "BenchmarkVersion",
+        "type": "object"
+      },
+      "Body_upload_benchmark_file_api_v1_benchmarks_upload_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "description": "CSV or JSON benchmark file",
+            "title": "File",
+            "type": "string"
+          },
+          "name": {
+            "description": "Benchmark name",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "file"
+        ],
+        "title": "Body_upload_benchmark_file_api_v1_benchmarks_upload_post",
         "type": "object"
       },
       "ChoiceOption": {
@@ -372,19 +551,91 @@
             "type": "string"
           },
           "workspace_id": {
-            "description": "Tenant workspace ID",
-            "minLength": 1,
-            "title": "Workspace Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional tenant workspace ID; authenticated actor workspace takes precedence",
+            "title": "Workspace Id"
           }
         },
         "required": [
-          "workspace_id",
           "name",
           "evaluation_cutoff",
           "reviewer_identity"
         ],
         "title": "EvaluationPolicyCreateRequest",
+        "type": "object"
+      },
+      "EvaluationPolicyRecord": {
+        "description": "Parent policy entity containing metadata and latest version.",
+        "properties": {
+          "created_at": {
+            "description": "Creation timestamp",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "latest_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Latest policy version ID",
+            "title": "Latest Version Id"
+          },
+          "name": {
+            "description": "Policy name",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "policy_id": {
+            "description": "Policy entity ID",
+            "minLength": 1,
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "description": "Update timestamp",
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version_count": {
+            "default": 1,
+            "description": "Version count",
+            "minimum": 1.0,
+            "title": "Version Count",
+            "type": "integer"
+          },
+          "workspace_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional tenant workspace ID; authenticated actor workspace takes precedence",
+            "title": "Workspace Id"
+          }
+        },
+        "required": [
+          "policy_id",
+          "name"
+        ],
+        "title": "EvaluationPolicyRecord",
         "type": "object"
       },
       "EvaluationPolicyVersion": {
@@ -480,6 +731,12 @@
             "title": "Name",
             "type": "string"
           },
+          "policy_id": {
+            "default": "",
+            "description": "Parent policy entity ID",
+            "title": "Policy Id",
+            "type": "string"
+          },
           "policy_version_id": {
             "description": "Unique policy version ID",
             "minLength": 1,
@@ -508,15 +765,20 @@
             "type": "integer"
           },
           "workspace_id": {
-            "description": "Tenant workspace ID",
-            "minLength": 1,
-            "title": "Workspace Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional tenant workspace ID; authenticated actor workspace takes precedence",
+            "title": "Workspace Id"
           }
         },
         "required": [
           "policy_version_id",
-          "workspace_id",
           "name",
           "allowed_tools",
           "allowed_source_classes",
@@ -1316,6 +1578,124 @@
         "title": "ItemIntake",
         "type": "object"
       },
+      "ItemVersion": {
+        "additionalProperties": false,
+        "description": "Immutable benchmark item representation for public/releasable operations.\n\nProtected gold answers and grading rubrics are strictly excluded.\nBinds to an exact immutable gold reference via gold_binding_version.",
+        "properties": {
+          "answer_revision_id": {
+            "description": "Opaque random answer revision identifier allocated by persistence layer",
+            "minLength": 1,
+            "title": "Answer Revision Id",
+            "type": "string"
+          },
+          "benchmark_version_id": {
+            "description": "Parent benchmark version ID",
+            "minLength": 1,
+            "title": "Benchmark Version Id",
+            "type": "string"
+          },
+          "choices": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ChoiceOption"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Ordered options for multiple-choice tasks",
+            "title": "Choices"
+          },
+          "external_id": {
+            "description": "User-supplied external item ID",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "External Id",
+            "type": "string"
+          },
+          "item_version_id": {
+            "description": "Unique immutable item version ID",
+            "minLength": 1,
+            "title": "Item Version Id",
+            "type": "string"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/PublicItemMetadata",
+            "description": "Allowlisted, typed public metadata"
+          },
+          "question": {
+            "description": "Question prompt text",
+            "maxLength": 32768,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          },
+          "task_type": {
+            "$ref": "#/components/schemas/TaskType",
+            "description": "Task type of the benchmark item"
+          }
+        },
+        "required": [
+          "item_version_id",
+          "benchmark_version_id",
+          "external_id",
+          "task_type",
+          "question",
+          "answer_revision_id"
+        ],
+        "title": "ItemVersion",
+        "type": "object"
+      },
+      "ItemVersionListResponse": {
+        "additionalProperties": false,
+        "description": "Paginated list of item versions for an authorized benchmark version.",
+        "properties": {
+          "has_more": {
+            "description": "Whether subsequent pages exist",
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "description": "Page of public item versions",
+            "items": {
+              "$ref": "#/components/schemas/ItemVersion"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "default": 1,
+            "description": "1-indexed current page",
+            "minimum": 1.0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 50,
+            "description": "Items per page",
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total_count": {
+            "description": "Total item count in version",
+            "minimum": 0.0,
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total_count",
+          "has_more"
+        ],
+        "title": "ItemVersionListResponse",
+        "type": "object"
+      },
       "PublicItemMetadata": {
         "additionalProperties": false,
         "description": "Allowlisted, strictly typed public item metadata.\n\nCRITICAL BOUNDARY: Extra/arbitrary fields are strictly forbidden to prevent\naccidental leaking of protected answers, vault keys, or internal annotations.",
@@ -1880,6 +2260,62 @@
       "post": {
         "description": "Validate benchmark CSV/JSON items. Returns immutable version ID or row errors without echoing protected answers.",
         "operationId": "import_benchmark_api_v1_benchmarks_post",
+        "parameters": [
+          {
+            "description": "Optional client idempotency key",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional client idempotency key",
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1911,6 +2347,16 @@
             },
             "description": "Validation error"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -1919,7 +2365,7 @@
                 }
               }
             },
-            "description": "Policy blocked or forbidden"
+            "description": "Forbidden or policy blocked"
           },
           "404": {
             "content": {
@@ -1939,7 +2385,7 @@
                 }
               }
             },
-            "description": "Version conflict"
+            "description": "Version or idempotency conflict"
           },
           "422": {
             "content": {
@@ -1973,6 +2419,648 @@
           }
         },
         "summary": "Import and validate benchmark",
+        "tags": [
+          "Benchmarks"
+        ]
+      }
+    },
+    "/api/v1/benchmarks/upload": {
+      "post": {
+        "description": "Upload and validate a benchmark CSV or JSON file. Returns immutable version ID or row errors without retaining files or echoing protected answers.",
+        "operationId": "upload_benchmark_file_api_v1_benchmarks_upload_post",
+        "parameters": [
+          {
+            "description": "Optional client idempotency key",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional client idempotency key",
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_benchmark_file_api_v1_benchmarks_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkImportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden or policy blocked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version or idempotency conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Upload benchmark file (CSV or JSON)",
+        "tags": [
+          "Benchmarks"
+        ]
+      }
+    },
+    "/api/v1/benchmarks/versions/{version_id}": {
+      "get": {
+        "description": "Retrieve immutable benchmark version metadata.",
+        "operationId": "get_benchmark_version_api_v1_benchmarks_versions__version_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkVersion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden or policy blocked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version or idempotency conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Get benchmark version",
+        "tags": [
+          "Benchmarks"
+        ]
+      }
+    },
+    "/api/v1/benchmarks/versions/{version_id}/items": {
+      "get": {
+        "description": "Paginated retrieval of public item versions (gold answers strictly excluded).",
+        "operationId": "list_benchmark_items_api_v1_benchmarks_versions__version_id__items_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page number",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "Page number",
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items per page",
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Items per page",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemVersionListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden or policy blocked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version or idempotency conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "List benchmark items",
+        "tags": [
+          "Benchmarks"
+        ]
+      }
+    },
+    "/api/v1/benchmarks/{benchmark_id}": {
+      "get": {
+        "description": "Retrieve parent benchmark entity and version counts.",
+        "operationId": "get_benchmark_api_v1_benchmarks__benchmark_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "benchmark_id",
+            "required": true,
+            "schema": {
+              "title": "Benchmark Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkRecord"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden or policy blocked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version or idempotency conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Get benchmark metadata",
         "tags": [
           "Benchmarks"
         ]
@@ -2024,6 +3112,16 @@
             },
             "description": "Validation error"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -2032,7 +3130,7 @@
                 }
               }
             },
-            "description": "Policy blocked or forbidden"
+            "description": "Forbidden or policy blocked"
           },
           "404": {
             "content": {
@@ -2052,7 +3150,7 @@
                 }
               }
             },
-            "description": "Version conflict"
+            "description": "Version or idempotency conflict"
           },
           "422": {
             "content": {
@@ -2139,6 +3237,16 @@
             },
             "description": "Validation error"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -2147,7 +3255,7 @@
                 }
               }
             },
-            "description": "Policy blocked or forbidden"
+            "description": "Forbidden or policy blocked"
           },
           "404": {
             "content": {
@@ -2167,7 +3275,7 @@
                 }
               }
             },
-            "description": "Version conflict"
+            "description": "Version or idempotency conflict"
           },
           "422": {
             "content": {
@@ -2242,6 +3350,16 @@
             },
             "description": "Validation error"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -2250,7 +3368,7 @@
                 }
               }
             },
-            "description": "Policy blocked or forbidden"
+            "description": "Forbidden or policy blocked"
           },
           "404": {
             "content": {
@@ -2270,7 +3388,7 @@
                 }
               }
             },
-            "description": "Version conflict"
+            "description": "Version or idempotency conflict"
           },
           "422": {
             "content": {
@@ -2371,6 +3489,16 @@
             },
             "description": "Validation error"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -2379,7 +3507,7 @@
                 }
               }
             },
-            "description": "Policy blocked or forbidden"
+            "description": "Forbidden or policy blocked"
           },
           "404": {
             "content": {
@@ -2399,7 +3527,7 @@
                 }
               }
             },
-            "description": "Version conflict"
+            "description": "Version or idempotency conflict"
           },
           "422": {
             "content": {
@@ -2514,7 +3642,7 @@
                 }
               }
             },
-            "description": "Policy blocked or forbidden"
+            "description": "Forbidden or policy blocked"
           },
           "404": {
             "content": {
@@ -2534,7 +3662,7 @@
                 }
               }
             },
-            "description": "Version conflict"
+            "description": "Version or idempotency conflict"
           },
           "410": {
             "content": {
@@ -2629,6 +3757,16 @@
             },
             "description": "Validation error"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -2637,7 +3775,7 @@
                 }
               }
             },
-            "description": "Policy blocked or forbidden"
+            "description": "Forbidden or policy blocked"
           },
           "404": {
             "content": {
@@ -2657,7 +3795,7 @@
                 }
               }
             },
-            "description": "Version conflict"
+            "description": "Version or idempotency conflict"
           },
           "422": {
             "content": {
@@ -2795,6 +3933,16 @@
             },
             "description": "Validation error"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -2803,7 +3951,7 @@
                 }
               }
             },
-            "description": "Policy blocked or forbidden"
+            "description": "Forbidden or policy blocked"
           },
           "404": {
             "content": {
@@ -2823,7 +3971,7 @@
                 }
               }
             },
-            "description": "Version conflict"
+            "description": "Version or idempotency conflict"
           },
           "422": {
             "content": {
@@ -2908,6 +4056,16 @@
             },
             "description": "Validation error"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -2916,7 +4074,7 @@
                 }
               }
             },
-            "description": "Policy blocked or forbidden"
+            "description": "Forbidden or policy blocked"
           },
           "404": {
             "content": {
@@ -2936,7 +4094,7 @@
                 }
               }
             },
-            "description": "Version conflict"
+            "description": "Version or idempotency conflict"
           },
           "422": {
             "content": {
@@ -2979,6 +4137,44 @@
       "post": {
         "description": "Store an immutable evaluation policy version containing source and privacy boundaries.",
         "operationId": "create_policy_api_v1_policies_post",
+        "parameters": [
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -3010,6 +4206,16 @@
             },
             "description": "Validation error"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -3018,7 +4224,7 @@
                 }
               }
             },
-            "description": "Policy blocked or forbidden"
+            "description": "Forbidden or policy blocked"
           },
           "404": {
             "content": {
@@ -3038,7 +4244,7 @@
                 }
               }
             },
-            "description": "Version conflict"
+            "description": "Version or idempotency conflict"
           },
           "422": {
             "content": {
@@ -3072,6 +4278,304 @@
           }
         },
         "summary": "Create evaluation policy",
+        "tags": [
+          "Policies"
+        ]
+      }
+    },
+    "/api/v1/policies/versions/{version_id}": {
+      "get": {
+        "description": "Retrieve immutable evaluation policy version details.",
+        "operationId": "get_policy_version_api_v1_policies_versions__version_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationPolicyVersion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden or policy blocked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version or idempotency conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Get policy version",
+        "tags": [
+          "Policies"
+        ]
+      }
+    },
+    "/api/v1/policies/{policy_id}": {
+      "get": {
+        "description": "Retrieve parent evaluation policy entity and latest version.",
+        "operationId": "get_policy_api_v1_policies__policy_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "title": "Policy Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationPolicyRecord"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden or policy blocked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version or idempotency conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Get policy entity",
         "tags": [
           "Policies"
         ]
@@ -3113,6 +4617,16 @@
             },
             "description": "Validation error"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -3121,7 +4635,7 @@
                 }
               }
             },
-            "description": "Policy blocked or forbidden"
+            "description": "Forbidden or policy blocked"
           },
           "404": {
             "content": {
@@ -3141,7 +4655,7 @@
                 }
               }
             },
-            "description": "Version conflict"
+            "description": "Version or idempotency conflict"
           },
           "422": {
             "content": {
@@ -3177,6 +4691,204 @@
         "summary": "Get report export status",
         "tags": [
           "Reports"
+        ]
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "health_live_health_live_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden or policy blocked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version or idempotency conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "health_ready_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden or policy blocked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version or idempotency conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Readiness probe",
+        "tags": [
+          "Health"
         ]
       }
     }

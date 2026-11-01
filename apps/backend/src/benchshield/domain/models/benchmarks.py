@@ -67,9 +67,9 @@ class ItemVersion(BaseModel):
     choices: list[ChoiceOption] | None = Field(
         default=None, description="Ordered options for multiple-choice tasks"
     )
-    answer_binding_version: str = Field(
+    answer_revision_id: str = Field(
         ...,
-        description="Immutable version binding to the protected answer revision (without exposing low-entropy plaintext hashes)",
+        description="Opaque random answer revision identifier allocated by persistence layer",
         min_length=1,
     )
     metadata: PublicItemMetadata = Field(
@@ -86,11 +86,43 @@ class BenchmarkVersion(BaseModel):
     benchmark_version_id: str = Field(
         ..., description="Unique immutable benchmark version ID", min_length=1
     )
+    benchmark_id: str = Field(default="", description="Parent benchmark entity ID")
     workspace_id: str = Field(..., description="Tenant workspace ID", min_length=1)
     name: str = Field(..., description="Benchmark name", min_length=1, max_length=256)
     version_number: int = Field(default=1, description="Monotonic version sequence number", ge=1)
-    item_count: int = Field(..., description="Total number of items in this version", ge=1)
-    checksum: str = Field(..., description="Deterministic content checksum (SHA-256)")
+    item_count: int = Field(..., description="Total number of items in this version", ge=0)
+    task_types: list[TaskType] = Field(default_factory=list, description="Task types in version")
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC), description="Timestamp of version creation"
     )
+
+
+class BenchmarkRecord(BaseModel):
+    """Parent benchmark entity containing metadata and latest version."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    benchmark_id: str = Field(..., description="Benchmark entity ID", min_length=1)
+    workspace_id: str = Field(..., description="Tenant workspace ID", min_length=1)
+    name: str = Field(..., description="Benchmark name", min_length=1, max_length=256)
+    description: str | None = Field(default=None, description="Optional description")
+    latest_version_id: str | None = Field(default=None, description="Latest benchmark version ID")
+    version_count: int = Field(default=1, description="Number of versions created", ge=1)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), description="Creation timestamp"
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), description="Update timestamp"
+    )
+
+
+class ItemVersionListResponse(BaseModel):
+    """Paginated list of item versions for an authorized benchmark version."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[ItemVersion] = Field(..., description="Page of public item versions")
+    total_count: int = Field(..., description="Total item count in version", ge=0)
+    page: int = Field(default=1, description="1-indexed current page", ge=1)
+    page_size: int = Field(default=50, description="Items per page", ge=1, le=500)
+    has_more: bool = Field(..., description="Whether subsequent pages exist")

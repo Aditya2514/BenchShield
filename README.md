@@ -2,15 +2,15 @@
 
 > Automated exposure audit system for benchmark maintainers. Detects publicly accessible benchmark questions, solutions, and answers with verifiable evidence, timing analysis, and optional controlled attacker experiments.
 
-## Status: Phase B0 Complete
+## Status: Phase B1 Complete
 
-Phase B0 (Contracts and Evaluation Fixtures) has been implemented and verified:
-- **Executable Pydantic Schemas**: Core domain models, independent finding dimensions, intake boundaries, and event envelopes.
-- **Contract Exports**: Authoritative OpenAPI 3.1 specification (`docs/contracts/openapi.json`) and SSE event JSON schemas (`docs/contracts/events/`).
-- **Benchmark Intake Engine**: Pure CSV and JSON parsing, duplicate-ID detection, choice-text mapping, atomic batch validation, and strict protection of reference answers.
-- **State Machine Validators**: Deterministic validation for investigation and experiment lifecycles and optimistic concurrency checks.
-- **Deterministic Fake Adapters**: In-memory fake adapters for search, fetch, model reasoning, evidence storage, and trusted grading with usage accounting.
-- **Synthetic Evaluation Fixtures**: 100% synthetic development and held-out partitions registered in `fixtures/manifest.json`.
+Phase B1 (Secure Backend Foundation) has been implemented and verified:
+- **Opaque Answer Revision Identity**: Replaced public answer-derived identifiers with opaque random revision IDs (`anr_<uuid4_hex[:16]>`), preventing candidate answer enumeration attacks.
+- **Multi-Schema PostgreSQL Persistence**: 10 core tables across `public` and `vault` schemas with tenant-scoped composite foreign keys enforcing strict workspace boundaries.
+- **Restricted Vault Boundary & AES-256-GCM**: Reference answers encrypted at rest with versioned keys; application runtime (`benchshield_app`) has INSERT-only access with SELECT strictly revoked; trusted verifier (`benchshield_verifier`) reads answers via `TrustedVaultReader`.
+- **Signed JWT Authentication & Server-Side Authorization**: Real HMAC-SHA256 token verification, server-side workspace membership checks in PostgreSQL, and an explicit role/permission matrix (`viewer`, `operator`, `evaluator`, `admin`).
+- **Operational Intake & Bounded Retrieval**: Atomic CSV/JSON imports (`POST /api/v1/benchmarks` and `POST /api/v1/benchmarks/upload`), idempotency handling with conflict detection, bounded pagination, and immutable evaluation policy management (`POST /api/v1/policies`).
+- **Real Database Integration Test Suite**: 58 automated tests passing across unit, contract, security, and native embedded PostgreSQL integration suites (zero SQLite substitutions).
 
 ---
 
@@ -79,7 +79,7 @@ cd apps/backend && uv run pytest tests/contract/test_contract_exports.py
 
 ## Delivery Roadmap
 - [x] **Phase B0 / F0**: Contracts, Schemas, Evaluation Fixtures, and Mocks.
-- [ ] **Phase B1 / F1**: Secure Backend Foundation, Intake Persistence, and Vault Isolation.
+- [x] **Phase B1 / F1**: Secure Backend Foundation, Intake Persistence, and Vault Isolation.
 - [ ] **Phase B2 / F2**: Bounded Discovery, Durable Execution, and Live Progress Telemetry.
 - [ ] **Phase B3 / F3**: Verified Evidence, Finding Review, and Frozen Audit MVP.
 - [ ] **Phase B4 / F4**: Optional Controlled Attacker Experiments.

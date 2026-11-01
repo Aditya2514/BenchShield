@@ -45,17 +45,23 @@ This test compares `openapi.json` against `app.openapi()` and fails if changes i
 ## Endpoint Contract Summary
 | Method | Endpoint | Description | Phase Status |
 |---|---|---|---|
-| POST | `/api/v1/benchmarks` | Atomic import of CSV/JSON benchmarks. Returns IDs or row errors without leaking gold answers. | Contract-only (501) in B0; service implemented in B1 |
-| POST | `/api/v1/policies` | Create immutable evaluation policy version. | Contract-only (501) in B0; persistence in B1 |
-| POST | `/api/v1/investigations` | Launch audit investigation with `Idempotency-Key`. | Contract-only (501) in B0; orchestration in B2 |
-| GET | `/api/v1/investigations/{id}` | Read investigation status, partial coverage, budget spend, and limitations. | Contract-only (501) in B0; worker state in B2 |
-| GET | `/api/v1/investigations/{id}/events` | Authenticated SSE stream for monotonic progress telemetry. | Contract-only (501) in B0; SSE stream in B2 |
-| POST | `/api/v1/investigations/{id}/cancel` | Idempotent cancellation request. | Contract-only (501) in B0; worker cancellation in B2 |
-| GET | `/api/v1/investigations/{id}/findings` | Paginated findings with independent dimensions and evidence references. | Contract-only (501) in B0; services in B3 |
-| POST | `/api/v1/findings/{id}/reviews` | Append reviewer decision with expected version (returns 409 on conflict). | Contract-only (501) in B0; services in B3 |
-| POST | `/api/v1/investigations/{id}/experiments`| Launch pinned optional attacker experiment. | Contract-only (501) in B0; experiments in B4 |
-| POST | `/api/v1/investigations/{id}/reports` | Create frozen report export job. | Contract-only (501) in B0; reporting in B3 |
-| GET | `/api/v1/reports/{id}` | Get report status and authorized download reference. | Contract-only (501) in B0; reporting in B3 |
+| POST | `/api/v1/benchmarks` | Atomic import of JSON benchmark items. Returns version ID or row errors without leaking gold answers. | **Operational in B1** |
+| POST | `/api/v1/benchmarks/upload` | Atomic import of CSV or JSON benchmark file. Bounded size limit and zero retained temporary files. | **Operational in B1** |
+| GET | `/api/v1/benchmarks/{id}` | Read parent benchmark entity and version counts. | **Operational in B1** |
+| GET | `/api/v1/benchmarks/versions/{id}` | Read immutable benchmark version snapshot metadata. | **Operational in B1** |
+| GET | `/api/v1/benchmarks/versions/{id}/items` | Paginated item listing strictly excluding protected gold answers. | **Operational in B1** |
+| POST | `/api/v1/policies` | Create immutable evaluation policy version. Rejects confidential external discovery with HTTP 400. | **Operational in B1** |
+| GET | `/api/v1/policies/{id}` | Read parent policy entity and latest version. | **Operational in B1** |
+| GET | `/api/v1/policies/versions/{id}` | Read immutable policy version specification. | **Operational in B1** |
+| POST | `/api/v1/investigations` | Launch audit investigation with `Idempotency-Key`. | Contract placeholder (501) in B1; orchestration in B2 |
+| GET | `/api/v1/investigations/{id}` | Read investigation status, partial coverage, budget spend, and limitations. | Contract placeholder (501) in B1; worker state in B2 |
+| GET | `/api/v1/investigations/{id}/events` | Authenticated SSE stream for monotonic progress telemetry. | Contract placeholder (501) in B1; SSE stream in B2 |
+| POST | `/api/v1/investigations/{id}/cancel` | Idempotent cancellation request. | Contract placeholder (501) in B1; worker cancellation in B2 |
+| GET | `/api/v1/investigations/{id}/findings` | Paginated findings with independent dimensions and evidence references. | Contract placeholder (501) in B1; services in B3 |
+| POST | `/api/v1/findings/{id}/reviews` | Append reviewer decision with expected version (returns 409 on conflict). | Contract placeholder (501) in B1; services in B3 |
+| POST | `/api/v1/investigations/{id}/experiments`| Launch pinned optional attacker experiment. | Contract placeholder (501) in B1; experiments in B4 |
+| POST | `/api/v1/investigations/{id}/reports` | Create frozen report export job. | Contract placeholder (501) in B1; reporting in B3 |
+| GET | `/api/v1/reports/{id}` | Get report status and authorized download reference. | Contract placeholder (501) in B1; reporting in B3 |
 
 ---
 

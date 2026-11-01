@@ -55,9 +55,7 @@ class GoldVaultRecord(BaseModel):
     benchmark_version_id: str = Field(..., description="Parent benchmark version ID")
     item_version_id: str = Field(..., description="Parent item version ID")
     external_id: str = Field(..., description="Benchmark item external ID")
-    answer_binding_version: str = Field(
-        ..., description="Salted version binding to protected answer"
-    )
+    answer_revision_id: str = Field(..., description="Opaque answer revision identifier")
     gold_answer_text: str = Field(..., description="Normalized reference answer text")
     gold_choice_id: str | None = Field(
         default=None, description="Choice ID if multiple-choice task"
@@ -92,7 +90,10 @@ class BenchmarkImportRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    workspace_id: str = Field(..., description="Tenant workspace ID", min_length=1)
+    workspace_id: str | None = Field(
+        default=None,
+        description="Optional tenant workspace ID; authenticated actor workspace takes precedence",
+    )
     name: str = Field(
         ..., description="User-friendly name of the benchmark", min_length=1, max_length=256
     )
@@ -113,6 +114,7 @@ class BenchmarkImportResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    benchmark_id: str | None = Field(default=None, description="Parent benchmark ID if accepted")
     benchmark_version_id: str | None = Field(
         default=None, description="Created benchmark version ID if accepted, None if rejected"
     )

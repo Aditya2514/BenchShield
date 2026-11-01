@@ -19,14 +19,29 @@ uv sync --all-extras
 
 ### Running Tests
 ```bash
-# Run all tests using uv
+# Run all tests (unit, contract, security, and real PostgreSQL integration tests)
 uv run pytest
 
 # Run specific test suites
 uv run pytest tests/unit
 uv run pytest tests/contract
 uv run pytest tests/security
+uv run pytest tests/integration
 ```
+
+### Local PostgreSQL Infrastructure & Migrations
+For local Docker Compose PostgreSQL:
+```bash
+# Start local multi-user PostgreSQL
+docker compose -f ../../infra/docker-compose.yml up -d
+
+# Run migrations to head
+uv run alembic upgrade head
+
+# Bootstrap development test identities (Alice & Bob)
+uv run python -m benchshield.persistence.bootstrap
+```
+*Note: The integration test suite (`tests/integration/test_b1_secure_foundation.py`) automatically spawns an isolated native embedded PostgreSQL instance, runs migrations, seeds test identities, and cleans up on teardown without requiring manual Docker startup.*
 
 ### Linting & Formatting
 ```bash

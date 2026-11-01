@@ -17,10 +17,22 @@ import pytest
 from fastapi.testclient import TestClient
 
 from benchshield.api.app import contract_app
+from benchshield.api.auth import create_jwt_token
+from benchshield.config import Settings, set_settings
 from benchshield.domain.enums import ErrorCode, EventType
 from benchshield.domain.models.errors import ErrorResponse
 from benchshield.domain.models.events import SSEEventEnvelope
 from benchshield.services.intake_service import BenchmarkIntakeService
+
+
+@pytest.fixture(autouse=True)
+def enable_auth_shortcuts():
+    """Ensure in-memory regression tests have auth shortcuts enabled."""
+    cfg = Settings(allow_insecure_auth_shortcuts=True)
+    set_settings(cfg)
+    yield
+    set_settings(None)
+
 
 client = TestClient(contract_app)
 
@@ -140,6 +152,8 @@ def test_defect5_http_placeholder_and_validation_errors_match_error_response():
 
     # Test 422 validation failure on bad payload
     secret_sentinel = "SECRET_SENTINEL_IN_BODY_123"
+    token = create_jwt_token("usr_admin", "admin@benchshield.com")
+    auth_headers = {"Authorization": f"Bearer {token}", "X-Workspace-ID": "ws_1"}
     res_422 = client.post(
         "/api/v1/policies",
         json={
@@ -148,6 +162,7 @@ def test_defect5_http_placeholder_and_validation_errors_match_error_response():
             "reviewer_identity": secret_sentinel,
             "evaluation_cutoff": "not-a-date",
         },
+        headers=auth_headers,
     )
     assert res_422.status_code in (400, 422)
     body_422 = res_422.json()
@@ -274,21 +289,21 @@ def test_section_b_version_identity_and_reproducibility():
         "gold_answer": "B",
     }
 
-    # 1. Unchanged inputs yield identical benchmark and answer binding versions
+    # 1. Independent imports generate fresh opaque revision IDs (no deterministic answer hash)
     res1, pub1, _ = BenchmarkIntakeService.validate_and_process([base_item], workspace_id="ws_acme")
     res2, pub2, _ = BenchmarkIntakeService.validate_and_process([base_item], workspace_id="ws_acme")
-    assert res1.benchmark_version_id == res2.benchmark_version_id
-    assert pub1[0].answer_binding_version == pub2[0].answer_binding_version
-    assert pub1[0].item_version_id == pub2[0].item_version_id
+    assert res1.benchmark_version_id != res2.benchmark_version_id
+    assert pub1[0].answer_revision_id != pub2[0].answer_revision_id
+    assert pub1[0].answer_revision_id.startswith("anr_")
 
-    # 2. Changed answer yields different benchmark and answer binding versions
+    # 2. Changed answer yields different benchmark and answer revision versions
     item_diff_ans = dict(base_item)
     item_diff_ans["gold_answer"] = "A"
     res_ans, pub_ans, _ = BenchmarkIntakeService.validate_and_process(
         [item_diff_ans], workspace_id="ws_acme"
     )
     assert res_ans.benchmark_version_id != res1.benchmark_version_id
-    assert pub_ans[0].answer_binding_version != pub1[0].answer_binding_version
+    assert pub_ans[0].answer_revision_id != pub1[0].answer_revision_id
 
     # 3. Changed question yields different benchmark version and item version
     item_diff_q = dict(base_item)
@@ -316,12 +331,12 @@ def test_section_b_version_identity_and_reproducibility():
         [base_item], workspace_id="ws_other_corp"
     )
     assert res_ws.benchmark_version_id != res1.benchmark_version_id
-    assert pub_ws[0].answer_binding_version != pub1[0].answer_binding_version
+    assert pub_ws[0].answer_revision_id != pub1[0].answer_revision_id
     assert pub_ws[0].item_version_id != pub1[0].item_version_id
 
     # 6. Low-entropy answer protection: bare sha256("B") must NOT be exposed
     bare_answer_hash = hashlib.sha256(b"B").hexdigest()
-    assert bare_answer_hash[:16] not in pub1[0].answer_binding_version
+    assert bare_answer_hash[:16] not in pub1[0].answer_revision_id
     assert bare_answer_hash[:16] not in res1.benchmark_version_id
 
 
@@ -419,6 +434,8 @@ def test_section_d_http_validation_safety_and_no_sentinel_leaks():
     """Verify HTTP validation never leaks raw submitted values or sentinels."""
     # 1. Invalid payload with distinct sentinel to POST /api/v1/benchmarks
     secret_sentinel = "DISTINCT_SECRET_SENTINEL_ALPHA_999"
+    token = create_jwt_token("usr_admin", "admin@benchshield.com")
+    auth_headers = {"Authorization": f"Bearer {token}", "X-Workspace-ID": "ws_test"}
     res = client.post(
         "/api/v1/benchmarks",
         json={
@@ -433,6 +450,7 @@ def test_section_d_http_validation_safety_and_no_sentinel_leaks():
                 }
             ],
         },
+        headers=auth_headers,
     )
     assert res.status_code == 422
     err_body = res.json()
@@ -444,10 +462,12 @@ def test_section_d_http_validation_safety_and_no_sentinel_leaks():
     # 2. Malformed JSON with sentinel in raw body
     malformed_sentinel = "MALFORMED_JSON_SECRET_SENTINEL_777"
     raw_bad_json = f'{{"workspace_id": "{malformed_sentinel}", "broken_json": '.encode()
+    malformed_headers = dict(auth_headers)
+    malformed_headers["Content-Type"] = "application/json"
     res_bad_json = client.post(
         "/api/v1/benchmarks",
         content=raw_bad_json,
-        headers={"Content-Type": "application/json"},
+        headers=malformed_headers,
     )
     assert res_bad_json.status_code == 422
     err_resp_bad = ErrorResponse.model_validate(res_bad_json.json())

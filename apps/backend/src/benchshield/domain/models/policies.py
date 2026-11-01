@@ -10,7 +10,10 @@ from benchshield.domain.enums import DataClassification, RetentionProfile, Sourc
 class EvaluationPolicyCreateRequest(BaseModel):
     """Payload to create an immutable evaluation policy version."""
 
-    workspace_id: str = Field(..., description="Tenant workspace ID", min_length=1)
+    workspace_id: str | None = Field(
+        default=None,
+        description="Optional tenant workspace ID; authenticated actor workspace takes precedence",
+    )
     name: str = Field(..., description="Descriptive policy name", min_length=1, max_length=256)
     allowed_tools: list[str] = Field(
         default=["search", "fetch"],
@@ -73,7 +76,11 @@ class EvaluationPolicyVersion(BaseModel):
     """Immutable evaluation policy version record."""
 
     policy_version_id: str = Field(..., description="Unique policy version ID", min_length=1)
-    workspace_id: str = Field(..., description="Tenant workspace ID", min_length=1)
+    policy_id: str = Field(default="", description="Parent policy entity ID")
+    workspace_id: str | None = Field(
+        default=None,
+        description="Optional tenant workspace ID; authenticated actor workspace takes precedence",
+    )
     name: str = Field(..., description="Policy name", min_length=1, max_length=256)
     version_number: int = Field(default=1, description="Version sequence number", ge=1)
     allowed_tools: list[str] = Field(..., description="Permitted tools")
@@ -95,4 +102,23 @@ class EvaluationPolicyVersion(BaseModel):
     reviewer_identity: str = Field(..., description="Author identity")
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC), description="Timestamp of policy creation"
+    )
+
+
+class EvaluationPolicyRecord(BaseModel):
+    """Parent policy entity containing metadata and latest version."""
+
+    policy_id: str = Field(..., description="Policy entity ID", min_length=1)
+    workspace_id: str | None = Field(
+        default=None,
+        description="Optional tenant workspace ID; authenticated actor workspace takes precedence",
+    )
+    name: str = Field(..., description="Policy name", min_length=1, max_length=256)
+    latest_version_id: str | None = Field(default=None, description="Latest policy version ID")
+    version_count: int = Field(default=1, description="Version count", ge=1)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), description="Creation timestamp"
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), description="Update timestamp"
     )
