@@ -13,3 +13,31 @@ dist/
 coverage/
 .runtime/
 *.zip
+
+# Frontend / Node
+# Dependencies & Build
+dist-ssr/
+
+# Environment & Local
+*.local
+.env.*.local
+
+# Logs & TypeScript
+*.log
+*.tsbuildinfo
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# AI Agents, Assistant Metadata & Skills
+.agents/
+.claude/
+.motion/
+.superpowers/
+agent/
+skills-lock.json

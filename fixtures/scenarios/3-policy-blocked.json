@@ -1,0 +1,91 @@
+{
+  "scenario_id": "3-policy-blocked",
+  "name": "Halted by policy gate (policy_blocked)",
+  "description": "The policy gate refused to run discovery. No claims are made either way.",
+  "investigation": {
+    "investigation_id": "inv_demo_blocked",
+    "status": "policy_blocked",
+    "is_partial": false,
+    "total_items": 4,
+    "investigated_items": 0,
+    "budgets": {
+      "max_queries": 12,
+      "used_queries": 0,
+      "max_fetches": 12,
+      "used_fetches": 0,
+      "cost_ceiling_usd": 5.0,
+      "used_cost_usd": 0.0,
+      "deadline_seconds": 600
+    },
+    "limitations": {
+      "inaccessible_sources": [],
+      "provider_outages": [],
+      "scope_limitations": [
+        "Execution halted before discovery: no approved egress route for confidential data."
+      ]
+    },
+    "findings_count": 0,
+    "created_at": "2026-11-01T10:26:44.260895Z",
+    "updated_at": "2026-11-01T10:26:45.486506Z"
+  },
+  "findings": [],
+  "report": null,
+  "report_download": null,
+  "events": [
+    {
+      "id": "1",
+      "type": "investigation_queued",
+      "data": {
+        "total_items": 4,
+        "policy_version_id": "polv_36d71b9a083344ed",
+        "benchmark_version_id": "bmv_fa8988c3642a4212"
+      }
+    },
+    {
+      "id": "2",
+      "type": "investigation_blocked",
+      "data": {
+        "reason": "Policy gate: external discovery requested for confidential data without an approved egress descriptor."
+      }
+    }
+  ],
+  "review_history": {},
+  "policy": {
+    "policy_version_id": "polv_36d71b9a083344ed",
+    "policy_id": "pol_40bd8b109a27447a",
+    "workspace_id": "ws_alpha",
+    "name": "Demo public-benchmark exposure policy",
+    "version_number": 1,
+    "allowed_tools": [
+      "search",
+      "scrape"
+    ],
+    "allowed_source_classes": [
+      "web_search",
+      "code_repository",
+      "academic_archive"
+    ],
+    "prohibited_answer_key_access": true,
+    "benchmark_identification_permitted": false,
+    "evaluation_cutoff": "2024-01-01T00:00:00Z",
+    "cutoff_timezone": "UTC",
+    "item_scope": null,
+    "max_queries_per_item": 3,
+    "max_fetches_per_item": 3,
+    "max_concurrent_discovery_tasks": 2,
+    "deadline_seconds": 600,
+    "cost_ceiling_usd": 5.0,
+    "data_classification": "synthetic",
+    "retention_profile": "pilot_standard_30_90",
+    "reviewer_identity": "alice@corp-alpha.com",
+    "created_at": "2026-11-01T10:26:44.243489Z"
+  },
+  "benchmark_import": {
+    "benchmark_id": "bmk_0eb50621b84a4029",
+    "benchmark_version_id": "bmv_fa8988c3642a4212",
+    "total_rows": 4,
+    "valid_rows": 4,
+    "status": "accepted",
+    "errors": []
+  }
+}

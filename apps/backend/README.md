@@ -9,6 +9,19 @@ cd apps/backend
 uv sync --all-extras
 uv run python ../../scripts/demo_audit.py   # full B1->B3 audit, prints every step
 uv run python ../../scripts/dev_server.py   # live API on :8000 (+ /docs), prints bearer tokens
+
+# live web discovery instead of the scripted fake web:
+TINYFISH_API_KEY=your_key uv run python ../../scripts/dev_server.py
+```
+
+`TINYFISH_API_KEY` is read from the process environment (not from `.env`). Never commit it.
+
+Live smoke test (real web, three public GSM8K items, prints findings and a verdict):
+
+```bash
+TINYFISH_API_KEY=your_key uv run python ../../scripts/live_audit.py
+uv run python ../../scripts/live_audit.py --benchmark my_items.json   # your own items
+uv run python ../../scripts/live_audit.py --offline                   # no key needed
 ```
 
 Both start an embedded PostgreSQL, run migrations, seed dev users and use an offline,

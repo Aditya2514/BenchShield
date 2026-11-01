@@ -306,6 +306,21 @@ Experiments use fresh sessions, pinned model and configuration, frozen discovery
 
 ## 🚀 Quick start
 
+### Full stack (backend + frontend)
+
+```bash
+cd apps/backend && uv sync --all-extras && uv run python ../../scripts/dev_server.py
+```
+
+```bash
+npm install && npm run dev --workspace=apps/frontend
+```
+
+Open http://localhost:5173 and click a dev user to sign in. Vite proxies `/api` to the backend on port 8000. Flow: **Benchmarks** → **Policies** → **Investigations** (live events, then *Run Verification*) → **Findings** (append-only reviews) → **Reports** (freeze + authorized download). Experiments show "not available" until backend phase B4.
+
+Demo mode without a backend: set `VITE_ENABLE_MSW=true` in `apps/frontend/.env`. Mock data in `fixtures/scenarios` was captured from the real backend and is schema-checked against `docs/contracts/openapi.json`.
+
+
 > **Prerequisites:** Python ≥ 3.11 · [uv](https://docs.astral.sh/uv/) · Docker (optional, for a local PostgreSQL)
 
 ```bash
