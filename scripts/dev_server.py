@@ -84,7 +84,7 @@ async def main(port: int) -> None:
         expose_headers=["x-request-id"],
     )
 
-    print("\nBenchShield dev API  ->  http://127.0.0.1:%d   (Swagger: /docs)\n" % port)
+    print(f"\nBenchShield dev API  ->  http://127.0.0.1:{port}   (Swagger: /docs)\n")
     for uid, email, ws, role in USERS:
         tok = create_jwt_token(user_id=uid, email=email, secret=JWT_SECRET, expires_in_seconds=86400)
         print(f"{role:6} {email:24} X-Workspace-ID: {ws}\n       Authorization: Bearer {tok}\n")
