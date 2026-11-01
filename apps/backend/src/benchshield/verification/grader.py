@@ -25,7 +25,7 @@ from benchshield.domain.enums import (
     TemporalStatus,
 )
 
-GRADER_VERSION = "grader_v1.0"
+GRADER_VERSION = "grader_v1.1"
 NORMALIZATION_VERSION = "norm_v1.0"
 
 # Identity thresholds on question-token coverage inside the source text.
@@ -34,6 +34,9 @@ AMBIGUOUS_COVERAGE = 0.5
 # Answers this short collide with unrelated text ("4", "B", "yes"); never auto-verify them
 # unless the task identity is exact.
 COMMON_ANSWER_MAX_LEN = 3
+# A short answer only counts as "found" for verification if it appears within this many
+# normalized characters after the exact question text (e.g. GSM8K's "#### 18" line).
+ANSWER_PROXIMITY_CHARS = 1500
 
 _PUNCT_RE = re.compile(r"[^\w\s]", re.UNICODE)
 _WS_RE = re.compile(r"\s+")
@@ -153,11 +156,35 @@ def assess_answer(
     return AnswerMatch.MISMATCH, "Reference answer not found in source."
 
 
+def answer_near_question(question: str, gold_text: str, source_text: str) -> bool:
+    """True if the normalized answer appears shortly after any exact occurrence of the question."""
+    q_norm, g_norm = normalize_text(question), normalize_text(gold_text)
+    s_norm = f" {normalize_text(source_text)} "
+    if not q_norm or not g_norm:
+        return False
+    needle, start = f" {q_norm} ", 0
+    while (idx := s_norm.find(needle, start)) >= 0:
+        end = idx + len(needle) - 1
+        window = s_norm[end : end + ANSWER_PROXIMITY_CHARS + 1]
+        if f" {g_norm} " in f"{window} ":
+            return True
+        start = idx + 1
+    return False
+
+
 def grade(task_type: str, question: str, gold_text: str, source_text: str) -> GradeResult:
     identity, coverage, id_expl = assess_task_identity(question, source_text)
     answer, ans_expl = assess_answer(task_type, gold_text, source_text, identity)
     answer_found = answer in (AnswerMatch.EXACT, AnswerMatch.NORMALIZED, AnswerMatch.TASK_SPECIFIC)
     common_risk = answer_found and len(normalize_text(gold_text)) <= COMMON_ANSWER_MAX_LEN
+    if common_risk and identity == TaskIdentity.EXACT:
+        if answer_near_question(question, gold_text, source_text):
+            common_risk = False
+            ans_expl += (
+                f" Short answer appears within {ANSWER_PROXIMITY_CHARS} chars after the question."
+            )
+        else:
+            ans_expl += " Short answer only appears far from the question; possible coincidence."
 
     if identity == TaskIdentity.DIFFERENT:
         exposure, status = ExposureType.METADATA, ClaimStatus.REJECTED

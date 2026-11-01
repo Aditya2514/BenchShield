@@ -134,3 +134,41 @@ async def test_b3_audit_flow(app_client: httpx.AsyncClient, real_postgres_env):
         f"/api/v1/investigations/{inv}/reports", json={"investigation_id": inv}, headers=alice
     )
     assert r2.json()["report_version"] == "R-002"
+
+
+@pytest.mark.asyncio
+async def test_per_item_fetch_cap_prevents_starvation(
+    app_client: httpx.AsyncClient, real_postgres_env
+):
+    """One item with many search hits must not consume other items' fetch budget."""
+    alice = auth_headers(make_token("usr_alice", "alice@corp-alpha.com"), "ws_alpha")
+    bench = {**DEMO_BENCHMARK, "name": f"cap-{uuid4().hex[:6]}"}
+    bmv = (await app_client.post("/api/v1/benchmarks", json=bench, headers=alice)).json()[
+        "benchmark_version_id"
+    ]
+    policy = {**DEMO_POLICY, "max_fetches_per_item": 1}  # SYN-001 has 2 matching pages
+    pol = (await app_client.post("/api/v1/policies", json=policy, headers=alice)).json()[
+        "policy_version_id"
+    ]
+    inv = (
+        await app_client.post(
+            "/api/v1/investigations",
+            json={
+                "workspace_id": "ws_alpha",
+                "benchmark_version_id": bmv,
+                "policy_version_id": pol,
+            },
+            headers=alice | {"Idempotency-Key": f"cap-{uuid4().hex}"},
+        )
+    ).json()["investigation_id"]
+    await _run_worker(real_postgres_env["app_async_url"], inv)
+    await app_client.post(f"/api/v1/investigations/{inv}/verify", headers=alice)
+    rep = (
+        await app_client.post(
+            f"/api/v1/investigations/{inv}/reports", json={"investigation_id": inv}, headers=alice
+        )
+    ).json()
+    content = (await app_client.get(rep["download_url"], headers=alice)).json()
+    cov = {c["external_id"]: c["sources_retrieved"] for c in content["coverage"]}
+    assert cov == {"SYN-001": 1, "SYN-002": 1, "SYN-003": 1, "SYN-004": 1}
+    assert not any("No sources were retrieved" in lim for lim in content["limitations"])

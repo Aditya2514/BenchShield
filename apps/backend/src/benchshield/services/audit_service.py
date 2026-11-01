@@ -616,14 +616,53 @@ class AuditService:
                 f.temporal_status == TemporalStatus.VERIFIED_PRE_CUTOFF.value for f in verified
             ),
         )
+        # Per-item coverage: how many sources were actually retrieved for each item.
+        cov_rows = (
+            await self.db.execute(
+                select(
+                    ItemVersionModel.external_id,
+                    InvestigationTaskModel.status,
+                    func.count(CandidateSourceModel.id),
+                )
+                .join(
+                    ItemVersionModel, ItemVersionModel.id == InvestigationTaskModel.item_version_id
+                )
+                .outerjoin(
+                    CandidateSourceModel, CandidateSourceModel.task_id == InvestigationTaskModel.id
+                )
+                .where(
+                    InvestigationTaskModel.investigation_id == inv.id,
+                    InvestigationTaskModel.workspace_id == inv.workspace_id,
+                )
+                .group_by(ItemVersionModel.external_id, InvestigationTaskModel.status)
+                .order_by(ItemVersionModel.external_id)
+            )
+        ).all()
+        coverage = [
+            {"external_id": ext, "task_status": st, "sources_retrieved": n}
+            for ext, st, n in cov_rows
+        ]
+        no_sources = [c["external_id"] for c in coverage if c["sources_retrieved"] == 0]
+
         limitations = []
-        if inv.is_partial or inv.status in (
+        if inv.status in (
             InvestigationStatus.CANCELLED.value,
             InvestigationStatus.BUDGET_EXHAUSTED.value,
         ):
             limitations.append(
                 f"Partial coverage: investigation ended as '{inv.status}' after "
                 f"{inv.investigated_items}/{inv.total_items} items."
+            )
+        elif inv.is_partial:
+            limitations.append(
+                "Partial coverage: the investigation budget ran out, so some items received "
+                "fewer searches or fetches than the policy allows."
+            )
+        if no_sources:
+            limitations.append(
+                f"No sources were retrieved for {len(no_sources)} item(s): "
+                f"{', '.join(no_sources)}. Absence of findings for these items is not "
+                "evidence of absence of exposure."
             )
         if counts.timing_unknown_count:
             limitations.append(
@@ -669,6 +708,7 @@ class AuditService:
             },
             "summary_counts": counts.model_dump(mode="json"),
             "items_with_verified_exposure": items_with_exposure,
+            "coverage": coverage,
             "limitations": limitations,
             "findings": [
                 {

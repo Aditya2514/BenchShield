@@ -51,14 +51,24 @@ def test_reordered_choices_match_on_option_text():
     assert r.claim_status == ClaimStatus.VERIFIED
 
 
-def test_common_answer_collision_needs_review():
-    r = grade(
-        "exact_short_answer",
-        "What is the atomic number of carbon?",
-        "6",
-        "What is the atomic number of carbon? 6",
-    )
+def test_short_answer_far_from_question_needs_review():
+    page = "What is the atomic number of carbon? " + "filler text " * 200 + "page 6"
+    r = grade("exact_short_answer", "What is the atomic number of carbon?", "6", page)
     assert r.common_answer_risk and r.claim_status == ClaimStatus.NEEDS_REVIEW
+
+
+def test_short_answer_right_after_question_is_verified():
+    q = "Janet\u2019s ducks lay 16 eggs per day. How much does she make?"
+    page = "Janet's ducks lay 16 eggs per day. How much does she make? #### 18"
+    r = grade("exact_short_answer", q, "18", page)
+    assert not r.common_answer_risk and r.claim_status == ClaimStatus.VERIFIED
+
+
+def test_short_answer_with_only_equivalent_identity_needs_review():
+    q = "Janet's ducks lay 16 eggs per day. How much does she make?"
+    page = "janet ducks lay 16 eggs per day how much make she does 18"
+    r = grade("exact_short_answer", q, "18", page)
+    assert r.claim_status == ClaimStatus.NEEDS_REVIEW
 
 
 def test_answer_without_task_identity_is_not_assessed():
