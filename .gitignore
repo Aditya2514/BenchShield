@@ -1,12 +1,31 @@
+# Dependencies & Build
 node_modules/
 dist/
 dist-ssr/
+coverage/
+
+# Environment & Local
 *.local
 .env
 .env.*.local
 !.env.example
-coverage/
-.DS_Store
+
+# Logs & TypeScript
 *.log
 *.tsbuildinfo
 
+# OS & Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# AI Agents, Assistant Metadata & Skills
+.agents/
+.claude/
+.motion/
+.superpowers/
+agent/
+skills-lock.json
