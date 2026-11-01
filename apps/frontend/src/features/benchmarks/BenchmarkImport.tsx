@@ -1,6 +1,29 @@
 import React, { useState } from 'react';
-import { Upload, AlertOctagon, CheckCircle2, FileText, ArrowRight } from 'lucide-react';
+import {
+  Upload,
+  AlertOctagon,
+  CheckCircle2,
+  FileText,
+  ArrowRight,
+  FileCode,
+} from 'lucide-react';
 import type { RowError } from '@benchshield/api-client';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  Button,
+  Badge,
+  Alert,
+  Table,
+  TableHeader,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '../../components/ui';
 
 export interface StagedBenchmark {
   benchmark_version_id: string;
@@ -124,171 +147,192 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
-        <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-          <div className="p-2 bg-indigo-950 text-indigo-400 border border-indigo-700/50 rounded-lg">
-            <Upload className="w-5 h-5" aria-hidden="true" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-white">Import Benchmark Items</h2>
-            <p className="text-xs text-slate-400">
-              Upload evaluation items in CSV or versioned JSON. Gold reference answers are vaulted securely and never persisted in browser storage.
-            </p>
-          </div>
-        </div>
-
-        <form onSubmit={handleValidateAndStage} className="mt-6 space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg shrink-0">
+              <Upload className="w-5 h-5" aria-hidden="true" />
+            </div>
             <div>
-              <label htmlFor="benchmark-name" className="block text-xs font-medium text-slate-300">
-                Benchmark Name
+              <CardTitle>Import Benchmark Items</CardTitle>
+              <CardDescription>
+                Upload evaluation items in CSV or versioned JSON. Gold reference answers are vaulted securely and never persisted in browser storage.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          {/* Obvious Pre-Upload Drop Zone / Format Guide */}
+          <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 bg-slate-50/60 hover:bg-slate-100/60 transition-colors">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <FileCode className="w-6 h-6 text-indigo-600 shrink-0 mt-0.5" aria-hidden="true" />
+                <div>
+                  <h4 className="text-xs sm:text-sm font-semibold text-slate-900">Supported Ingestion Formats &amp; Schemas</h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    JSON Array or CSV with standard headers: <code className="text-slate-700 font-semibold">item_id</code>, <code className="text-slate-700 font-semibold">question</code>, <code className="text-slate-700 font-semibold">options</code>, <code className="text-slate-700 font-semibold">reference_answer</code>.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                <Badge variant="info">JSON</Badge>
+                <Badge variant="info">CSV</Badge>
+                <Badge variant="success">Short-Answer</Badge>
+                <Badge variant="success">Multiple-Choice</Badge>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleValidateAndStage} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="benchmark-name" className="block text-xs font-semibold text-slate-700 mb-1">
+                  Benchmark Name <span className="text-red-600">*</span>
+                </label>
+                <input
+                  id="benchmark-name"
+                  type="text"
+                  value={benchmarkName}
+                  onChange={(e) => setBenchmarkName(e.target.value)}
+                  required
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm text-slate-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600"
+                />
+              </div>
+
+              <div>
+                <fieldset>
+                  <legend className="block text-xs font-semibold text-slate-700 mb-1">Format <span className="text-red-600">*</span></legend>
+                  <div className="flex gap-4 pt-1 text-xs text-slate-700">
+                    <label className="flex items-center gap-2 cursor-pointer font-medium">
+                      <input
+                        type="radio"
+                        name="format"
+                        value="json"
+                        checked={format === 'json'}
+                        onChange={() => setFormat('json')}
+                        className="text-indigo-600 focus:ring-indigo-600"
+                      />
+                      JSON Array
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer font-medium">
+                      <input
+                        type="radio"
+                        name="format"
+                        value="csv"
+                        checked={format === 'csv'}
+                        onChange={() => setFormat('csv')}
+                        className="text-indigo-600 focus:ring-indigo-600"
+                      />
+                      CSV Format
+                    </label>
+                  </div>
+                </fieldset>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="benchmark-data" className="block text-xs font-semibold text-slate-700 mb-1">
+                Item Data Payload (JSON or CSV lines) <span className="text-red-600">*</span>
               </label>
-              <input
-                id="benchmark-name"
-                type="text"
-                value={benchmarkName}
-                onChange={(e) => setBenchmarkName(e.target.value)}
+              <textarea
+                id="benchmark-data"
+                rows={8}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
                 required
-                className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500"
+                className="w-full font-mono text-xs bg-white border border-slate-300 rounded-lg p-3 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600"
               />
             </div>
 
-            <div>
-              <fieldset>
-                <legend className="block text-xs font-medium text-slate-300">Format</legend>
-                <div className="mt-2 flex gap-4 text-xs text-slate-300">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="format"
-                      value="json"
-                      checked={format === 'json'}
-                      onChange={() => setFormat('json')}
-                      className="text-indigo-600 focus:ring-indigo-500"
-                    />
-                    JSON Array
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="format"
-                      value="csv"
-                      checked={format === 'csv'}
-                      onChange={() => setFormat('csv')}
-                      className="text-indigo-600 focus:ring-indigo-500"
-                    />
-                    CSV Format
-                  </label>
-                </div>
-              </fieldset>
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              <span className="text-xs text-slate-500 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-slate-400" aria-hidden="true" />
+                Supported grading: exact short-answer and multiple-choice.
+              </span>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                variant="primary"
+                icon={<ArrowRight className="w-4 h-4" aria-hidden="true" />}
+              >
+                {isLoading ? 'Validating...' : 'Validate & Stage Items'}
+              </Button>
             </div>
-          </div>
+          </form>
 
-          <div>
-            <label htmlFor="benchmark-data" className="block text-xs font-medium text-slate-300">
-              Item Data Payload (JSON or CSV lines)
-            </label>
-            <textarea
-              id="benchmark-data"
-              rows={8}
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              className="mt-1 w-full font-mono text-xs bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-200 focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-xs text-slate-500 flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-slate-400" aria-hidden="true" />
-              Supported grading: exact short-answer and multiple-choice.
-            </span>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50"
-            >
-              {isLoading ? 'Validating...' : 'Validate & Stage Items'}
-              <ArrowRight className="w-4 h-4" aria-hidden="true" />
-            </button>
-          </div>
-        </form>
-
-        {submitError && (
-          <div role="alert" className="mt-4 p-4 rounded-lg bg-red-950/70 border border-red-700/60 flex items-start gap-3">
-            <AlertOctagon className="w-5 h-5 text-red-400 shrink-0 mt-0.5" aria-hidden="true" />
-            <div>
-              <h3 className="text-sm font-semibold text-red-200">Validation Notice</h3>
-              <p className="text-xs text-red-300/90 mt-0.5">{submitError}</p>
-            </div>
-          </div>
-        )}
-      </div>
+          {submitError && (
+            <Alert variant="danger" title="Validation Notice">
+              {submitError}
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Validation Results & Row Error Table */}
       {result && (
-        <section aria-labelledby="intake-summary-title" className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 id="intake-summary-title" className="text-sm font-semibold text-white">
-              Intake Preflight Summary
-            </h3>
-            <span className="text-xs font-mono text-slate-400">
-              Version: {result.benchmark_version_id}
-            </span>
-          </div>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between w-full">
+              <CardTitle id="intake-summary-title">Intake Preflight Summary</CardTitle>
+              <Badge variant="neutral" className="font-mono">
+                Version: {result.benchmark_version_id}
+              </Badge>
+            </div>
+          </CardHeader>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-              <span className="text-xs text-slate-400 block">Total Rows</span>
-              <span className="text-xl font-bold text-white">{result.total_rows}</span>
-            </div>
-            <div className="p-3 bg-emerald-950/50 rounded-lg border border-emerald-800/40">
-              <span className="text-xs text-emerald-400 block flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Valid Rows
-              </span>
-              <span className="text-xl font-bold text-emerald-200">{result.valid_rows}</span>
-            </div>
-            <div className="p-3 bg-red-950/50 rounded-lg border border-red-800/40">
-              <span className="text-xs text-red-400 block flex items-center gap-1">
-                <AlertOctagon className="w-3.5 h-3.5" aria-hidden="true" /> Row Errors
-              </span>
-              <span className="text-xl font-bold text-red-200">{result.invalid_rows}</span>
-            </div>
-          </div>
-
-          {result.row_errors.length > 0 && (
-            <div className="space-y-2 pt-2">
-              <h4 className="text-xs font-medium text-slate-300">Actionable Row Errors:</h4>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border border-slate-800 rounded-lg overflow-hidden">
-                  <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
-                    <tr>
-                      <th scope="col" className="py-2 px-3 font-medium">Row #</th>
-                      <th scope="col" className="py-2 px-3 font-medium">Item ID</th>
-                      <th scope="col" className="py-2 px-3 font-medium">Error Code</th>
-                      <th scope="col" className="py-2 px-3 font-medium">Explanation</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 bg-slate-900/60">
-                    {result.row_errors.map((err, i) => (
-                      <tr key={i} className="hover:bg-slate-800/40">
-                        <td className="py-2 px-3 font-mono text-slate-400">{err.row_number}</td>
-                        <td className="py-2 px-3 font-mono text-slate-200">{err.item_id}</td>
-                        <td className="py-2 px-3">
-                          <span className="px-1.5 py-0.5 rounded bg-red-950 text-red-300 font-mono text-[11px] border border-red-800/60">
-                            {err.error_code}
-                          </span>
-                        </td>
-                        <td className="py-2 px-3 text-red-200/90">{err.message}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          <CardContent className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs">
+                <span className="text-xs text-slate-600 font-medium block">Total Rows</span>
+                <span className="text-2xl font-bold text-slate-900 mt-0.5 block">{result.total_rows}</span>
+              </div>
+              <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 shadow-2xs">
+                <span className="text-xs text-emerald-800 font-medium block flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Valid Rows
+                </span>
+                <span className="text-2xl font-bold text-emerald-900 mt-0.5 block">{result.valid_rows}</span>
+              </div>
+              <div className="p-4 bg-red-50 rounded-xl border border-red-200 shadow-2xs">
+                <span className="text-xs text-red-800 font-medium block flex items-center gap-1.5">
+                  <AlertOctagon className="w-3.5 h-3.5" aria-hidden="true" /> Row Errors
+                </span>
+                <span className="text-2xl font-bold text-red-900 mt-0.5 block">{result.invalid_rows}</span>
               </div>
             </div>
-          )}
-        </section>
+
+            {result.row_errors.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <h4 className="text-xs font-semibold text-slate-800">Actionable Row Errors:</h4>
+                <Table>
+                  <TableHeader>
+                    <tr>
+                      <TableHead>Row #</TableHead>
+                      <TableHead>Item ID</TableHead>
+                      <TableHead>Error Code</TableHead>
+                      <TableHead>Explanation</TableHead>
+                    </tr>
+                  </TableHeader>
+                  <TableBody>
+                    {result.row_errors.map((err, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-mono text-slate-600">{err.row_number}</TableCell>
+                        <TableCell className="font-mono font-semibold text-slate-900">{err.item_id}</TableCell>
+                        <TableCell>
+                          <Badge variant="danger" className="font-mono">
+                            {err.error_code}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-red-900 font-medium">{err.message}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );
 }
-

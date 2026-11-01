@@ -67,26 +67,26 @@ export function getTemporalStatusMeta(status: TemporalStatus): StatusMeta {
     case 'verified_pre_cutoff':
       return {
         label: 'Verified Pre-Cutoff',
-        badgeClass: 'bg-rose-950/80 text-rose-300 border border-rose-700/60',
+        badgeClass: 'bg-red-50 text-red-800 border-red-300',
         iconName: 'AlertTriangle',
       };
     case 'observed_post_cutoff':
       return {
         label: 'Observed Post-Cutoff',
-        badgeClass: 'bg-amber-950/80 text-amber-300 border border-amber-700/60',
+        badgeClass: 'bg-amber-50 text-amber-900 border-amber-300',
         iconName: 'Clock',
       };
     case 'verified_introduced_post_cutoff':
       return {
         label: 'Verified Post-Cutoff Intro',
-        badgeClass: 'bg-blue-950/80 text-blue-300 border border-blue-700/60',
+        badgeClass: 'bg-blue-50 text-blue-800 border-blue-300',
         iconName: 'CheckCircle2',
       };
     case 'unknown':
     default:
       return {
         label: 'Timing Unknown',
-        badgeClass: 'bg-slate-800 text-slate-300 border border-slate-600',
+        badgeClass: 'bg-slate-100 text-slate-700 border-slate-300',
         iconName: 'HelpCircle',
       };
   }
@@ -97,26 +97,26 @@ export function getClaimStatusMeta(status: ClaimStatus): StatusMeta {
     case 'verified':
       return {
         label: 'Verified Claim',
-        badgeClass: 'bg-red-950/80 text-red-300 border border-red-700/60',
+        badgeClass: 'bg-red-50 text-red-800 border-red-300',
         iconName: 'AlertOctagon',
       };
     case 'candidate':
       return {
         label: 'Candidate Match',
-        badgeClass: 'bg-yellow-950/80 text-yellow-300 border border-yellow-700/60',
+        badgeClass: 'bg-amber-50 text-amber-900 border-amber-300',
         iconName: 'Search',
       };
     case 'rejected':
       return {
         label: 'Rejected Match',
-        badgeClass: 'bg-slate-800 text-slate-400 border border-slate-700',
+        badgeClass: 'bg-slate-100 text-slate-600 border-slate-300',
         iconName: 'XCircle',
       };
     case 'needs_review':
     default:
       return {
         label: 'Needs Review',
-        badgeClass: 'bg-purple-950/80 text-purple-300 border border-purple-700/60',
+        badgeClass: 'bg-purple-50 text-purple-800 border-purple-300',
         iconName: 'HelpCircle',
       };
   }

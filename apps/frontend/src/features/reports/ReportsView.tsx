@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   FileCheck,
   Download,
-  AlertTriangle,
   Lock,
   Clock,
   ShieldAlert,
@@ -10,6 +9,15 @@ import {
   FileText,
 } from 'lucide-react';
 import type { ReportResponse } from '@benchshield/api-client';
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  Button,
+  Badge,
+  Alert,
+  EmptyState,
+} from '../../components/ui';
 
 interface ExtendedReportResponse extends ReportResponse {
   download_expires_at?: string;
@@ -111,202 +119,205 @@ export function ReportsView({
     window.open(report.download_url, '_blank');
   };
 
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'success' as const;
+      case 'failed':
+        return 'danger' as const;
+      default:
+        return 'info' as const;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Header Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-indigo-950 text-indigo-400 border border-indigo-700/50 rounded-lg">
-              <FileCheck className="w-5 h-5" aria-hidden="true" />
-            </div>
-            <div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-bold text-white">Versioned Audit Report</h2>
-                {report && (
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold ${
-                      report.status === 'completed'
-                        ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/60'
-                        : report.status === 'failed'
-                        ? 'bg-red-950 text-red-300 border border-red-800/60'
-                        : 'bg-indigo-950 text-indigo-300 border border-indigo-700/60'
-                    }`}
-                  >
-                    {report.status.toUpperCase()}
-                  </span>
-                )}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-4 w-full">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg shrink-0">
+                <FileCheck className="w-5 h-5" aria-hidden="true" />
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Investigation: <code className="text-slate-300">{investigationId}</code> | Freezes benchmark, item, snapshot, verifier and reviewer action versions.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            {!report && (
-              <button
-                type="button"
-                onClick={handleFreezeReport}
-                disabled={isFreezing}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50"
-              >
-                <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-                {isFreezing ? 'Freezing Report...' : 'Freeze & Generate Report'}
-              </button>
-            )}
-
-            {report?.status === 'completed' && report.download_url && (
-              <div className="flex items-center gap-2">
-                {isDownloadExpired && (
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
-                    URL Expired
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  disabled={isRefreshingDownload}
-                  className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors ${
-                    isDownloadExpired
-                      ? 'bg-amber-600 hover:bg-amber-500 text-slate-950'
-                      : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                  }`}
-                  aria-label={isDownloadExpired ? 'Download Expired: Click to Refresh & Download' : 'Download Authorized Report'}
-                >
-                  {isRefreshingDownload ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                  ) : (
-                    <Download className="w-3.5 h-3.5" aria-hidden="true" />
+              <div>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                    Versioned Audit Report
+                  </h2>
+                  {report && (
+                    <Badge variant={getStatusBadgeVariant(report.status)} className="font-mono">
+                      {report.status.toUpperCase()}
+                    </Badge>
                   )}
-                  {isRefreshingDownload
-                    ? 'Refreshing URL...'
-                    : isDownloadExpired
-                    ? 'Refresh & Download Report'
-                    : 'Download Authorized Report'}
-                </button>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Investigation: <code className="text-slate-700 font-semibold">{investigationId}</code> | Freezes benchmark, item, snapshot, verifier and reviewer action versions.
+                </p>
+              </div>
+            </div>
 
-                {/* Simulation toggle for test / verification */}
-                <button
+            <div className="flex flex-wrap items-center gap-2.5">
+              {!report && (
+                <Button
                   type="button"
-                  onClick={() => setForceExpired(!forceExpired)}
-                  className="px-2 py-1 rounded text-[10px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700"
-                  title="Simulate expired pre-signed link"
+                  variant="primary"
+                  onClick={handleFreezeReport}
+                  disabled={isFreezing}
+                  icon={<Lock className="w-3.5 h-3.5" aria-hidden="true" />}
                 >
-                  {forceExpired ? 'Reset Expiry' : 'Simulate Expired Link'}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+                  {isFreezing ? 'Freezing Report...' : 'Freeze & Generate Report'}
+                </Button>
+              )}
 
-        {refreshNotice && (
-          <div
-            role="status"
-            className="p-3 bg-blue-950/70 border border-blue-700/60 rounded-lg text-xs text-blue-200 flex items-center gap-2"
-          >
-            <Clock className="w-4 h-4 text-blue-400 shrink-0" aria-hidden="true" />
-            <span>{refreshNotice}</span>
-          </div>
-        )}
+              {report?.status === 'completed' && report.download_url && (
+                <div className="flex items-center gap-2">
+                  {isDownloadExpired && (
+                    <Badge variant="warning" className="font-mono">
+                      URL Expired
+                    </Badge>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleDownload}
+                    disabled={isRefreshingDownload}
+                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                      isDownloadExpired
+                        ? 'bg-amber-600 hover:bg-amber-700 text-white focus-visible:ring-amber-500'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white focus-visible:ring-emerald-500'
+                    }`}
+                    aria-label={isDownloadExpired ? 'Download Expired: Click to Refresh & Download' : 'Download Authorized Report'}
+                  >
+                    {isRefreshingDownload ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                    )}
+                    {isRefreshingDownload
+                      ? 'Refreshing URL...'
+                      : isDownloadExpired
+                      ? 'Refresh & Download Report'
+                      : 'Download Authorized Report'}
+                  </button>
 
-        {actionError && (
-          <div role="alert" className="p-3 bg-red-950/70 border border-red-700/60 rounded-lg text-xs text-red-200">
-            {actionError}
+                  {/* Simulation toggle for test / verification */}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setForceExpired(!forceExpired)}
+                    title="Simulate expired pre-signed link"
+                  >
+                    {forceExpired ? 'Reset Expiry' : 'Simulate Expired Link'}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </CardHeader>
 
-        {/* Empty State when no report has been generated */}
-        {!report && (
-          <div className="p-8 text-center bg-slate-950 rounded-xl border border-slate-800 space-y-3">
-            <FileText className="w-10 h-10 text-slate-600 mx-auto" aria-hidden="true" />
-            <h3 className="text-base font-semibold text-slate-200">No Frozen Report Generated</h3>
-            <p className="text-xs text-slate-400 max-w-lg mx-auto">
-              Report freezing creates an immutable, cryptographically verifiable record of the current audit state. All verified findings, temporal evidence, and reviewer adjudications will be permanently version-locked.
-            </p>
-            <button
-              type="button"
-              onClick={handleFreezeReport}
-              disabled={isFreezing}
-              className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition"
+        <CardContent className="space-y-4">
+          {refreshNotice && (
+            <Alert role="status" variant="info" title="Download Notice">
+              {refreshNotice}
+            </Alert>
+          )}
+
+          {actionError && (
+            <Alert variant="danger" title="Report Export Error">
+              {actionError}
+            </Alert>
+          )}
+
+          {/* Empty State when no report has been generated */}
+          {!report && (
+            <EmptyState
+              icon={<FileText className="w-6 h-6 text-slate-500" aria-hidden="true" />}
+              title="No Frozen Report Generated"
+              description="Report freezing creates an immutable, cryptographically verifiable record of the current audit state. All verified findings, temporal evidence, and reviewer adjudications will be permanently version-locked."
+              action={
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleFreezeReport}
+                  disabled={isFreezing}
+                  icon={<Lock className="w-3.5 h-3.5" aria-hidden="true" />}
+                >
+                  {isFreezing ? 'Freezing Report...' : 'Freeze & Generate Report'}
+                </Button>
+              }
+            />
+          )}
+
+          {/* Distinct Failure Notice: Report Export Failure is strictly distinct from investigation failure */}
+          {report?.status === 'failed' && (
+            <div
+              role="alert"
+              className="p-4 rounded-xl bg-red-50 border border-red-300 flex items-start gap-3 text-xs"
             >
-              <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-              {isFreezing ? 'Freezing Report...' : 'Freeze & Generate Report'}
-            </button>
-          </div>
-        )}
-
-        {/* Distinct Failure Notice: Report Export Failure is strictly distinct from investigation failure */}
-        {report?.status === 'failed' && (
-          <div
-            role="alert"
-            className="p-4 rounded-lg bg-red-950/80 border border-red-700/80 flex items-start gap-3 text-xs"
-          >
-            <ShieldAlert className="w-5 h-5 text-red-400 shrink-0 mt-0.5" aria-hidden="true" />
-            <div>
-              <h3 className="text-sm font-bold text-red-200">
-                Report Generation Failure (export_failed)
-              </h3>
-              <p className="text-red-300/90 mt-1">
-                The report artifact freeze failed downstream. <strong>The underlying investigation data, verified findings, and reviewer adjudications remain completely intact, valid, and unaffected.</strong>
-              </p>
-              <p className="text-red-400 font-mono mt-1">
-                Error Code: {report.error_code || 'export_failed'}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Frozen Report Metadata Card */}
-        {report && report.status === 'completed' && (
-          <div className="space-y-4 pt-2">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              <div className="p-3.5 bg-slate-950 rounded-lg border border-slate-800">
-                <span className="text-slate-400 block mb-1">Frozen Report ID</span>
-                <span className="text-sm font-mono font-bold text-white">
-                  {report.report_version_id || report.report_id}
-                </span>
-              </div>
-
-              <div className="p-3.5 bg-slate-950 rounded-lg border border-slate-800">
-                <span className="text-slate-400 block mb-1 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-blue-400" aria-hidden="true" /> Frozen Timestamp
-                </span>
-                <span className="text-sm font-mono text-slate-200">
-                  {report.frozen_at ? new Date(report.frozen_at).toLocaleTimeString() : 'N/A'}
-                </span>
-              </div>
-
-              <div className="p-3.5 bg-slate-950 rounded-lg border border-slate-800">
-                <span className="text-slate-400 block mb-1">Reviewer Decisions</span>
-                <span className="text-sm font-bold text-emerald-300">
-                  {report.reviewer_decisions_count} recorded
-                </span>
-              </div>
-
-              <div className="p-3.5 bg-slate-950 rounded-lg border border-slate-800">
-                <span className="text-slate-400 block mb-1">Unresolved Claims</span>
-                <span className="text-sm font-bold text-slate-300">
-                  {report.unresolved_claims_count}
-                </span>
+              <ShieldAlert className="w-5 h-5 text-red-700 shrink-0 mt-0.5" aria-hidden="true" />
+              <div>
+                <h3 className="text-sm font-bold text-red-950">
+                  Report Generation Failure (export_failed)
+                </h3>
+                <p className="text-red-900 mt-1">
+                  The report artifact freeze failed downstream. <strong>The underlying investigation data, verified findings, and reviewer adjudications remain completely intact, valid, and unaffected.</strong>
+                </p>
+                <p className="text-red-700 font-mono mt-1 font-semibold">
+                  Error Code: {report.error_code || 'export_failed'}
+                </p>
               </div>
             </div>
+          )}
 
-            {report.limitations && report.limitations.length > 0 && (
-              <div className="p-4 bg-slate-950 rounded-lg border border-slate-800 space-y-1.5 text-xs">
-                <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-amber-400" aria-hidden="true" /> Explicit Scope Limitations:
-                </span>
-                <ul className="list-disc list-inside space-y-1 text-slate-400 pl-2">
-                  {report.limitations.map((lim, i) => (
-                    <li key={i}>{lim}</li>
-                  ))}
-                </ul>
+          {/* Frozen Report Metadata Card */}
+          {report && report.status === 'completed' && (
+            <div className="space-y-4 pt-1">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs">
+                  <span className="text-slate-500 font-semibold block mb-1">Frozen Report ID</span>
+                  <span className="text-sm font-mono font-bold text-slate-900">
+                    {report.report_version_id || report.report_id}
+                  </span>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs">
+                  <span className="text-slate-500 font-semibold block mb-1 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-blue-600" aria-hidden="true" /> Frozen Timestamp
+                  </span>
+                  <span className="text-sm font-mono text-slate-800 font-semibold">
+                    {report.frozen_at ? new Date(report.frozen_at).toLocaleTimeString() : 'N/A'}
+                  </span>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs">
+                  <span className="text-slate-500 font-semibold block mb-1">Reviewer Decisions</span>
+                  <span className="text-sm font-bold text-emerald-800">
+                    {report.reviewer_decisions_count} recorded
+                  </span>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs">
+                  <span className="text-slate-500 font-semibold block mb-1">Unresolved Claims</span>
+                  <span className="text-sm font-bold text-slate-800">
+                    {report.unresolved_claims_count}
+                  </span>
+                </div>
               </div>
-            )}
-          </div>
-        )}
-      </div>
+
+              {report.limitations && report.limitations.length > 0 && (
+                <Alert variant="warning" title="Explicit Scope Limitations:">
+                  <ul className="list-disc list-inside space-y-1 text-amber-900 font-medium pl-1 mt-1">
+                    {report.limitations.map((lim, i) => (
+                      <li key={i}>{lim}</li>
+                    ))}
+                  </ul>
+                </Alert>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
