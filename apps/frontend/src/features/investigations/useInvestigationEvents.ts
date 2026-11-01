@@ -1,156 +1,169 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import type { InvestigationResponse } from '@benchshield/api-client';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { InvestigationEvent, InvestigationStatusResponse } from '@benchshield/api-client';
+import { getInvestigation } from '../../api/endpoints.js';
+import { ApiError, errorMessage } from '../../api/http.js';
+import { streamInvestigationEvents } from '../../api/sse.js';
 
-export interface SSEEventEnvelope {
-  event_id: string;
-  entity_id: string;
-  type: string;
-  schema_version: string;
-  time: string;
-  data: any;
+/** Statuses where the backend worker may still emit events. */
+export const ACTIVE_STATUSES = new Set(['queued', 'validating', 'discovering', 'verifying']);
+
+export type StreamState = 'connecting' | 'live' | 'idle' | 'error';
+
+/** Applies one event to the latest snapshot without reviving a cancelled run. */
+export function applyEvent(
+  inv: InvestigationStatusResponse | null,
+  e: InvestigationEvent
+): InvestigationStatusResponse | null {
+  if (!inv) return inv;
+  if (inv.status === 'cancelled' && e.type !== 'investigation_cancelled') return inv;
+  switch (e.type) {
+    case 'budget_updated':
+      return {
+        ...inv,
+        budgets: {
+          ...inv.budgets,
+          used_queries: e.data.used_queries,
+          used_fetches: e.data.used_fetches,
+          used_cost_usd: e.data.used_cost_usd,
+        },
+      };
+    case 'item_investigation_started':
+      return { ...inv, status: inv.status === 'queued' ? 'discovering' : inv.status };
+    case 'investigation_completed':
+      return {
+        ...inv,
+        status: e.data.status,
+        investigated_items: e.data.investigated_items,
+        findings_count: e.data.findings_count,
+        is_partial: e.data.is_partial,
+      };
+    case 'investigation_cancelled':
+      return { ...inv, status: 'cancelled' };
+    case 'investigation_failed':
+      return { ...inv, status: 'failed' };
+    case 'investigation_blocked':
+      return { ...inv, status: 'policy_blocked' };
+    default:
+      return inv;
+  }
 }
 
-interface UseInvestigationEventsOptions {
-  investigationId: string | null;
-  initialInvestigation: InvestigationResponse | null;
-  mockEventSequence?: SSEEventEnvelope[];
+/** Human-readable reason for a failed or blocked run, taken from its events. */
+export function failureReasonFrom(events: InvestigationEvent[]): string | null {
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i];
+    if (e.type === 'investigation_failed') return `${e.data.failure_code}: ${e.data.message}`;
+    if (e.type === 'investigation_blocked') return e.data.reason;
+    if (e.type === 'investigation_cancelled') return `Cancelled: ${e.data.reason}`;
+  }
+  return null;
 }
 
-export function useInvestigationEvents({
-  investigationId,
-  initialInvestigation,
-  mockEventSequence = [],
-}: UseInvestigationEventsOptions) {
-  const [investigation, setInvestigation] = useState<InvestigationResponse | null>(initialInvestigation);
-  const [events, setEvents] = useState<SSEEventEnvelope[]>([]);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [cursorExpired, setCursorExpired] = useState<boolean>(false);
+/**
+ * Loads an investigation snapshot and follows its SSE stream.
+ *
+ * The backend closes the stream once the run is idle (e.g. awaiting_review).
+ * When it does, the hook refreshes the snapshot and reconnects with
+ * Last-Event-ID only while the run is still active. Call `follow()` after an
+ * action that emits new events (verify, cancel) to resume streaming.
+ */
+export function useInvestigation(investigationId: string | null) {
+  const [investigation, setInvestigation] = useState<InvestigationStatusResponse | null>(null);
+  const [events, setEvents] = useState<InvestigationEvent[]>([]);
+  const [streamState, setStreamState] = useState<StreamState>('idle');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [cursorExpired, setCursorExpired] = useState(false);
 
-  // Set of seen event IDs for strict deduplication
-  const seenEventIds = useRef<Set<string>>(new Set());
-  const lastEventIdRef = useRef<string | null>(null);
+  const seenIds = useRef<Set<string>>(new Set());
+  const lastEventId = useRef<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  // Refresh full snapshot from server
   const refreshSnapshot = useCallback(async () => {
-    if (!investigationId) return;
+    if (!investigationId) return null;
     try {
-      const res = await fetch(`/api/v1/investigations/${investigationId}`);
-      if (res.ok) {
-        const data: InvestigationResponse = await res.json();
-        setInvestigation(data);
-        setCursorExpired(false);
-      }
+      const snap = await getInvestigation(investigationId);
+      setInvestigation(snap);
+      setLoadError(null);
+      return snap;
     } catch (err) {
-      console.error('Failed to refresh investigation snapshot:', err);
+      setLoadError(errorMessage(err));
+      return null;
     }
   }, [investigationId]);
 
-  // Handle incoming event with deduplication
-  const handleEvent = useCallback((event: SSEEventEnvelope) => {
-    // If event is already processed, discard duplicate
-    if (seenEventIds.current.has(event.event_id)) {
-      return;
-    }
-
-    seenEventIds.current.add(event.event_id);
-    lastEventIdRef.current = event.event_id;
-
-    setEvents((prev) => [...prev, event]);
-
-    // Apply incremental state updates (without reviving a cancelled run)
-    if (event.data?.state) {
-      setInvestigation((prev) => {
-        if (!prev || prev.state === 'cancelled') return prev;
-        return {
-          ...prev,
-          state: event.data.state,
-          partial_coverage: event.data.partial_coverage ?? prev.partial_coverage,
-          coverage_limitations: event.data.coverage_limitations ?? prev.coverage_limitations,
-          counts: {
-            ...prev.counts,
-            processed_items: event.data.processed_items ?? prev.counts.processed_items,
-            candidate_findings: event.data.candidate_findings ?? prev.counts.candidate_findings,
-            verified_findings: event.data.verified_findings ?? prev.counts.verified_findings,
-          },
-          budget_usage: {
-            ...prev.budget_usage,
-            queries_executed: event.data.queries_executed ?? prev.budget_usage.queries_executed,
-            pages_fetched: event.data.pages_fetched ?? prev.budget_usage.pages_fetched,
-            spend_usd: event.data.spend_usd ?? prev.budget_usage.spend_usd,
-          },
-          failure_reason: event.data.failure_reason ?? prev.failure_reason,
-        };
-      });
-    }
+  const handleEvent = useCallback((e: InvestigationEvent) => {
+    if (seenIds.current.has(e.id)) return;
+    seenIds.current.add(e.id);
+    lastEventId.current = e.id;
+    setEvents((prev) => [...prev, e]);
+    setInvestigation((prev) => applyEvent(prev, e));
   }, []);
 
-  // Simulate or connect SSE stream with reconnect cursor and deduplication
-  useEffect(() => {
+  const follow = useCallback(async () => {
     if (!investigationId) return;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-    setIsConnected(true);
-
-    // If a mock event sequence is provided, replay them progressively
-    if (mockEventSequence && mockEventSequence.length > 0) {
-      let timer: NodeJS.Timeout | null = null;
-      let idx = 0;
-
-      const playNext = () => {
-        if (idx < mockEventSequence.length) {
-          handleEvent(mockEventSequence[idx]);
-          idx++;
-          timer = setTimeout(playNext, 40);
+    for (let attempt = 0; !controller.signal.aborted; attempt++) {
+      setStreamState('connecting');
+      try {
+        setStreamState('live');
+        await streamInvestigationEvents(investigationId, {
+          lastEventId: lastEventId.current,
+          signal: controller.signal,
+          onEvent: handleEvent,
+        });
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        if (err instanceof ApiError && err.status === 410) {
+          // Cursor expired: replay from the start; duplicates are dropped by id.
+          setCursorExpired(true);
+          lastEventId.current = null;
+        } else if (err instanceof ApiError && (err.status === 401 || err.status === 403 || err.status === 404)) {
+          setStreamState('error');
+          setLoadError(errorMessage(err));
+          return;
+        } else {
+          setStreamState('error');
         }
-      };
-
-      playNext();
-
-      return () => {
-        if (timer) clearTimeout(timer);
-        setIsConnected(false);
-      };
+      }
+      if (controller.signal.aborted) return;
+      const snap = await refreshSnapshot();
+      if (!snap || !ACTIVE_STATUSES.has(snap.status)) {
+        setStreamState('idle');
+        return;
+      }
+      await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** Math.min(attempt, 4), 10000)));
     }
+  }, [investigationId, handleEvent, refreshSnapshot]);
 
-    // Live EventSource integration with Last-Event-ID reconnect
-    const eventUrl = `/api/v1/investigations/${investigationId}/events`;
-    let es: EventSource | null = null;
-
-    try {
-      es = new EventSource(eventUrl);
-
-      es.onmessage = (e) => {
-        try {
-          const parsed: SSEEventEnvelope = JSON.parse(e.data);
-          handleEvent(parsed);
-        } catch (err) {
-          console.error('Failed to parse SSE payload:', err);
-        }
-      };
-
-      es.onerror = () => {
-        // SSE reconnect / expired cursor handling: refresh snapshot
-        setCursorExpired(true);
-        refreshSnapshot();
-      };
-    } catch {
-      // Fallback for environments without EventSource
-      setIsConnected(false);
-    }
-
+  useEffect(() => {
+    seenIds.current = new Set();
+    lastEventId.current = null;
+    setEvents([]);
+    setInvestigation(null);
+    setCursorExpired(false);
+    setLoadError(null);
+    if (!investigationId) return;
+    void refreshSnapshot().then((snap) => {
+      if (snap) void follow();
+    });
     return () => {
-      es?.close();
-      setIsConnected(false);
+      abortRef.current?.abort();
+      setStreamState('idle');
     };
-  }, [investigationId, mockEventSequence, handleEvent, refreshSnapshot]);
+  }, [investigationId, refreshSnapshot, follow]);
 
   return {
     investigation,
     setInvestigation,
     events,
-    isConnected,
+    streamState,
+    loadError,
     cursorExpired,
-    handleEvent,
     refreshSnapshot,
+    follow,
+    failureReason: failureReasonFrom(events),
   };
 }
-

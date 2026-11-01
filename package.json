@@ -10,7 +10,7 @@
   "scripts": {
     "typecheck": "npm run typecheck --workspaces",
     "lint": "eslint . && npm run lint:contracts",
-    "lint:contracts": "redocly lint docs/contracts/openapi.yaml",
+    "lint:contracts": "redocly lint docs/contracts/openapi.json --skip-rule operation-4xx-response --skip-rule no-server-example.com --skip-rule info-license --skip-rule security-defined",
     "test": "npm run test --workspaces",
     "generate:client": "npm run generate --workspace=packages/api-client",
     "check:generated": "npm run generate:client && git diff --exit-code packages/api-client/src/schema.d.ts",

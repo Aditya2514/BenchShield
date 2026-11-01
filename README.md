@@ -2,6 +2,24 @@
 
 > Automated exposure audit system for benchmark maintainers. Detects publicly accessible benchmark questions, solutions, and answers with verifiable evidence, timing analysis, and optional controlled attacker experiments.
 
+## Run the full stack (backend + frontend)
+
+```bash
+cd apps/backend && uv sync --all-extras && uv run python ../../scripts/dev_server.py
+```
+
+```bash
+npm install && npm run dev --workspace=apps/frontend
+```
+
+Open http://localhost:5173 and click one of the dev users to sign in. Vite proxies `/api` to the backend on port 8000. The dev server's discovery worker uses an offline demo web, so the default benchmark produces real findings.
+
+Flow: **Benchmarks** (upload) → **Policies** → **Investigations** (launch, live event stream, then *Run Verification*) → **Findings** (inspect evidence, append-only reviews) → **Reports** (freeze, authorized download). Experiments show "not available" because the backend returns 501 until phase B4.
+
+Demo mode without a backend: set `VITE_ENABLE_MSW=true` in `apps/frontend/.env`. The mock API serves `fixtures/scenarios`, which were captured from the real backend and are validated against `docs/contracts/openapi.json` by `packages/api-client` tests.
+
+The frontend's TypeScript client is generated from the backend's `docs/contracts/openapi.json` (`npm run generate:client`).
+
 ## Status: Phase B1 Complete
 
 Phase B1 (Secure Backend Foundation) has been implemented and verified:

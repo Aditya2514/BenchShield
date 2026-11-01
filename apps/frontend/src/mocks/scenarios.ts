@@ -1,3 +1,19 @@
+/**
+ * Mock scenarios for demo mode and tests.
+ *
+ * Every fixture in fixtures/scenarios was captured from (or derived field-by-
+ * field from) the real backend, and packages/api-client/tests validates each
+ * one against docs/contracts/openapi.json. Nothing here is a hand-invented shape.
+ */
+import type {
+  BenchmarkImportResponse,
+  EvaluationPolicyVersion,
+  FindingView,
+  InvestigationEvent,
+  InvestigationStatusResponse,
+  ReportStatusResponse,
+  ReviewDecision,
+} from '@benchshield/api-client';
 import scenario1 from '../../../../fixtures/scenarios/1-successful-audit.json';
 import scenario2 from '../../../../fixtures/scenarios/2-partial-coverage-outage.json';
 import scenario3 from '../../../../fixtures/scenarios/3-policy-blocked.json';
@@ -8,62 +24,122 @@ export interface ScenarioData {
   scenario_id: string;
   name: string;
   description: string;
-  investigation: any;
-  findings: any[];
-  report: any;
-  events: any[];
+  investigation: InvestigationStatusResponse;
+  findings: FindingView[];
+  report: ReportStatusResponse | null;
+  report_download: Record<string, unknown> | null;
+  events: InvestigationEvent[];
+  review_history: Record<string, ReviewDecision[]>;
+  policy: EvaluationPolicyVersion;
+  benchmark_import: BenchmarkImportResponse;
 }
 
-export const SCENARIOS: Record<string, ScenarioData> = {
-  '1-successful-audit': scenario1 as ScenarioData,
-  '2-partial-coverage-outage': scenario2 as ScenarioData,
-  '3-policy-blocked': scenario3 as ScenarioData,
-  '4-failed-audit': scenario4 as ScenarioData,
-  '5-report-generation-failure': scenario5 as ScenarioData,
+export const SCENARIOS: Record<string, ScenarioData> = Object.fromEntries(
+  [scenario1, scenario2, scenario3, scenario4, scenario5].map((s) => [s.scenario_id, s as unknown as ScenarioData])
+);
+
+export const DEFAULT_SCENARIO_ID = '1-successful-audit';
+
+const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
+
+interface MockInvestigation {
+  investigation: InvestigationStatusResponse;
+  findings: FindingView[];
+  events: InvestigationEvent[];
+  /** Verification events and findings are released by POST /verify (like the backend). */
+  pendingVerification: { events: InvestigationEvent[]; findings: FindingView[] } | null;
+  /** Discovery events not yet streamed (new launches only). */
+  pendingDiscovery: boolean;
+}
+
+/** In-memory state behind the MSW handlers. Reset per test. */
+export const mockDb = {
+  investigations: new Map<string, MockInvestigation>(),
+  findingIndex: new Map<string, string>(),
+  reviews: new Map<string, ReviewDecision[]>(),
+  reports: new Map<string, { status: ReportStatusResponse; content: Record<string, unknown> | null }>(),
+  failNextRequestWith401: false,
+  counter: 0,
 };
 
-let currentScenarioId: string = '1-successful-audit';
-let currentFindings = JSON.parse(JSON.stringify(SCENARIOS['1-successful-audit'].findings));
+function register(inv: MockInvestigation) {
+  mockDb.investigations.set(inv.investigation.investigation_id, inv);
+  for (const f of [...inv.findings, ...(inv.pendingVerification?.findings ?? [])]) {
+    mockDb.findingIndex.set(f.finding_id, inv.investigation.investigation_id);
+  }
+}
 
-export function getActiveScenario(): ScenarioData {
-  const scenario = SCENARIOS[currentScenarioId] || SCENARIOS['1-successful-audit'];
-  return {
-    ...scenario,
-    findings: currentFindings,
+export function resetMockDb() {
+  mockDb.investigations.clear();
+  mockDb.findingIndex.clear();
+  mockDb.reviews.clear();
+  mockDb.reports.clear();
+  mockDb.failNextRequestWith401 = false;
+  mockDb.counter = 0;
+  for (const s of Object.values(SCENARIOS)) {
+    const data = clone(s);
+    register({
+      investigation: data.investigation,
+      findings: data.findings,
+      events: data.events,
+      pendingVerification: null,
+      pendingDiscovery: false,
+    });
+    for (const [fid, decisions] of Object.entries(data.review_history)) mockDb.reviews.set(fid, decisions);
+    if (data.report) {
+      mockDb.reports.set(data.report.report_id, { status: data.report, content: data.report_download });
+    }
+  }
+}
+
+/** Simulates a new run by replaying scenario 1 under a fresh investigation id. */
+export function createMockRun(benchmarkVersionId: string, policyVersionId: string): InvestigationStatusResponse {
+  const base = clone(SCENARIOS[DEFAULT_SCENARIO_ID]);
+  const oldId = base.investigation.investigation_id;
+  const newId = `inv_mock_${++mockDb.counter}`;
+  const swap = <T,>(v: T): T =>
+    JSON.parse(
+      JSON.stringify(v)
+        .split(oldId).join(newId)
+        .split(base.policy.policy_version_id).join(policyVersionId)
+        .split(base.benchmark_import.benchmark_version_id ?? '__none__').join(benchmarkVersionId)
+    );
+  const now = new Date().toISOString();
+  const findings = swap(base.findings).map((f) => ({
+    ...f,
+    finding_id: `${f.finding_id}_${mockDb.counter}`,
+    version: 1,
+    current_reviewer_decision: null,
+  }));
+  const allEvents = swap(base.events);
+  const investigation: InvestigationStatusResponse = {
+    ...swap(base.investigation),
+    status: 'queued',
+    investigated_items: 0,
+    findings_count: 0,
+    budgets: { ...base.investigation.budgets, used_queries: 0, used_fetches: 0, used_cost_usd: 0 },
+    created_at: now,
+    updated_at: now,
   };
+  register({
+    investigation,
+    findings: [],
+    events: allEvents.filter((e) => e.type !== 'verification_completed'),
+    pendingVerification: {
+      events: allEvents.filter((e) => e.type === 'verification_completed'),
+      findings,
+    },
+    pendingDiscovery: true,
+  });
+  return investigation;
 }
 
-export function setActiveScenario(scenarioId: string) {
-  if (SCENARIOS[scenarioId]) {
-    currentScenarioId = scenarioId;
-    currentFindings = JSON.parse(JSON.stringify(SCENARIOS[scenarioId].findings));
-  }
-}
+resetMockDb();
 
-export function getActiveFindings() {
-  return currentFindings;
-}
-
-export function updateFindingReview(findingId: string, action: string, reason: string, reviewerId: string, expectedVersion: number) {
-  const findingIndex = currentFindings.findIndex((f: any) => f.id === findingId);
-  if (findingIndex === -1) {
-    return { error: 'not_found', status: 404 };
-  }
-
-  const finding = currentFindings[findingIndex];
-  if (finding.version !== expectedVersion) {
-    return { error: 'version_conflict', status: 409 };
-  }
-
-  finding.review_decision = {
-    action,
-    reason,
-    reviewed_at: new Date().toISOString(),
-    reviewer_id: reviewerId,
-  };
-  finding.claim_status = action === 'confirmed' ? 'verified' : action === 'rejected' ? 'rejected' : 'needs_review';
-  finding.version += 1;
-
-  return { finding, status: 200 };
-}
-
+export const mockKit = {
+  scenarios: SCENARIOS,
+  defaultScenarioId: DEFAULT_SCENARIO_ID,
+  simulateExpiry: () => {
+    mockDb.failNextRequestWith401 = true;
+  },
+};

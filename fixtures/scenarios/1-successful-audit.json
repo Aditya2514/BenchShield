@@ -1,142 +1,944 @@
 {
   "scenario_id": "1-successful-audit",
-  "name": "Successful Audit with Verified Answer Exposure",
-  "description": "Completed investigation for SYN-014 with verified reference-answer exposure and frozen report R-001.",
+  "name": "Successful audit with verified answer exposure",
+  "description": "Real backend run over the offline demo web: 4 items, 3 verified claims, 1 needs review, 1 rejected. One decision recorded, report R-001 frozen.",
   "investigation": {
-    "id": "inv-syn014-success",
-    "benchmark_version_id": "bm-syn014-v1",
-    "policy_version_id": "pol-syn014-v1",
-    "state": "completed",
-    "partial_coverage": false,
-    "coverage_limitations": [],
-    "counts": {
-      "total_items": 1,
-      "processed_items": 1,
-      "candidate_findings": 2,
-      "verified_findings": 1
+    "investigation_id": "inv_demo_success",
+    "status": "awaiting_review",
+    "is_partial": false,
+    "total_items": 4,
+    "investigated_items": 4,
+    "budgets": {
+      "max_queries": 12,
+      "used_queries": 12,
+      "max_fetches": 12,
+      "used_fetches": 5,
+      "cost_ceiling_usd": 5.0,
+      "used_cost_usd": 0.0,
+      "deadline_seconds": 600
     },
-    "budget_usage": {
-      "queries_executed": 2,
-      "pages_fetched": 3,
-      "spend_usd": 1.25
-    }
+    "limitations": {
+      "inaccessible_sources": [],
+      "provider_outages": [],
+      "scope_limitations": []
+    },
+    "findings_count": 5,
+    "created_at": "2026-11-01T10:26:44.260895Z",
+    "updated_at": "2026-11-01T10:26:45.486506Z"
   },
   "findings": [
     {
-      "id": "find-syn014-01",
-      "investigation_id": "inv-syn014-success",
-      "item_id": "SYN-014",
-      "item_version_id": "iv-syn014-01",
-      "claim_status": "verified",
-      "exposure_dimension": "reference_answer",
-      "task_identity": "exact",
-      "answer_match": "task_specific",
-      "temporal_status": "unknown",
-      "attribution": "none",
-      "policy_compliance": "violated",
-      "evidence": {
-        "snapshot_id": "snap-syn014-s01",
-        "source_url": "https://synthetic-repo.example.com/solutions/k7-station.html",
-        "retrieval_time": "2026-11-01T12:00:00Z",
-        "content_hash": "sha256-a1b2c3d4e5f60718293a4b5c6d7e8f90",
-        "excerpt_text": "Exam Question: Which fictional station has code K7? Options: [West, South, East, North]. Correct Answer: East (Code K7 corresponds to East station)."
+      "finding_id": "fnd_214a19d0287a48ea",
+      "investigation_id": "inv_demo_success",
+      "item_version_id": "itv_0eb5939cb6bf45c2",
+      "external_id": "SYN-001",
+      "version": 2,
+      "claim": {
+        "claim_id": "clm_214a19d0287a48ea",
+        "exposure_type": "reference_answer",
+        "claim_status": "verified",
+        "rationale": "Exact task text and the reference answer both appear in the source."
       },
-      "review_decision": {
-        "action": "confirmed",
-        "reason": "Source explicitly matches question task and maps answer to East despite reordered options.",
-        "reviewed_at": "2026-11-01T12:30:00Z",
-        "reviewer_id": "rev-maintainer-01"
+      "verification": {
+        "verification_id": "ver_214a19d0287a48ea",
+        "task_identity": "exact",
+        "answer_match": "exact",
+        "normalization_version": "norm_v1.0",
+        "grader_version": "grader_v1.0",
+        "explanation": "Full normalized question text appears in the source. Reference answer appears verbatim in source."
       },
-      "version": 2
+      "temporal": {
+        "assessment_id": "tmp_214a19d0287a48ea",
+        "temporal_status": "observed_post_cutoff",
+        "retrieval_time": "2026-11-01T10:26:44.553127Z",
+        "asserted_publication_time": null,
+        "commit_time": null,
+        "archive_capture_time": null,
+        "verified_introduction_time": null,
+        "supporting_evidence_note": "Observed after cutoff; no evidence of when it was introduced."
+      },
+      "snapshot": {
+        "snapshot_id": "src_6bf55bf3c5c0487c",
+        "source_url": "https://github.com/leaky-org/eval-dump/blob/main/k9.md",
+        "redirect_chain": [],
+        "final_url": "https://github.com/leaky-org/eval-dump/blob/main/k9.md",
+        "retrieved_at": "2026-11-01T10:26:44.553127Z",
+        "source_family": "code_repository",
+        "content_hash": "ed8f27ad3ab9b962ac576165ad65ea223bd5d3ce17e24da40d629c88cf35b702",
+        "raw_content_preview": "# Leaked eval items\n\nQ: What is the primary power generation mechanism of fictional Station K-9?\nA: [REDACTED_REFERENCE_ANSWER]\n",
+        "extraction_version": "extract_v1.0",
+        "excerpt_locator": {
+          "line_start": 3,
+          "line_end": 3,
+          "char_offset_start": 24,
+          "char_offset_end": 96,
+          "selector": null
+        },
+        "media_type": "text/markdown",
+        "availability": "available",
+        "access_limitations": [
+          "Observed after the evaluation cutoff; introduction time unknown."
+        ]
+      },
+      "current_reviewer_decision": "confirm",
+      "created_at": "2026-11-01T10:26:45.460884Z",
+      "updated_at": "2026-11-01T10:26:45.525542Z"
+    },
+    {
+      "finding_id": "fnd_24fa799702194f39",
+      "investigation_id": "inv_demo_success",
+      "item_version_id": "itv_0eb5939cb6bf45c2",
+      "external_id": "SYN-001",
+      "version": 1,
+      "claim": {
+        "claim_id": "clm_24fa799702194f39",
+        "exposure_type": "question_context",
+        "claim_status": "verified",
+        "rationale": "Exact task text appears in the source without the reference answer."
+      },
+      "verification": {
+        "verification_id": "ver_24fa799702194f39",
+        "task_identity": "exact",
+        "answer_match": "mismatch",
+        "normalization_version": "norm_v1.0",
+        "grader_version": "grader_v1.0",
+        "explanation": "Full normalized question text appears in the source. Reference answer not found in source."
+      },
+      "temporal": {
+        "assessment_id": "tmp_24fa799702194f39",
+        "temporal_status": "observed_post_cutoff",
+        "retrieval_time": "2026-11-01T10:26:44.558947Z",
+        "asserted_publication_time": null,
+        "commit_time": null,
+        "archive_capture_time": null,
+        "verified_introduction_time": null,
+        "supporting_evidence_note": "Observed after cutoff; no evidence of when it was introduced."
+      },
+      "snapshot": {
+        "snapshot_id": "src_5373e0e6b827413d",
+        "source_url": "https://forum.example-discussions.net/t/station-k9",
+        "redirect_chain": [],
+        "final_url": "https://forum.example-discussions.net/t/station-k9",
+        "retrieved_at": "2026-11-01T10:26:44.558947Z",
+        "source_family": "web_search",
+        "content_hash": "9db44d09def989423d578e4106f95c920ba1587c2bb67a705e955c532bbd2671",
+        "raw_content_preview": "Anyone know: what is the primary power generation mechanism of fictional Station K-9? I could not find it in the lore wiki.",
+        "extraction_version": "extract_v1.0",
+        "excerpt_locator": {
+          "line_start": 1,
+          "line_end": 1,
+          "char_offset_start": 13,
+          "char_offset_end": 85,
+          "selector": null
+        },
+        "media_type": "text/markdown",
+        "availability": "available",
+        "access_limitations": [
+          "Observed after the evaluation cutoff; introduction time unknown."
+        ]
+      },
+      "current_reviewer_decision": null,
+      "created_at": "2026-11-01T10:26:45.468487Z",
+      "updated_at": "2026-11-01T10:26:45.468491Z"
+    },
+    {
+      "finding_id": "fnd_2c740c903e514be3",
+      "investigation_id": "inv_demo_success",
+      "item_version_id": "itv_5803d16f31494bf2",
+      "external_id": "SYN-002",
+      "version": 1,
+      "claim": {
+        "claim_id": "clm_2c740c903e514be3",
+        "exposure_type": "reference_answer",
+        "claim_status": "verified",
+        "rationale": "Exact task text and the reference answer both appear in the source."
+      },
+      "verification": {
+        "verification_id": "ver_2c740c903e514be3",
+        "task_identity": "exact",
+        "answer_match": "task_specific",
+        "normalization_version": "norm_v1.0",
+        "grader_version": "grader_v1.0",
+        "explanation": "Full normalized question text appears in the source. Correct option text present in source (matched by option text, order-independent)."
+      },
+      "temporal": {
+        "assessment_id": "tmp_2c740c903e514be3",
+        "temporal_status": "observed_post_cutoff",
+        "retrieval_time": "2026-11-01T10:26:44.615702Z",
+        "asserted_publication_time": null,
+        "commit_time": null,
+        "archive_capture_time": null,
+        "verified_introduction_time": null,
+        "supporting_evidence_note": "Observed after cutoff; no evidence of when it was introduced."
+      },
+      "snapshot": {
+        "snapshot_id": "src_4c506f9375924356",
+        "source_url": "https://arxiv.org/abs/2401.00001",
+        "redirect_chain": [],
+        "final_url": "https://arxiv.org/abs/2401.00001",
+        "retrieved_at": "2026-11-01T10:26:44.615702Z",
+        "source_family": "academic_archive",
+        "content_hash": "3d01eb71556a7ad9a63da175af0fc376e749e79bce69f6134b7d845737ab9a66",
+        "raw_content_preview": "Example item: Which fictional station holds registration code K7?\n(A) West Station (B) South Station (C) [REDACTED_REFERENCE_ANSWER] (D) North Station\nCorrect: [REDACTED_REFERENCE_ANSWER]",
+        "extraction_version": "extract_v1.0",
+        "excerpt_locator": {
+          "line_start": 1,
+          "line_end": 1,
+          "char_offset_start": 14,
+          "char_offset_end": 65,
+          "selector": null
+        },
+        "media_type": "text/markdown",
+        "availability": "available",
+        "access_limitations": [
+          "Observed after the evaluation cutoff; introduction time unknown."
+        ]
+      },
+      "current_reviewer_decision": null,
+      "created_at": "2026-11-01T10:26:45.472907Z",
+      "updated_at": "2026-11-01T10:26:45.472911Z"
+    },
+    {
+      "finding_id": "fnd_ec9659311e2340da",
+      "investigation_id": "inv_demo_success",
+      "item_version_id": "itv_ec8cdeb1604a49ee",
+      "external_id": "SYN-003",
+      "version": 1,
+      "claim": {
+        "claim_id": "clm_ec9659311e2340da",
+        "exposure_type": "reference_answer",
+        "claim_status": "needs_review",
+        "rationale": "Answer text found but it is short/common or task identity is not exact; possible common-answer collision, sent to review."
+      },
+      "verification": {
+        "verification_id": "ver_ec9659311e2340da",
+        "task_identity": "exact",
+        "answer_match": "exact",
+        "normalization_version": "norm_v1.0",
+        "grader_version": "grader_v1.0",
+        "explanation": "Full normalized question text appears in the source. Reference answer appears verbatim in source."
+      },
+      "temporal": {
+        "assessment_id": "tmp_ec9659311e2340da",
+        "temporal_status": "observed_post_cutoff",
+        "retrieval_time": "2026-11-01T10:26:44.711276Z",
+        "asserted_publication_time": null,
+        "commit_time": null,
+        "archive_capture_time": null,
+        "verified_introduction_time": null,
+        "supporting_evidence_note": "Observed after cutoff; no evidence of when it was introduced."
+      },
+      "snapshot": {
+        "snapshot_id": "src_dc085fed45064aff",
+        "source_url": "https://chem-quiz.example-edu.org/carbon",
+        "redirect_chain": [],
+        "final_url": "https://chem-quiz.example-edu.org/carbon",
+        "retrieved_at": "2026-11-01T10:26:44.711276Z",
+        "source_family": "web_search",
+        "content_hash": "4712c01e3be1c2e297d0ea93b78aea0d514baff0caaa818e7620d8af14eeec93",
+        "raw_content_preview": "Quiz 3. What is the atomic number of carbon? Answer: [REDACTED_REFERENCE_ANSWER]. Next: page [REDACTED_REFERENCE_ANSWER] of 10.",
+        "extraction_version": "extract_v1.0",
+        "excerpt_locator": {
+          "line_start": 1,
+          "line_end": 1,
+          "char_offset_start": 8,
+          "char_offset_end": 44,
+          "selector": null
+        },
+        "media_type": "text/markdown",
+        "availability": "available",
+        "access_limitations": [
+          "Observed after the evaluation cutoff; introduction time unknown."
+        ]
+      },
+      "current_reviewer_decision": null,
+      "created_at": "2026-11-01T10:26:45.482236Z",
+      "updated_at": "2026-11-01T10:26:45.482240Z"
+    },
+    {
+      "finding_id": "fnd_b0a7866317914900",
+      "investigation_id": "inv_demo_success",
+      "item_version_id": "itv_52d7aa89ff1f4a18",
+      "external_id": "SYN-004",
+      "version": 1,
+      "claim": {
+        "claim_id": "clm_b0a7866317914900",
+        "exposure_type": "metadata",
+        "claim_status": "rejected",
+        "rationale": "Source does not contain this task; rejected as unrelated."
+      },
+      "verification": {
+        "verification_id": "ver_b0a7866317914900",
+        "task_identity": "different",
+        "answer_match": "not_applicable",
+        "normalization_version": "norm_v1.0",
+        "grader_version": "grader_v1.0",
+        "explanation": "43% of question content tokens present; source is a different task. Answer not assessed: task identity not established."
+      },
+      "temporal": {
+        "assessment_id": "tmp_b0a7866317914900",
+        "temporal_status": "observed_post_cutoff",
+        "retrieval_time": "2026-11-01T10:26:44.661681Z",
+        "asserted_publication_time": null,
+        "commit_time": null,
+        "archive_capture_time": null,
+        "verified_introduction_time": null,
+        "supporting_evidence_note": "Observed after cutoff; no evidence of when it was introduced."
+      },
+      "snapshot": {
+        "snapshot_id": "src_b75c9dac7a2442cb",
+        "source_url": "https://travel.example-blog.com/meridia-ring",
+        "redirect_chain": [],
+        "final_url": "https://travel.example-blog.com/meridia-ring",
+        "retrieved_at": "2026-11-01T10:26:44.661681Z",
+        "source_family": "web_search",
+        "content_hash": "ed3499484fff7abbf66a7b49af5015013a7c4f5ebfee1ae877d5b478b3584690",
+        "raw_content_preview": "Our trip to the Meridia ring: amazing desalination tour, great food, 10/10.",
+        "extraction_version": "extract_v1.0",
+        "excerpt_locator": null,
+        "media_type": "text/markdown",
+        "availability": "available",
+        "access_limitations": [
+          "Observed after the evaluation cutoff; introduction time unknown."
+        ]
+      },
+      "current_reviewer_decision": null,
+      "created_at": "2026-11-01T10:26:45.477571Z",
+      "updated_at": "2026-11-01T10:26:45.477575Z"
     }
   ],
   "report": {
-    "report_id": "rep-syn014-01",
-    "investigation_id": "inv-syn014-success",
+    "report_id": "rpt_c5a7e01d371740cc",
+    "report_version": "R-001",
     "status": "completed",
-    "report_version_id": "R-001",
-    "frozen_at": "2026-11-01T12:45:00Z",
-    "download_url": "/api/v1/reports/rep-syn014-01/download",
-    "download_expires_at": "2026-11-02T12:45:00Z",
-    "reviewer_decisions_count": 1,
-    "unresolved_claims_count": 0,
+    "download_url": "/api/v1/reports/rpt_c5a7e01d371740cc/download",
+    "authorized_until": "2026-11-01T10:41:45.596650Z"
+  },
+  "report_download": {
+    "scope": {
+      "is_partial": false,
+      "total_items": 4,
+      "investigated_items": 4,
+      "investigation_status": "awaiting_review"
+    },
+    "policy": {
+      "name": "Demo public-benchmark exposure policy",
+      "cost_ceiling_usd": 5.0,
+      "evaluation_cutoff": "2024-01-01T00:00:00+00:00",
+      "data_classification": "synthetic",
+      "max_fetches_per_item": 3,
+      "max_queries_per_item": 3
+    },
+    "findings": [
+      {
+        "claim": {
+          "claim_id": "clm_214a19d0287a48ea",
+          "rationale": "Exact task text and the reference answer both appear in the source.",
+          "claim_status": "verified",
+          "exposure_type": "reference_answer"
+        },
+        "version": 2,
+        "snapshot": {
+          "final_url": "https://github.com/leaky-org/eval-dump/blob/main/k9.md",
+          "media_type": "text/markdown",
+          "source_url": "https://github.com/leaky-org/eval-dump/blob/main/k9.md",
+          "snapshot_id": "src_6bf55bf3c5c0487c",
+          "availability": "available",
+          "content_hash": "ed8f27ad3ab9b962ac576165ad65ea223bd5d3ce17e24da40d629c88cf35b702",
+          "retrieved_at": "2026-11-01T10:26:44.553127Z",
+          "source_family": "code_repository",
+          "redirect_chain": [],
+          "excerpt_locator": {
+            "line_end": 3,
+            "selector": null,
+            "line_start": 3,
+            "char_offset_end": 96,
+            "char_offset_start": 24
+          },
+          "access_limitations": [
+            "Observed after the evaluation cutoff; introduction time unknown."
+          ],
+          "extraction_version": "extract_v1.0",
+          "raw_content_preview": "# Leaked eval items\n\nQ: What is the primary power generation mechanism of fictional Station K-9?\nA: [REDACTED_REFERENCE_ANSWER]\n"
+        },
+        "temporal": {
+          "commit_time": null,
+          "assessment_id": "tmp_214a19d0287a48ea",
+          "retrieval_time": "2026-11-01T10:26:44.553127Z",
+          "temporal_status": "observed_post_cutoff",
+          "archive_capture_time": null,
+          "supporting_evidence_note": "Observed after cutoff; no evidence of when it was introduced.",
+          "asserted_publication_time": null,
+          "verified_introduction_time": null
+        },
+        "created_at": "2026-11-01T10:26:45.460884Z",
+        "finding_id": "fnd_214a19d0287a48ea",
+        "updated_at": "2026-11-01T10:26:45.525542Z",
+        "external_id": "SYN-001",
+        "verification": {
+          "explanation": "Full normalized question text appears in the source. Reference answer appears verbatim in source.",
+          "answer_match": "exact",
+          "task_identity": "exact",
+          "grader_version": "grader_v1.0",
+          "verification_id": "ver_214a19d0287a48ea",
+          "normalization_version": "norm_v1.0"
+        },
+        "review_history": [
+          {
+            "action": "confirm",
+            "reason": "Verbatim Q and A.",
+            "finding_id": "fnd_214a19d0287a48ea",
+            "decision_id": "rev_ce1adacd694b48df",
+            "new_version": 2,
+            "reviewed_at": "2026-11-01T10:26:45.525542Z",
+            "reviewer_id": "usr_alice",
+            "expected_version": 1
+          }
+        ],
+        "item_version_id": "itv_0eb5939cb6bf45c2",
+        "investigation_id": "inv_demo_success",
+        "auto_claim_status": "verified",
+        "current_reviewer_decision": "confirm"
+      },
+      {
+        "claim": {
+          "claim_id": "clm_24fa799702194f39",
+          "rationale": "Exact task text appears in the source without the reference answer.",
+          "claim_status": "verified",
+          "exposure_type": "question_context"
+        },
+        "version": 1,
+        "snapshot": {
+          "final_url": "https://forum.example-discussions.net/t/station-k9",
+          "media_type": "text/markdown",
+          "source_url": "https://forum.example-discussions.net/t/station-k9",
+          "snapshot_id": "src_5373e0e6b827413d",
+          "availability": "available",
+          "content_hash": "9db44d09def989423d578e4106f95c920ba1587c2bb67a705e955c532bbd2671",
+          "retrieved_at": "2026-11-01T10:26:44.558947Z",
+          "source_family": "web_search",
+          "redirect_chain": [],
+          "excerpt_locator": {
+            "line_end": 1,
+            "selector": null,
+            "line_start": 1,
+            "char_offset_end": 85,
+            "char_offset_start": 13
+          },
+          "access_limitations": [
+            "Observed after the evaluation cutoff; introduction time unknown."
+          ],
+          "extraction_version": "extract_v1.0",
+          "raw_content_preview": "Anyone know: what is the primary power generation mechanism of fictional Station K-9? I could not find it in the lore wiki."
+        },
+        "temporal": {
+          "commit_time": null,
+          "assessment_id": "tmp_24fa799702194f39",
+          "retrieval_time": "2026-11-01T10:26:44.558947Z",
+          "temporal_status": "observed_post_cutoff",
+          "archive_capture_time": null,
+          "supporting_evidence_note": "Observed after cutoff; no evidence of when it was introduced.",
+          "asserted_publication_time": null,
+          "verified_introduction_time": null
+        },
+        "created_at": "2026-11-01T10:26:45.468487Z",
+        "finding_id": "fnd_24fa799702194f39",
+        "updated_at": "2026-11-01T10:26:45.468491Z",
+        "external_id": "SYN-001",
+        "verification": {
+          "explanation": "Full normalized question text appears in the source. Reference answer not found in source.",
+          "answer_match": "mismatch",
+          "task_identity": "exact",
+          "grader_version": "grader_v1.0",
+          "verification_id": "ver_24fa799702194f39",
+          "normalization_version": "norm_v1.0"
+        },
+        "review_history": [],
+        "item_version_id": "itv_0eb5939cb6bf45c2",
+        "investigation_id": "inv_demo_success",
+        "auto_claim_status": "verified",
+        "current_reviewer_decision": null
+      },
+      {
+        "claim": {
+          "claim_id": "clm_2c740c903e514be3",
+          "rationale": "Exact task text and the reference answer both appear in the source.",
+          "claim_status": "verified",
+          "exposure_type": "reference_answer"
+        },
+        "version": 1,
+        "snapshot": {
+          "final_url": "https://arxiv.org/abs/2401.00001",
+          "media_type": "text/markdown",
+          "source_url": "https://arxiv.org/abs/2401.00001",
+          "snapshot_id": "src_4c506f9375924356",
+          "availability": "available",
+          "content_hash": "3d01eb71556a7ad9a63da175af0fc376e749e79bce69f6134b7d845737ab9a66",
+          "retrieved_at": "2026-11-01T10:26:44.615702Z",
+          "source_family": "academic_archive",
+          "redirect_chain": [],
+          "excerpt_locator": {
+            "line_end": 1,
+            "selector": null,
+            "line_start": 1,
+            "char_offset_end": 65,
+            "char_offset_start": 14
+          },
+          "access_limitations": [
+            "Observed after the evaluation cutoff; introduction time unknown."
+          ],
+          "extraction_version": "extract_v1.0",
+          "raw_content_preview": "Example item: Which fictional station holds registration code K7?\n(A) West Station (B) South Station (C) [REDACTED_REFERENCE_ANSWER] (D) North Station\nCorrect: [REDACTED_REFERENCE_ANSWER]"
+        },
+        "temporal": {
+          "commit_time": null,
+          "assessment_id": "tmp_2c740c903e514be3",
+          "retrieval_time": "2026-11-01T10:26:44.615702Z",
+          "temporal_status": "observed_post_cutoff",
+          "archive_capture_time": null,
+          "supporting_evidence_note": "Observed after cutoff; no evidence of when it was introduced.",
+          "asserted_publication_time": null,
+          "verified_introduction_time": null
+        },
+        "created_at": "2026-11-01T10:26:45.472907Z",
+        "finding_id": "fnd_2c740c903e514be3",
+        "updated_at": "2026-11-01T10:26:45.472911Z",
+        "external_id": "SYN-002",
+        "verification": {
+          "explanation": "Full normalized question text appears in the source. Correct option text present in source (matched by option text, order-independent).",
+          "answer_match": "task_specific",
+          "task_identity": "exact",
+          "grader_version": "grader_v1.0",
+          "verification_id": "ver_2c740c903e514be3",
+          "normalization_version": "norm_v1.0"
+        },
+        "review_history": [],
+        "item_version_id": "itv_5803d16f31494bf2",
+        "investigation_id": "inv_demo_success",
+        "auto_claim_status": "verified",
+        "current_reviewer_decision": null
+      },
+      {
+        "claim": {
+          "claim_id": "clm_ec9659311e2340da",
+          "rationale": "Answer text found but it is short/common or task identity is not exact; possible common-answer collision, sent to review.",
+          "claim_status": "needs_review",
+          "exposure_type": "reference_answer"
+        },
+        "version": 1,
+        "snapshot": {
+          "final_url": "https://chem-quiz.example-edu.org/carbon",
+          "media_type": "text/markdown",
+          "source_url": "https://chem-quiz.example-edu.org/carbon",
+          "snapshot_id": "src_dc085fed45064aff",
+          "availability": "available",
+          "content_hash": "4712c01e3be1c2e297d0ea93b78aea0d514baff0caaa818e7620d8af14eeec93",
+          "retrieved_at": "2026-11-01T10:26:44.711276Z",
+          "source_family": "web_search",
+          "redirect_chain": [],
+          "excerpt_locator": {
+            "line_end": 1,
+            "selector": null,
+            "line_start": 1,
+            "char_offset_end": 44,
+            "char_offset_start": 8
+          },
+          "access_limitations": [
+            "Observed after the evaluation cutoff; introduction time unknown."
+          ],
+          "extraction_version": "extract_v1.0",
+          "raw_content_preview": "Quiz 3. What is the atomic number of carbon? Answer: [REDACTED_REFERENCE_ANSWER]. Next: page [REDACTED_REFERENCE_ANSWER] of 10."
+        },
+        "temporal": {
+          "commit_time": null,
+          "assessment_id": "tmp_ec9659311e2340da",
+          "retrieval_time": "2026-11-01T10:26:44.711276Z",
+          "temporal_status": "observed_post_cutoff",
+          "archive_capture_time": null,
+          "supporting_evidence_note": "Observed after cutoff; no evidence of when it was introduced.",
+          "asserted_publication_time": null,
+          "verified_introduction_time": null
+        },
+        "created_at": "2026-11-01T10:26:45.482236Z",
+        "finding_id": "fnd_ec9659311e2340da",
+        "updated_at": "2026-11-01T10:26:45.482240Z",
+        "external_id": "SYN-003",
+        "verification": {
+          "explanation": "Full normalized question text appears in the source. Reference answer appears verbatim in source.",
+          "answer_match": "exact",
+          "task_identity": "exact",
+          "grader_version": "grader_v1.0",
+          "verification_id": "ver_ec9659311e2340da",
+          "normalization_version": "norm_v1.0"
+        },
+        "review_history": [],
+        "item_version_id": "itv_ec8cdeb1604a49ee",
+        "investigation_id": "inv_demo_success",
+        "auto_claim_status": "needs_review",
+        "current_reviewer_decision": null
+      },
+      {
+        "claim": {
+          "claim_id": "clm_b0a7866317914900",
+          "rationale": "Source does not contain this task; rejected as unrelated.",
+          "claim_status": "rejected",
+          "exposure_type": "metadata"
+        },
+        "version": 1,
+        "snapshot": {
+          "final_url": "https://travel.example-blog.com/meridia-ring",
+          "media_type": "text/markdown",
+          "source_url": "https://travel.example-blog.com/meridia-ring",
+          "snapshot_id": "src_b75c9dac7a2442cb",
+          "availability": "available",
+          "content_hash": "ed3499484fff7abbf66a7b49af5015013a7c4f5ebfee1ae877d5b478b3584690",
+          "retrieved_at": "2026-11-01T10:26:44.661681Z",
+          "source_family": "web_search",
+          "redirect_chain": [],
+          "excerpt_locator": null,
+          "access_limitations": [
+            "Observed after the evaluation cutoff; introduction time unknown."
+          ],
+          "extraction_version": "extract_v1.0",
+          "raw_content_preview": "Our trip to the Meridia ring: amazing desalination tour, great food, 10/10."
+        },
+        "temporal": {
+          "commit_time": null,
+          "assessment_id": "tmp_b0a7866317914900",
+          "retrieval_time": "2026-11-01T10:26:44.661681Z",
+          "temporal_status": "observed_post_cutoff",
+          "archive_capture_time": null,
+          "supporting_evidence_note": "Observed after cutoff; no evidence of when it was introduced.",
+          "asserted_publication_time": null,
+          "verified_introduction_time": null
+        },
+        "created_at": "2026-11-01T10:26:45.477571Z",
+        "finding_id": "fnd_b0a7866317914900",
+        "updated_at": "2026-11-01T10:26:45.477575Z",
+        "external_id": "SYN-004",
+        "verification": {
+          "explanation": "43% of question content tokens present; source is a different task. Answer not assessed: task identity not established.",
+          "answer_match": "not_applicable",
+          "task_identity": "different",
+          "grader_version": "grader_v1.0",
+          "verification_id": "ver_b0a7866317914900",
+          "normalization_version": "norm_v1.0"
+        },
+        "review_history": [],
+        "item_version_id": "itv_52d7aa89ff1f4a18",
+        "investigation_id": "inv_demo_success",
+        "auto_claim_status": "rejected",
+        "current_reviewer_decision": null
+      }
+    ],
+    "frozen_at": "2026-11-01T10:26:45.576987+00:00",
+    "report_id": "rpt_c5a7e01d371740cc",
     "limitations": [
-      "Real-web temporal support unknown; page discovered post-cutoff without archive verification."
-    ]
+      "3 verified finding(s) were observed after the cutoff or have unknown timing; they show exposure, not pre-cutoff contamination.",
+      "1 claim(s) remain unresolved and need review.",
+      "Exposure findings show benchmark content is publicly retrievable; they do not prove any model was trained on it or that scores are inflated."
+    ],
+    "methodology": {
+      "dimensions": [
+        "exposure_type",
+        "task_identity",
+        "answer_match",
+        "temporal_status"
+      ],
+      "grader_version": "grader_v1.0",
+      "extraction_version": "extract_v1.0",
+      "methodology_version": "audit_v1.0",
+      "normalization_version": "norm_v1.0"
+    },
+    "report_version": "R-001",
+    "summary_counts": {
+      "total_items": 4,
+      "needs_review_count": 1,
+      "timing_unknown_count": 3,
+      "rejected_claims_count": 1,
+      "verified_claims_count": 3,
+      "verified_pre_cutoff_count": 0
+    },
+    "investigation_id": "inv_demo_success",
+    "policy_version_id": "polv_36d71b9a083344ed",
+    "benchmark_version_id": "bmv_fa8988c3642a4212",
+    "items_with_verified_exposure": [
+      "SYN-001",
+      "SYN-002"
+    ],
+    "content_sha256": "c937f52d638a2df0f6c888f2b60895e15dfdf8f564b8da3b17574b48c2af66f1"
   },
   "events": [
     {
-      "event_id": "evt-001",
-      "entity_id": "inv-syn014-success",
-      "type": "investigation.queued",
-      "schema_version": "1.0.0",
-      "time": "2026-11-01T11:58:00Z",
+      "id": "1",
+      "type": "investigation_queued",
       "data": {
-        "state": "queued",
-        "total_items": 1,
-        "processed_items": 0,
-        "candidate_findings": 0,
-        "verified_findings": 0,
-        "queries_executed": 0,
-        "pages_fetched": 0,
-        "spend_usd": 0.0,
-        "partial_coverage": false
+        "total_items": 4,
+        "policy_version_id": "polv_36d71b9a083344ed",
+        "benchmark_version_id": "bmv_fa8988c3642a4212"
       }
     },
     {
-      "event_id": "evt-002",
-      "entity_id": "inv-syn014-success",
-      "type": "investigation.discovering",
-      "schema_version": "1.0.0",
-      "time": "2026-11-01T11:59:00Z",
+      "id": "2",
+      "type": "item_investigation_started",
       "data": {
-        "state": "discovering",
-        "total_items": 1,
-        "processed_items": 0,
-        "candidate_findings": 2,
-        "verified_findings": 0,
-        "queries_executed": 2,
-        "pages_fetched": 3,
-        "spend_usd": 0.85,
-        "partial_coverage": false
+        "item_index": 1,
+        "external_id": "SYN-001",
+        "item_version_id": "itv_0eb5939cb6bf45c2"
       }
     },
     {
-      "event_id": "evt-003",
-      "entity_id": "inv-syn014-success",
-      "type": "investigation.verifying",
-      "schema_version": "1.0.0",
-      "time": "2026-11-01T12:00:00Z",
+      "id": "3",
+      "type": "candidate_discovered",
       "data": {
-        "state": "verifying",
-        "total_items": 1,
-        "processed_items": 1,
-        "candidate_findings": 2,
-        "verified_findings": 1,
-        "queries_executed": 2,
-        "pages_fetched": 3,
-        "spend_usd": 1.25,
-        "partial_coverage": false
+        "source_url": "https://github.com/leaky-org/eval-dump/blob/main/k9.md",
+        "external_id": "SYN-001",
+        "source_family": "code_repository",
+        "item_version_id": "itv_0eb5939cb6bf45c2"
       }
     },
     {
-      "event_id": "evt-004",
-      "entity_id": "inv-syn014-success",
-      "type": "investigation.completed",
-      "schema_version": "1.0.0",
-      "time": "2026-11-01T12:01:00Z",
+      "id": "4",
+      "type": "candidate_discovered",
       "data": {
-        "state": "completed",
-        "total_items": 1,
-        "processed_items": 1,
-        "candidate_findings": 2,
-        "verified_findings": 1,
-        "queries_executed": 2,
-        "pages_fetched": 3,
-        "spend_usd": 1.25,
-        "partial_coverage": false
+        "source_url": "https://forum.example-discussions.net/t/station-k9",
+        "external_id": "SYN-001",
+        "source_family": "web_search",
+        "item_version_id": "itv_0eb5939cb6bf45c2"
+      }
+    },
+    {
+      "id": "5",
+      "type": "budget_updated",
+      "data": {
+        "max_fetches": 12,
+        "max_queries": 12,
+        "used_fetches": 2,
+        "used_queries": 3,
+        "used_cost_usd": 0.0,
+        "cost_ceiling_usd": 5.0
+      }
+    },
+    {
+      "id": "6",
+      "type": "item_investigation_started",
+      "data": {
+        "item_index": 2,
+        "external_id": "SYN-002",
+        "item_version_id": "itv_5803d16f31494bf2"
+      }
+    },
+    {
+      "id": "7",
+      "type": "candidate_discovered",
+      "data": {
+        "source_url": "https://arxiv.org/abs/2401.00001",
+        "external_id": "SYN-002",
+        "source_family": "academic_archive",
+        "item_version_id": "itv_5803d16f31494bf2"
+      }
+    },
+    {
+      "id": "8",
+      "type": "budget_updated",
+      "data": {
+        "max_fetches": 12,
+        "max_queries": 12,
+        "used_fetches": 3,
+        "used_queries": 6,
+        "used_cost_usd": 0.0,
+        "cost_ceiling_usd": 5.0
+      }
+    },
+    {
+      "id": "9",
+      "type": "item_investigation_started",
+      "data": {
+        "item_index": 3,
+        "external_id": "SYN-004",
+        "item_version_id": "itv_52d7aa89ff1f4a18"
+      }
+    },
+    {
+      "id": "10",
+      "type": "candidate_discovered",
+      "data": {
+        "source_url": "https://travel.example-blog.com/meridia-ring",
+        "external_id": "SYN-004",
+        "source_family": "web_search",
+        "item_version_id": "itv_52d7aa89ff1f4a18"
+      }
+    },
+    {
+      "id": "11",
+      "type": "budget_updated",
+      "data": {
+        "max_fetches": 12,
+        "max_queries": 12,
+        "used_fetches": 4,
+        "used_queries": 9,
+        "used_cost_usd": 0.0,
+        "cost_ceiling_usd": 5.0
+      }
+    },
+    {
+      "id": "12",
+      "type": "item_investigation_started",
+      "data": {
+        "item_index": 4,
+        "external_id": "SYN-003",
+        "item_version_id": "itv_ec8cdeb1604a49ee"
+      }
+    },
+    {
+      "id": "13",
+      "type": "candidate_discovered",
+      "data": {
+        "source_url": "https://chem-quiz.example-edu.org/carbon",
+        "external_id": "SYN-003",
+        "source_family": "web_search",
+        "item_version_id": "itv_ec8cdeb1604a49ee"
+      }
+    },
+    {
+      "id": "14",
+      "type": "budget_updated",
+      "data": {
+        "max_fetches": 12,
+        "max_queries": 12,
+        "used_fetches": 5,
+        "used_queries": 12,
+        "used_cost_usd": 0.0,
+        "cost_ceiling_usd": 5.0
+      }
+    },
+    {
+      "id": "15",
+      "type": "investigation_completed",
+      "data": {
+        "status": "awaiting_review",
+        "is_partial": true,
+        "total_items": 4,
+        "findings_count": 2,
+        "investigated_items": 2
+      }
+    },
+    {
+      "id": "16",
+      "type": "verification_completed",
+      "data": {
+        "external_id": "SYN-001",
+        "answer_match": "exact",
+        "claim_status": "verified",
+        "exposure_type": "reference_answer",
+        "task_identity": "exact",
+        "item_version_id": "itv_0eb5939cb6bf45c2",
+        "temporal_status": "observed_post_cutoff"
+      }
+    },
+    {
+      "id": "17",
+      "type": "verification_completed",
+      "data": {
+        "external_id": "SYN-001",
+        "answer_match": "mismatch",
+        "claim_status": "verified",
+        "exposure_type": "question_context",
+        "task_identity": "exact",
+        "item_version_id": "itv_0eb5939cb6bf45c2",
+        "temporal_status": "observed_post_cutoff"
+      }
+    },
+    {
+      "id": "18",
+      "type": "verification_completed",
+      "data": {
+        "external_id": "SYN-002",
+        "answer_match": "task_specific",
+        "claim_status": "verified",
+        "exposure_type": "reference_answer",
+        "task_identity": "exact",
+        "item_version_id": "itv_5803d16f31494bf2",
+        "temporal_status": "observed_post_cutoff"
+      }
+    },
+    {
+      "id": "19",
+      "type": "verification_completed",
+      "data": {
+        "external_id": "SYN-004",
+        "answer_match": "not_applicable",
+        "claim_status": "rejected",
+        "exposure_type": "metadata",
+        "task_identity": "different",
+        "item_version_id": "itv_52d7aa89ff1f4a18",
+        "temporal_status": "observed_post_cutoff"
+      }
+    },
+    {
+      "id": "20",
+      "type": "verification_completed",
+      "data": {
+        "external_id": "SYN-003",
+        "answer_match": "exact",
+        "claim_status": "needs_review",
+        "exposure_type": "reference_answer",
+        "task_identity": "exact",
+        "item_version_id": "itv_ec8cdeb1604a49ee",
+        "temporal_status": "observed_post_cutoff"
       }
     }
-  ]
+  ],
+  "review_history": {
+    "fnd_214a19d0287a48ea": [
+      {
+        "decision_id": "rev_ce1adacd694b48df",
+        "finding_id": "fnd_214a19d0287a48ea",
+        "expected_version": 1,
+        "new_version": 2,
+        "reviewer_id": "usr_alice",
+        "action": "confirm",
+        "reason": "Verbatim Q and A.",
+        "reviewed_at": "2026-11-01T10:26:45.525542Z"
+      }
+    ]
+  },
+  "policy": {
+    "policy_version_id": "polv_36d71b9a083344ed",
+    "policy_id": "pol_40bd8b109a27447a",
+    "workspace_id": "ws_alpha",
+    "name": "Demo public-benchmark exposure policy",
+    "version_number": 1,
+    "allowed_tools": [
+      "search",
+      "scrape"
+    ],
+    "allowed_source_classes": [
+      "web_search",
+      "code_repository",
+      "academic_archive"
+    ],
+    "prohibited_answer_key_access": true,
+    "benchmark_identification_permitted": false,
+    "evaluation_cutoff": "2024-01-01T00:00:00Z",
+    "cutoff_timezone": "UTC",
+    "item_scope": null,
+    "max_queries_per_item": 3,
+    "max_fetches_per_item": 3,
+    "max_concurrent_discovery_tasks": 2,
+    "deadline_seconds": 600,
+    "cost_ceiling_usd": 5.0,
+    "data_classification": "synthetic",
+    "retention_profile": "pilot_standard_30_90",
+    "reviewer_identity": "alice@corp-alpha.com",
+    "created_at": "2026-11-01T10:26:44.243489Z"
+  },
+  "benchmark_import": {
+    "benchmark_id": "bmk_0eb50621b84a4029",
+    "benchmark_version_id": "bmv_fa8988c3642a4212",
+    "total_rows": 4,
+    "valid_rows": 4,
+    "status": "accepted",
+    "errors": []
+  }
 }
-

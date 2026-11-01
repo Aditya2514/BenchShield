@@ -11,11 +11,20 @@ import {
   RotateCw,
   ChevronDown,
   Check,
+  LogOut,
+  Wifi,
 } from 'lucide-react';
+import type { AppMode } from '../api/mode.js';
+import type { Session } from '../api/http.js';
+import type { Workflow } from '../workflow.js';
 
 export type NavTab = 'benchmarks' | 'policies' | 'investigations' | 'findings' | 'experiments' | 'reports';
 
 interface ShellProps {
+  mode: AppMode;
+  session: Session | null;
+  workflow: Workflow;
+  onDisconnect?: () => void;
   activeTab: NavTab;
   onTabChange: (tab: NavTab) => void;
   selectedScenario: string;
@@ -28,6 +37,10 @@ interface ShellProps {
 }
 
 export function Shell({
+  mode,
+  session,
+  workflow,
+  onDisconnect,
   activeTab,
   onTabChange,
   selectedScenario,
@@ -86,17 +99,42 @@ export function Shell({
             <div className="flex items-center gap-2">
               <span className="text-base font-bold tracking-tight text-slate-900">BenchShield</span>
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono border border-slate-200">
-                v0.2
+                v0.3
+              </span>
+              <span
+                className={`text-[11px] px-2 py-0.5 rounded-full font-semibold border ${
+                  mode === 'mock'
+                    ? 'bg-amber-50 text-amber-900 border-amber-300'
+                    : 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                }`}
+              >
+                {mode === 'mock' ? 'Demo data (mock API)' : 'Live API'}
               </span>
             </div>
             <p className="text-xs text-slate-500">
-              Workspace: <strong className="text-slate-800 font-semibold">Acme AI Evaluation Lab</strong>
+              Workspace:{' '}
+              <strong className="text-slate-800 font-semibold font-mono">{session?.workspaceId ?? 'not connected'}</strong>
+              {session?.label && <span className="text-slate-500"> · {session.label}</span>}
             </p>
           </div>
         </div>
 
-        {/* Right Header Actions: Mock Switcher & 401 Simulation */}
+        {/* Right Header Actions: live connection, or mock scenario switcher & 401 simulation */}
         <div className="flex items-center gap-3">
+          {mode === 'live' && session && onDisconnect && (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-800 font-medium">
+                <Wifi className="w-3.5 h-3.5" aria-hidden="true" /> Connected
+              </span>
+              <button
+                type="button"
+                onClick={onDisconnect}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+              >
+                <LogOut className="w-3.5 h-3.5" aria-hidden="true" /> Disconnect
+              </button>
+            </div>
+          )}
           {onSimulateExpiry && (
             <button
               type="button"
@@ -108,6 +146,7 @@ export function Shell({
             </button>
           )}
 
+          {mode === 'mock' && (
           <div className="flex items-center gap-2">
             <label htmlFor="scenario-selector" className="text-xs font-semibold text-slate-600">
               Active Mock Scenario:
@@ -191,6 +230,7 @@ export function Shell({
               )}
             </div>
           </div>
+          )}
         </div>
       </header>
 
@@ -208,7 +248,7 @@ export function Shell({
                 Session Expired (HTTP 401 Unauthorized)
               </h3>
               <p className="text-xs text-amber-900 mt-0.5">
-                Your authentication token has expired. Re-authenticate to resume secure investigation operations and view confidential benchmark audit records.
+                The API rejected your token (expired or invalid). Re-authenticate to resume secure investigation operations.
               </p>
             </div>
           </div>
@@ -249,6 +289,30 @@ export function Shell({
           })}
         </div>
       </nav>
+
+      {/* Current audit context: what the next step will use */}
+      {session && (
+        <div className="border-b border-slate-200 bg-slate-50 px-4 sm:px-6">
+          <dl className="max-w-6xl mx-auto flex flex-wrap items-center gap-x-5 gap-y-1 py-2 text-[11px] text-slate-600">
+            <div className="flex gap-1.5">
+              <dt className="font-semibold">Benchmark:</dt>
+              <dd className="font-mono text-slate-800">{workflow.benchmark?.benchmark_version_id ?? '—'}</dd>
+            </div>
+            <div className="flex gap-1.5">
+              <dt className="font-semibold">Policy:</dt>
+              <dd className="font-mono text-slate-800">{workflow.policy?.policy_version_id ?? '—'}</dd>
+            </div>
+            <div className="flex gap-1.5">
+              <dt className="font-semibold">Investigation:</dt>
+              <dd className="font-mono text-slate-800">{workflow.investigationId ?? '—'}</dd>
+            </div>
+            <div className="flex gap-1.5">
+              <dt className="font-semibold">Report:</dt>
+              <dd className="font-mono text-slate-800">{workflow.report?.report_version ?? '—'}</dd>
+            </div>
+          </dl>
+        </div>
+      )}
 
       {/* Main Workspace Body */}
       <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">

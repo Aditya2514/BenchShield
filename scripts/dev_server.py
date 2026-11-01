@@ -75,6 +75,22 @@ async def main(port: int) -> None:
         expose_headers=["x-request-id"],
     )
 
+    # Dev-only helper for the frontend's one-click login. Lives in this script,
+    # never in create_app(), so production deployments do not have it.
+    dev_tokens = [
+        {
+            "label": email,
+            "role": role,
+            "workspace_id": ws,
+            "token": create_jwt_token(user_id=uid, email=email, secret=JWT_SECRET, expires_in_seconds=86400),
+        }
+        for uid, email, ws, role in USERS
+    ]
+
+    @app.get("/dev/session", include_in_schema=False)
+    async def dev_session():
+        return {"users": dev_tokens}
+
     print("\nBenchShield dev API  ->  http://127.0.0.1:%d   (Swagger: /docs)\n" % port)
     for uid, email, ws, role in USERS:
         tok = create_jwt_token(user_id=uid, email=email, secret=JWT_SECRET, expires_in_seconds=86400)

@@ -7,7 +7,10 @@ import {
   ArrowRight,
   FileCode,
 } from 'lucide-react';
-import type { RowError } from '@benchshield/api-client';
+import type { ImportRowError } from '@benchshield/api-client';
+import { uploadBenchmark } from '../../api/endpoints.js';
+import { errorMessage } from '../../api/http.js';
+import type { StagedBenchmark } from '../../workflow.js';
 import {
   Card,
   CardHeader,
@@ -25,121 +28,137 @@ import {
   TableCell,
 } from '../../components/ui';
 
-export interface StagedBenchmark {
-  benchmark_version_id: string;
-  benchmark_name: string;
-  total_rows: number;
-  valid_rows: number;
-  invalid_rows: number;
-  row_errors: RowError[];
-}
+export type { StagedBenchmark };
+
+// Same items as the backend's offline demo (benchshield.devtools.demo_scenario),
+// so a live run against scripts/dev_server.py produces real findings.
+const VALID_JSON = JSON.stringify(
+  [
+    {
+      external_id: 'SYN-001',
+      task_type: 'exact_short_answer',
+      question: 'What is the primary power generation mechanism of fictional Station K-9?',
+      gold_answer: 'Sub-surface thorium reactor',
+      metadata: { domain: 'sci_fi_engineering', difficulty: 'medium' },
+    },
+    {
+      external_id: 'SYN-002',
+      task_type: 'multiple_choice',
+      question: 'Which fictional station holds registration code K7?',
+      choices: [
+        { id: 'A', text: 'North Station' },
+        { id: 'B', text: 'East Station' },
+        { id: 'C', text: 'South Station' },
+        { id: 'D', text: 'West Station' },
+      ],
+      gold_answer: 'B',
+      metadata: { domain: 'sci_fi_registry', difficulty: 'easy' },
+    },
+    {
+      external_id: 'SYN-003',
+      task_type: 'exact_short_answer',
+      question: 'What is the atomic number of carbon?',
+      gold_answer: '6',
+      metadata: { domain: 'chemistry', difficulty: 'easy' },
+    },
+    {
+      external_id: 'SYN-004',
+      task_type: 'exact_short_answer',
+      question: 'Which fictional river feeds the orbital desalination ring of Meridia?',
+      gold_answer: 'Vellan Stream',
+      metadata: { domain: 'sci_fi_geography', difficulty: 'hard' },
+    },
+  ],
+  null,
+  2
+);
+
+const INVALID_JSON = JSON.stringify(
+  [
+    {
+      external_id: 'SYN-014',
+      task_type: 'multiple_choice',
+      question: 'Which fictional station has code K7?',
+      choices: [
+        { id: 'A', text: 'North' },
+        { id: 'B', text: 'East' },
+      ],
+      gold_answer: 'B',
+    },
+    { external_id: 'SYN-015', task_type: 'exact_short_answer', question: '', gold_answer: 'Alpha' },
+    { external_id: 'SYN-016', task_type: 'code_execution', question: 'Write a sort.', gold_answer: 'n/a' },
+  ],
+  null,
+  2
+);
+
+const VALID_CSV = [
+  'external_id,task_type,question,choices,gold_answer',
+  'SYN-001,exact_short_answer,What is the primary power generation mechanism of fictional Station K-9?,,Sub-surface thorium reactor',
+  'SYN-002,multiple_choice,Which fictional station holds registration code K7?,A: North Station; B: East Station; C: South Station; D: West Station,B',
+  'SYN-003,exact_short_answer,What is the atomic number of carbon?,,6',
+].join('\n');
 
 interface BenchmarkImportProps {
+  staged?: StagedBenchmark | null;
   onImportSuccess?: (staged: StagedBenchmark) => void;
+  onContinue?: () => void;
 }
 
-export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
-  const [benchmarkName, setBenchmarkName] = useState('Synthetic Reasoning Suite v1');
-  const [format, setFormat] = useState<'json' | 'csv'>('json');
-  const [inputText, setInputText] = useState(
-    JSON.stringify(
-      [
-        {
-          item_id: 'SYN-014',
-          question: 'Which fictional station has code K7?',
-          options: ['North', 'East', 'South', 'West'],
-          reference_answer: 'East',
-        },
-        {
-          item_id: 'SYN-015',
-          question: '',
-          options: ['Alpha', 'Beta'],
-          reference_answer: 'Alpha',
-        },
-      ],
-      null,
-      2
-    )
-  );
+interface ImportResult {
+  status: 'accepted' | 'rejected';
+  benchmark_version_id: string | null;
+  total_rows: number;
+  valid_rows: number;
+  errors: ImportRowError[];
+}
 
+export function BenchmarkImport({ staged, onImportSuccess, onContinue }: BenchmarkImportProps) {
+  const [benchmarkName, setBenchmarkName] = useState('Synthetic Exposure Audit Demo');
+  const [format, setFormat] = useState<'json' | 'csv'>('json');
+  const [inputText, setInputText] = useState(VALID_JSON);
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<StagedBenchmark | null>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const chooseFormat = (f: 'json' | 'csv') => {
+    setFormat(f);
+    setInputText(f === 'csv' ? VALID_CSV : VALID_JSON);
+    setResult(null);
+    setSubmitError(null);
+  };
 
   const handleValidateAndStage = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setSubmitError(null);
+    setResult(null);
 
     try {
-      let parsedItems: any[] = [];
-      if (format === 'json') {
-        parsedItems = JSON.parse(inputText);
-        if (!Array.isArray(parsedItems)) {
-          throw new Error('JSON input must be an array of benchmark item objects.');
-        }
-      } else {
-        // Lean CSV parser
-        const lines = inputText.trim().split('\n');
-        if (lines.length < 2) {
-          throw new Error('CSV must contain a header and at least one item row.');
-        }
-        const headers = lines[0].split(',').map((h) => h.trim());
-        parsedItems = lines.slice(1).map((line) => {
-          const cols = line.split(',').map((c) => c.trim());
-          const item: Record<string, string> = {};
-          headers.forEach((h, i) => {
-            item[h] = cols[i] || '';
-          });
-          return item;
-        });
-      }
-
-      // Hard Rule Check: Verify reference answers are never stored in localStorage / sessionStorage
-      // We pass the items directly in the fetch body to /api/v1/benchmarks
-      const response = await fetch('/api/v1/benchmarks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          benchmark_name: benchmarkName,
-          format,
-          items: parsedItems,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (data.details?.row_errors) {
-          const stagedErr: StagedBenchmark = {
-            benchmark_version_id: 'pending',
-            benchmark_name: benchmarkName,
-            total_rows: parsedItems.length,
-            valid_rows: parsedItems.length - data.details.row_errors.length,
-            invalid_rows: data.details.row_errors.length,
-            row_errors: data.details.row_errors,
-          };
-          setResult(stagedErr);
-          setSubmitError(data.message || 'Row validation errors detected.');
-        } else {
-          setSubmitError(data.message || 'Failed to import benchmark.');
-        }
-        return;
-      }
-
-      const staged: StagedBenchmark = {
-        benchmark_version_id: data.benchmark_version_id,
-        benchmark_name: data.benchmark_name,
+      // Content goes straight to the backend, which vaults gold answers and
+      // never echoes them. Nothing is written to browser storage.
+      const data = await uploadBenchmark(benchmarkName, format, inputText);
+      const res: ImportResult = {
+        status: data.status,
+        benchmark_version_id: data.benchmark_version_id ?? null,
         total_rows: data.total_rows,
         valid_rows: data.valid_rows,
-        invalid_rows: data.invalid_rows,
-        row_errors: data.row_errors || [],
+        errors: data.errors ?? [],
       };
-
-      setResult(staged);
-      onImportSuccess?.(staged);
-    } catch (err: any) {
-      setSubmitError(err.message || 'Invalid file format or network error.');
+      setResult(res);
+      if (data.status === 'accepted' && data.benchmark_version_id) {
+        onImportSuccess?.({
+          benchmark_id: data.benchmark_id ?? null,
+          benchmark_version_id: data.benchmark_version_id,
+          name: benchmarkName,
+          total_rows: data.total_rows,
+          valid_rows: data.valid_rows,
+        });
+      } else {
+        setSubmitError('Row validation errors detected. Nothing was imported; fix the rows below and retry.');
+      }
+    } catch (err) {
+      setSubmitError(errorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -171,7 +190,7 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
                 <div>
                   <h4 className="text-xs sm:text-sm font-semibold text-slate-900">Supported Ingestion Formats &amp; Schemas</h4>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    JSON Array or CSV with standard headers: <code className="text-slate-700 font-semibold">item_id</code>, <code className="text-slate-700 font-semibold">question</code>, <code className="text-slate-700 font-semibold">options</code>, <code className="text-slate-700 font-semibold">reference_answer</code>.
+                    JSON array (or {'{'}"items": [...]{'}'}) or CSV with columns: <code className="text-slate-700 font-semibold">external_id</code>, <code className="text-slate-700 font-semibold">task_type</code>, <code className="text-slate-700 font-semibold">question</code>, <code className="text-slate-700 font-semibold">choices</code>, <code className="text-slate-700 font-semibold">gold_answer</code>.
                   </p>
                 </div>
               </div>
@@ -210,7 +229,7 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
                         name="format"
                         value="json"
                         checked={format === 'json'}
-                        onChange={() => setFormat('json')}
+                        onChange={() => chooseFormat('json')}
                         className="text-indigo-600 focus:ring-indigo-600"
                       />
                       JSON Array
@@ -221,7 +240,7 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
                         name="format"
                         value="csv"
                         checked={format === 'csv'}
-                        onChange={() => setFormat('csv')}
+                        onChange={() => chooseFormat('csv')}
                         className="text-indigo-600 focus:ring-indigo-600"
                       />
                       CSV Format
@@ -246,10 +265,22 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-              <span className="text-xs text-slate-500 flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-slate-400" aria-hidden="true" />
-                Supported grading: exact short-answer and multiple-choice.
-              </span>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-xs text-slate-500 flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-slate-400" aria-hidden="true" />
+                  Supported task types: exact_short_answer, multiple_choice.
+                </span>
+                {format === 'json' && (
+                  <span className="flex gap-2 text-xs">
+                    <button type="button" className="underline text-indigo-700 cursor-pointer" onClick={() => setInputText(VALID_JSON)}>
+                      Load valid sample
+                    </button>
+                    <button type="button" className="underline text-indigo-700 cursor-pointer" onClick={() => setInputText(INVALID_JSON)}>
+                      Load sample with errors
+                    </button>
+                  </span>
+                )}
+              </div>
               <Button
                 type="submit"
                 disabled={isLoading}
@@ -269,6 +300,21 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
         </CardContent>
       </Card>
 
+      {staged && !result && (
+        <Alert variant="success" title="Benchmark staged for this audit">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span>
+              {staged.name}: version <code className="font-semibold">{staged.benchmark_version_id}</code> ({staged.valid_rows} items)
+            </span>
+            {onContinue && (
+              <Button size="sm" variant="secondary" onClick={onContinue} icon={<ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />}>
+                Next: policy
+              </Button>
+            )}
+          </div>
+        </Alert>
+      )}
+
       {/* Validation Results & Row Error Table */}
       {result && (
         <Card>
@@ -276,7 +322,7 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
             <div className="flex items-center justify-between w-full">
               <CardTitle id="intake-summary-title">Intake Preflight Summary</CardTitle>
               <Badge variant="neutral" className="font-mono">
-                Version: {result.benchmark_version_id}
+                {result.status === 'accepted' ? `Version: ${result.benchmark_version_id}` : 'Rejected: not imported'}
               </Badge>
             </div>
           </CardHeader>
@@ -297,27 +343,35 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
                 <span className="text-xs text-red-800 font-medium block flex items-center gap-1.5">
                   <AlertOctagon className="w-3.5 h-3.5" aria-hidden="true" /> Row Errors
                 </span>
-                <span className="text-2xl font-bold text-red-900 mt-0.5 block">{result.invalid_rows}</span>
+                <span className="text-2xl font-bold text-red-900 mt-0.5 block">{result.errors.length}</span>
               </div>
             </div>
 
-            {result.row_errors.length > 0 && (
+            {result.status === 'accepted' && onContinue && (
+              <div className="flex justify-end">
+                <Button onClick={onContinue} icon={<ArrowRight className="w-4 h-4" aria-hidden="true" />}>
+                  Next: configure policy
+                </Button>
+              </div>
+            )}
+
+            {result.errors.length > 0 && (
               <div className="space-y-2 pt-2">
                 <h4 className="text-xs font-semibold text-slate-800">Actionable Row Errors:</h4>
                 <Table>
                   <TableHeader>
                     <tr>
                       <TableHead>Row #</TableHead>
-                      <TableHead>Item ID</TableHead>
+                      <TableHead>Field</TableHead>
                       <TableHead>Error Code</TableHead>
                       <TableHead>Explanation</TableHead>
                     </tr>
                   </TableHeader>
                   <TableBody>
-                    {result.row_errors.map((err, i) => (
+                    {result.errors.map((err, i) => (
                       <TableRow key={i}>
                         <TableCell className="font-mono text-slate-600">{err.row_number}</TableCell>
-                        <TableCell className="font-mono font-semibold text-slate-900">{err.item_id}</TableCell>
+                        <TableCell className="font-mono font-semibold text-slate-900">{err.field}</TableCell>
                         <TableCell>
                           <Badge variant="danger" className="font-mono">
                             {err.error_code}

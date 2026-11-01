@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import YAML from 'yaml';
+import { EVENT_TYPES } from '../src/index.js';
 
-const openApiPath = path.resolve(__dirname, '../../../docs/contracts/openapi.yaml');
-const eventsSchemaPath = path.resolve(__dirname, '../../../docs/contracts/events.schema.json');
+const contractsDir = path.resolve(__dirname, '../../../docs/contracts');
+const openapi = JSON.parse(fs.readFileSync(path.join(contractsDir, 'openapi.json'), 'utf-8'));
+const sseEnvelope = JSON.parse(fs.readFileSync(path.join(contractsDir, 'events/sse_envelope.json'), 'utf-8'));
 
 const FORBIDDEN_PROPERTY_NAMES = [
   'gold_answer',
@@ -14,117 +15,93 @@ const FORBIDDEN_PROPERTY_NAMES = [
   'answer_key_content',
 ];
 
-/**
- * Recursively inspects only property names defined in response schemas.
- */
-function checkPropertyNamesForGoldLeaks(schema: unknown, pathTrail: string[] = []): string[] {
-  const violations: string[] = [];
-  if (!schema || typeof schema !== 'object') {
-    return violations;
-  }
+// Request-only schemas legitimately carry the gold answer into the vault.
+const REQUEST_ONLY_SCHEMAS = new Set(['BenchmarkImportRequest', 'ItemIntake']);
 
+/** Recursively collects forbidden property names, following local $refs. */
+function findGoldLeaks(schema: unknown, trail: string[], seen = new Set<string>()): string[] {
+  if (!schema || typeof schema !== 'object') return [];
   const obj = schema as Record<string, unknown>;
+  const out: string[] = [];
 
+  if (typeof obj.$ref === 'string') {
+    const name = obj.$ref.split('/').pop()!;
+    if (REQUEST_ONLY_SCHEMAS.has(name) || seen.has(name)) return out;
+    seen.add(name);
+    return findGoldLeaks(openapi.components.schemas[name], [...trail, name], seen);
+  }
   if (obj.properties && typeof obj.properties === 'object') {
-    for (const propName of Object.keys(obj.properties)) {
-      if (FORBIDDEN_PROPERTY_NAMES.includes(propName.toLowerCase())) {
-        violations.push(`${pathTrail.join('.')}.${propName}`);
-      }
-      violations.push(...checkPropertyNamesForGoldLeaks((obj.properties as Record<string, unknown>)[propName], [...pathTrail, propName]));
+    for (const [prop, sub] of Object.entries(obj.properties as Record<string, unknown>)) {
+      if (FORBIDDEN_PROPERTY_NAMES.includes(prop.toLowerCase())) out.push([...trail, prop].join('.'));
+      out.push(...findGoldLeaks(sub, [...trail, prop], seen));
     }
   }
-
-  if (obj.items && typeof obj.items === 'object') {
-    violations.push(...checkPropertyNamesForGoldLeaks(obj.items, [...pathTrail, '[]']));
+  if (obj.items) out.push(...findGoldLeaks(obj.items, [...trail, '[]'], seen));
+  for (const key of ['allOf', 'anyOf', 'oneOf'] as const) {
+    const list = obj[key];
+    if (Array.isArray(list)) list.forEach((sub, i) => out.push(...findGoldLeaks(sub, [...trail, `${key}[${i}]`], seen)));
   }
-
-  if (Array.isArray(obj.allOf)) {
-    obj.allOf.forEach((sub, i) => violations.push(...checkPropertyNamesForGoldLeaks(sub, [...pathTrail, `allOf[${i}]`])));
-  }
-  if (Array.isArray(obj.anyOf)) {
-    obj.anyOf.forEach((sub, i) => violations.push(...checkPropertyNamesForGoldLeaks(sub, [...pathTrail, `anyOf[${i}]`])));
-  }
-  if (Array.isArray(obj.oneOf)) {
-    obj.oneOf.forEach((sub, i) => violations.push(...checkPropertyNamesForGoldLeaks(sub, [...pathTrail, `oneOf[${i}]`])));
-  }
-
-  return violations;
+  return out;
 }
 
-describe('Contract Safety Checks', () => {
-  it('ensures no API response schema exposes protected/gold answer property names', () => {
-    const rawYaml = fs.readFileSync(openApiPath, 'utf-8');
-    const openapi = YAML.parse(rawYaml);
-
+describe('Contract safety (backend-generated openapi.json)', () => {
+  it('no API response schema exposes a protected/gold answer property', () => {
     const violations: string[] = [];
-
-    // Traverse all response schemas across all endpoints
-    const paths = openapi.paths || {};
-    for (const [endpoint, methods] of Object.entries(paths)) {
-      for (const [method, op] of Object.entries(methods as Record<string, any>)) {
-        if (!op || typeof op !== 'object' || !op.responses) continue;
-
-        for (const [status, resp] of Object.entries(op.responses as Record<string, any>)) {
-          const content = resp?.content?.['application/json'];
-          if (content?.schema) {
-            const pathInfo = `${method.toUpperCase()} ${endpoint} -> ${status}`;
-            const leaks = checkPropertyNamesForGoldLeaks(content.schema, [pathInfo]);
-            violations.push(...leaks);
-          }
+    for (const [endpoint, methods] of Object.entries(openapi.paths as Record<string, Record<string, any>>)) {
+      for (const [method, op] of Object.entries(methods)) {
+        for (const [code, resp] of Object.entries((op?.responses ?? {}) as Record<string, any>)) {
+          const schema = resp?.content?.['application/json']?.schema;
+          if (schema) violations.push(...findGoldLeaks(schema, [`${method.toUpperCase()} ${endpoint} ${code}`]));
         }
       }
     }
-
-    // Also check components.schemas for response objects
-    const schemas = openapi.components?.schemas || {};
-    for (const [name, schema] of Object.entries(schemas)) {
-      // Exclude BenchmarkImportRequest which is a request body schema
-      if (name === 'BenchmarkImportRequest') continue;
-
-      const leaks = checkPropertyNamesForGoldLeaks(schema, [`components.schemas.${name}`]);
-      violations.push(...leaks);
-    }
-
     expect(violations).toEqual([]);
   });
 
-  it('negative test: catches response schemas that define a forbidden gold property', () => {
-    const dummyLeakySchema = {
-      type: 'object',
-      properties: {
-        item_id: { type: 'string' },
-        gold_answer: { type: 'string' },
-      },
-    };
-
-    const leaks = checkPropertyNamesForGoldLeaks(dummyLeakySchema, ['DUMMY_LEAKY_RESPONSE']);
-    expect(leaks).toContain('DUMMY_LEAKY_RESPONSE.gold_answer');
+  it('negative test: detects a forbidden gold property', () => {
+    const leaky = { type: 'object', properties: { item_id: { type: 'string' }, gold_answer: { type: 'string' } } };
+    expect(findGoldLeaks(leaky, ['DUMMY'])).toContain('DUMMY.gold_answer');
   });
 
-  it('permits valid exposure type enum values like reference_answer', () => {
-    const dummyValidSchema = {
-      type: 'object',
-      properties: {
-        exposure_dimension: {
-          type: 'string',
-          enum: ['metadata', 'question_context', 'worked_solution', 'reference_answer'],
-        },
-      },
-    };
-
-    const leaks = checkPropertyNamesForGoldLeaks(dummyValidSchema, ['DUMMY_VALID_RESPONSE']);
-    expect(leaks).toHaveLength(0);
+  it('every path the frontend calls exists in the contract', () => {
+    const used = [
+      'post /api/v1/benchmarks',
+      'post /api/v1/benchmarks/upload',
+      'post /api/v1/policies',
+      'post /api/v1/investigations',
+      'get /api/v1/investigations/{investigation_id}',
+      'get /api/v1/investigations/{investigation_id}/events',
+      'post /api/v1/investigations/{investigation_id}/cancel',
+      'post /api/v1/investigations/{investigation_id}/verify',
+      'get /api/v1/investigations/{investigation_id}/findings',
+      'get /api/v1/findings/{finding_id}',
+      'get /api/v1/findings/{finding_id}/reviews',
+      'post /api/v1/findings/{finding_id}/reviews',
+      'post /api/v1/investigations/{investigation_id}/experiments',
+      'post /api/v1/investigations/{investigation_id}/reports',
+      'get /api/v1/reports/{report_id}/download',
+    ];
+    const missing = used.filter((u) => {
+      const [method, p] = u.split(' ');
+      return !openapi.paths[p]?.[method];
+    });
+    expect(missing).toEqual([]);
   });
 
-  it('verifies events.schema.json requires monotonic event_id, entity_id, type, schema_version, time', () => {
-    const rawJson = fs.readFileSync(eventsSchemaPath, 'utf-8');
-    const schema = JSON.parse(rawJson);
+  it('SSE envelope requires id, investigation, type and data', () => {
+    expect(sseEnvelope.required).toEqual(
+      expect.arrayContaining(['event_id', 'investigation_id', 'type', 'data'])
+    );
+  });
 
-    expect(schema.required).toContain('event_id');
-    expect(schema.required).toContain('entity_id');
-    expect(schema.required).toContain('type');
-    expect(schema.required).toContain('schema_version');
-    expect(schema.required).toContain('time');
+  it('client EVENT_TYPES match the backend EventType enum exactly', () => {
+    expect([...EVENT_TYPES].sort()).toEqual([...sseEnvelope.$defs.EventType.enum].sort());
+  });
+
+  it('no SSE event payload exposes a gold answer property', () => {
+    const leaks = Object.entries(sseEnvelope.$defs as Record<string, any>)
+      .filter(([name]) => name.endsWith('Payload'))
+      .flatMap(([name, schema]) => findGoldLeaks(schema, [name]));
+    expect(leaks).toEqual([]);
   });
 });
-

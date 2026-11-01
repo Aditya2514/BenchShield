@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { Sliders, ShieldCheck, Check, DollarSign, Clock, CheckCircle2, ChevronDown } from 'lucide-react';
-import type { PolicyResponse, BudgetCeilings } from '@benchshield/api-client';
+import { Sliders, ShieldCheck, Check, DollarSign, Clock, CheckCircle2, ChevronDown, ArrowRight } from 'lucide-react';
+import type { EvaluationPolicyVersion, SourceFamily } from '@benchshield/api-client';
+import { createPolicy } from '../../api/endpoints.js';
+import { errorMessage, getSession } from '../../api/http.js';
+import { zonedMidnightToIso } from '../../lib/time.js';
 import {
   Card,
   CardHeader,
@@ -9,31 +12,44 @@ import {
   CardContent,
   Button,
   Badge,
+  Alert,
 } from '../../components/ui';
 
 interface PolicyFormProps {
-  onPolicyCreated?: (policy: PolicyResponse) => void;
+  activePolicy?: EvaluationPolicyVersion | null;
+  onPolicyCreated?: (policy: EvaluationPolicyVersion) => void;
+  onContinue?: () => void;
 }
 
-export function PolicyForm({ onPolicyCreated }: PolicyFormProps) {
-  const [cutoffDate, setCutoffDate] = useState('2026-10-01');
+const SOURCE_CLASSES: { id: SourceFamily; label: string; desc: string }[] = [
+  { id: 'web_search', label: 'Web Search', desc: 'General search results and pages' },
+  { id: 'code_repository', label: 'Code Repositories', desc: 'Public code and release repositories' },
+  { id: 'academic_archive', label: 'Academic Archives', desc: 'Papers and preprint servers' },
+  { id: 'discussion_forum', label: 'Discussion Forums', desc: 'Q&A sites and forums' },
+];
+
+export function PolicyForm({ activePolicy, onPolicyCreated, onContinue }: PolicyFormProps) {
+  const [name, setName] = useState('Demo public-benchmark exposure policy');
+  const [cutoffDate, setCutoffDate] = useState('2024-01-01');
   const [timezone, setTimezone] = useState('UTC');
-  const [allowedSources, setAllowedSources] = useState<string[]>(['repository', 'research_web']);
+  const [allowedSources, setAllowedSources] = useState<SourceFamily[]>(['web_search', 'code_repository', 'academic_archive']);
   const [prohibitAnswerKeys, setProhibitAnswerKeys] = useState(true);
   const [benchmarkIdentPermitted, setBenchmarkIdentPermitted] = useState(false);
+  const [dataClassification, setDataClassification] = useState<'public' | 'synthetic' | 'confidential'>('synthetic');
 
-  const [budgets, setBudgets] = useState<BudgetCeilings>({
-    max_search_queries_per_item: 3,
-    max_fetched_pages_per_item: 5,
-    max_deadline_seconds: 900,
-    monetary_ceiling_usd: 15.0,
+  const [budgets, setBudgets] = useState({
+    max_queries_per_item: 3,
+    max_fetches_per_item: 3,
+    deadline_seconds: 600,
+    cost_ceiling_usd: 5.0,
   });
 
-  const [reviewerId, setReviewerId] = useState('rev-maintainer-01');
+  const [reviewerId, setReviewerId] = useState(getSession()?.label || 'maintainer@example.com');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdPolicy, setCreatedPolicy] = useState<PolicyResponse | null>(null);
+  const [createdPolicy, setCreatedPolicy] = useState<EvaluationPolicyVersion | null>(activePolicy ?? null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const toggleSource = (source: string) => {
+  const toggleSource = (source: SourceFamily) => {
     setAllowedSources((prev) =>
       prev.includes(source) ? prev.filter((s) => s !== source) : [...prev, source]
     );
@@ -42,31 +58,27 @@ export function PolicyForm({ onPolicyCreated }: PolicyFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError(null);
 
     try {
-      const response = await fetch('/api/v1/policies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cutoff_date: cutoffDate,
-          timezone,
-          allowed_source_classes: allowedSources,
-          prohibited_answer_key_access: prohibitAnswerKeys,
-          benchmark_identification_permitted: benchmarkIdentPermitted,
-          budget_ceilings: budgets,
-          reviewer_id: reviewerId,
-        }),
+      const data = await createPolicy({
+        name,
+        evaluation_cutoff: zonedMidnightToIso(cutoffDate, timezone),
+        cutoff_timezone: timezone,
+        allowed_tools: ['search', 'fetch'],
+        allowed_source_classes: allowedSources,
+        prohibited_answer_key_access: prohibitAnswerKeys,
+        benchmark_identification_permitted: benchmarkIdentPermitted,
+        data_classification: dataClassification,
+        reviewer_identity: reviewerId,
+        max_concurrent_discovery_tasks: 2,
+        retention_profile: 'pilot_standard_30_90',
+        ...budgets,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create evaluation policy');
-      }
-
-      const data: PolicyResponse = await response.json();
       setCreatedPolicy(data);
       onPolicyCreated?.(data);
     } catch (err) {
-      console.error(err);
+      setSubmitError(errorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -90,7 +102,47 @@ export function PolicyForm({ onPolicyCreated }: PolicyFormProps) {
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {submitError && (
+            <Alert variant="danger" title="Policy was not created">
+              {submitError}
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="policy-name" className="block text-xs font-semibold text-slate-700 mb-1">
+                  Policy Name <span className="text-red-600">*</span>
+                </label>
+                <input
+                  id="policy-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  maxLength={256}
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm text-slate-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600"
+                />
+              </div>
+              <div>
+                <label htmlFor="data-classification" className="block text-xs font-semibold text-slate-700 mb-1">
+                  Data Classification
+                </label>
+                <div className="relative inline-flex items-center w-full">
+                  <select
+                    id="data-classification"
+                    value={dataClassification}
+                    onChange={(e) => setDataClassification(e.target.value as typeof dataClassification)}
+                    className="w-full appearance-none bg-white border border-slate-300 rounded-lg pl-3 pr-8 py-2 text-xs sm:text-sm text-slate-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600 cursor-pointer"
+                  >
+                    <option value="synthetic">Synthetic</option>
+                    <option value="public">Public</option>
+                    <option value="confidential">Confidential (external discovery is policy-blocked)</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 pointer-events-none" aria-hidden="true" />
+                </div>
+              </div>
+            </div>
+
             {/* Temporal Cutoff Configuration */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
@@ -137,12 +189,8 @@ export function PolicyForm({ onPolicyCreated }: PolicyFormProps) {
                 <legend className="block text-xs font-semibold text-slate-700 mb-2">
                   Allowed Source Classes
                 </legend>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[
-                    { id: 'repository', label: 'Public Repositories', desc: 'Code and release repositories' },
-                    { id: 'research_web', label: 'Research Web', desc: 'ArXiv, docs, and search index' },
-                    { id: 'conditional_mirror', label: 'Mirror Discovery', desc: 'Explicit mirror candidates' },
-                  ].map((src) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {SOURCE_CLASSES.map((src) => {
                     const checked = allowedSources.includes(src.id);
                     return (
                       <label
@@ -215,9 +263,9 @@ export function PolicyForm({ onPolicyCreated }: PolicyFormProps) {
                     type="number"
                     min={1}
                     max={20}
-                    value={budgets.max_search_queries_per_item}
+                    value={budgets.max_queries_per_item}
                     onChange={(e) =>
-                      setBudgets({ ...budgets, max_search_queries_per_item: Number(e.target.value) })
+                      setBudgets({ ...budgets, max_queries_per_item: Number(e.target.value) })
                     }
                     className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600"
                   />
@@ -231,10 +279,10 @@ export function PolicyForm({ onPolicyCreated }: PolicyFormProps) {
                     id="max-pages"
                     type="number"
                     min={1}
-                    max={30}
-                    value={budgets.max_fetched_pages_per_item}
+                    max={50}
+                    value={budgets.max_fetches_per_item}
                     onChange={(e) =>
-                      setBudgets({ ...budgets, max_fetched_pages_per_item: Number(e.target.value) })
+                      setBudgets({ ...budgets, max_fetches_per_item: Number(e.target.value) })
                     }
                     className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600"
                   />
@@ -248,10 +296,11 @@ export function PolicyForm({ onPolicyCreated }: PolicyFormProps) {
                     id="deadline-sec"
                     type="number"
                     min={60}
+                    max={86400}
                     step={60}
-                    value={budgets.max_deadline_seconds}
+                    value={budgets.deadline_seconds}
                     onChange={(e) =>
-                      setBudgets({ ...budgets, max_deadline_seconds: Number(e.target.value) })
+                      setBudgets({ ...budgets, deadline_seconds: Number(e.target.value) })
                     }
                     className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600"
                   />
@@ -264,11 +313,11 @@ export function PolicyForm({ onPolicyCreated }: PolicyFormProps) {
                   <input
                     id="monetary-ceiling"
                     type="number"
-                    min={1}
+                    min={0}
                     step={0.5}
-                    value={budgets.monetary_ceiling_usd}
+                    value={budgets.cost_ceiling_usd}
                     onChange={(e) =>
-                      setBudgets({ ...budgets, monetary_ceiling_usd: Number(e.target.value) })
+                      setBudgets({ ...budgets, cost_ceiling_usd: Number(e.target.value) })
                     }
                     className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600"
                   />
@@ -280,6 +329,7 @@ export function PolicyForm({ onPolicyCreated }: PolicyFormProps) {
             <div>
               <label htmlFor="reviewer-id" className="block text-xs font-semibold text-slate-700 mb-1">
                 Reviewer Identity <span className="text-red-600">*</span>
+                <span className="font-normal text-slate-500"> (recorded on the policy; review decisions are attributed to the signed-in user)</span>
               </label>
               <input
                 id="reviewer-id"
@@ -317,9 +367,16 @@ export function PolicyForm({ onPolicyCreated }: PolicyFormProps) {
                 </h3>
               </div>
               {createdPolicy && (
-                <Badge variant="success" className="font-mono">
-                  Version: {createdPolicy.policy_version_id} (Immutable)
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="success" className="font-mono">
+                    Version: {createdPolicy.policy_version_id} (Immutable)
+                  </Badge>
+                  {onContinue && (
+                    <Button size="sm" onClick={onContinue} icon={<ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />}>
+                      Next: launch investigation
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           </CardHeader>
@@ -353,10 +410,10 @@ export function PolicyForm({ onPolicyCreated }: PolicyFormProps) {
                   <DollarSign className="w-4 h-4 text-indigo-600" aria-hidden="true" /> Budget Cap
                 </span>
                 <p className="text-slate-900 font-medium">
-                  Ceiling: <strong>${budgets.monetary_ceiling_usd.toFixed(2)} USD</strong>
+                  Ceiling: <strong>${budgets.cost_ceiling_usd.toFixed(2)} USD</strong>
                 </p>
                 <p className="text-slate-500 text-[11px]">
-                  Max {budgets.max_search_queries_per_item} queries, {budgets.max_fetched_pages_per_item} pages/item
+                  Max {budgets.max_queries_per_item} queries, {budgets.max_fetches_per_item} fetches/item
                 </p>
               </div>
             </div>

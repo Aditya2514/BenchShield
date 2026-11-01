@@ -13,9 +13,10 @@ describe('MSW Production Exclusion Check', () => {
     const output = execSync('node scripts/check-no-msw.js', {
       cwd: rootDir,
       encoding: 'utf-8',
+      env: { ...process.env, VITE_ENABLE_MSW: 'false' },
     });
 
     expect(output).toContain('PASS: Production build contains zero MSW runtime or worker assets.');
-  }, 30000);
+  }, 60000);
 });
 

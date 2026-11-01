@@ -6,7 +6,7 @@ import openapiTS, { astToString } from 'openapi-typescript';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const openApiPath = path.resolve(__dirname, '../../../docs/contracts/openapi.yaml');
+const openApiPath = path.resolve(__dirname, '../../../docs/contracts/openapi.json');
 const outputPath = path.resolve(__dirname, '../src/schema.d.ts');
 
 async function generate() {
@@ -17,7 +17,7 @@ async function generate() {
   const ast = await openapiTS(new URL(`file://${openApiPath}`));
   const types = astToString(ast);
 
-  const header = `/* DO NOT EDIT - AUTOMATICALLY GENERATED FROM docs/contracts/openapi.yaml */\n\n`;
+  const header = `/* DO NOT EDIT - AUTOMATICALLY GENERATED FROM docs/contracts/openapi.json */\n\n`;
   const content = header + types;
 
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
