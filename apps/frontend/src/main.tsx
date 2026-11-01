@@ -6,7 +6,9 @@ import './index.css';
 async function enableMocking() {
   if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_MSW === 'true') {
     const { worker } = await import('./mocks/browser.js');
-    return worker.start();
+    return worker.start({
+      quiet: true,
+    });
   }
 }
 
