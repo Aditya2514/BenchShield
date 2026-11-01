@@ -252,6 +252,9 @@ class AuditService:
                     )
 
                 fid = f"fnd_{uuid4().hex[:16]}"
+                locator = _locate(content, item.question)
+                start = max(0, (locator.char_offset_start or 0) - 200) if locator else 0
+                preview = _redact(content[start : start + PREVIEW_CHARS], gold_text)
                 snapshot = SourceSnapshot(
                     snapshot_id=cand.id,
                     source_url=cand.url,
@@ -260,9 +263,9 @@ class AuditService:
                     source_family=_source_family(cand.url),
                     content_hash=cand.content_sha256
                     or hashlib.sha256(content.encode()).hexdigest(),
-                    raw_content_preview=_redact(content[:PREVIEW_CHARS], gold_text) or None,
+                    raw_content_preview=preview or None,
                     extraction_version=EXTRACTION_VERSION,
-                    excerpt_locator=_locate(content, item.question),
+                    excerpt_locator=locator,
                     media_type=(cand.evidence_metadata or {}).get("media_type", "text/html"),
                     availability=(
                         SnapshotAvailability.AVAILABLE

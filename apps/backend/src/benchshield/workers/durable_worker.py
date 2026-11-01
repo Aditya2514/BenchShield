@@ -322,7 +322,8 @@ class DurableTaskWorker:
                         url=snapshot.final_url or url,
                         source_domain=snapshot.title or "unknown",
                         title=snapshot.title,
-                        snapshot_content=snapshot.content[:2000],  # bounded excerpt preview
+                        # Bounded evidence text for the verifier; clients only ever see a short redacted preview.
+                        snapshot_content=snapshot.content[:200_000],
                         content_sha256=snapshot.content_sha256,
                         status="candidate",
                         evidence_metadata={
