@@ -43,3 +43,4 @@ Additionally, BenchShield's core privacy guarantee requires that reference answe
 ### Negative / Trade-offs
 - An additional database role and connection pool (`database_verifier_url`) must be maintained in environments running verification jobs.
 - Re-importing identical answers does not produce deterministic hashes; deduplication is handled via explicit idempotency keys and internal content hashing rather than public identities.
+

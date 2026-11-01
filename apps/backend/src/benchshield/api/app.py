@@ -27,7 +27,7 @@ from fastapi import (
     status,
 )
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -59,6 +59,7 @@ from benchshield.domain.models.reviews import ReviewCreateRequest, ReviewDecisio
 from benchshield.persistence.database import check_database_readiness, get_db_session
 from benchshield.services.benchmark_service import BenchmarkService
 from benchshield.services.intake_service import BenchmarkIntakeService
+from benchshield.services.investigation_service import InvestigationService
 from benchshield.services.policy_service import PolicyService
 
 
@@ -391,7 +392,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return await service.get_policy_version(version_id, actor=actor)
 
     # -----------------------------------------------------------------------
-    # Deferred Endpoints (Phase B2+)
+    # Operational Endpoints (Phase B2)
     # -----------------------------------------------------------------------
     @app.post(
         "/api/v1/investigations",
@@ -403,11 +404,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     async def launch_investigation(
         payload: InvestigationCreateRequest,
+        request: Request,
         idempotency_key: Annotated[
             str, Header(alias="Idempotency-Key", description="Unique client idempotency key")
         ],
+        actor: AuthenticatedActor = Depends(require_permission(Permission.LAUNCH_INVESTIGATION)),
+        db: AsyncSession = Depends(get_db_session),
     ):
-        _raise_contract_placeholder("B2")
+        service = InvestigationService(db, settings=cfg)
+        correlation_id = getattr(request.state, "correlation_id", "req_anon")
+        return await service.launch_investigation(
+            payload,
+            actor=actor,
+            correlation_id=correlation_id,
+            idempotency_key=idempotency_key,
+        )
 
     @app.get(
         "/api/v1/investigations/{investigation_id}",
@@ -417,8 +428,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         description="Retrieve investigation state, item counts, partial coverage, budget consumption, and limitations.",
         tags=["Investigations"],
     )
-    async def get_investigation(investigation_id: str):
-        _raise_contract_placeholder("B2")
+    async def get_investigation(
+        investigation_id: str,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.READ_INVESTIGATION)),
+        db: AsyncSession = Depends(get_db_session),
+    ):
+        service = InvestigationService(db, settings=cfg)
+        return await service.get_investigation(investigation_id, actor=actor)
 
     @app.get(
         "/api/v1/investigations/{investigation_id}/events",
@@ -446,10 +462,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "model": ErrorResponse,
                 "description": "Cursor expired (snapshot refresh required)",
             },
-            501: {
-                "model": ErrorResponse,
-                "description": "Contract placeholder only (deferred to B2)",
-            },
         },
         summary="Stream investigation events",
         description=(
@@ -463,8 +475,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         last_event_id: Annotated[
             str | None, Header(alias="Last-Event-ID", description="Reconnect cursor ID")
         ] = None,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.READ_INVESTIGATION)),
+        db: AsyncSession = Depends(get_db_session),
     ):
-        _raise_contract_placeholder("B2")
+        service = InvestigationService(db, settings=cfg)
+        # Pre-flight check to verify access and 404
+        await service.get_investigation(investigation_id, actor=actor)
+        return StreamingResponse(
+            service.get_event_stream(investigation_id, actor=actor, last_event_id=last_event_id),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     @app.post(
         "/api/v1/investigations/{investigation_id}/cancel",
@@ -477,10 +502,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def cancel_investigation(
         investigation_id: str,
         payload: InvestigationCancelRequest,
+        request: Request,
         idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.CANCEL_INVESTIGATION)),
+        db: AsyncSession = Depends(get_db_session),
     ):
-        _raise_contract_placeholder("B2")
+        service = InvestigationService(db, settings=cfg)
+        correlation_id = getattr(request.state, "correlation_id", "req_anon")
+        return await service.cancel_investigation(
+            investigation_id,
+            payload,
+            actor=actor,
+            correlation_id=correlation_id,
+            idempotency_key=idempotency_key,
+        )
 
+    # -----------------------------------------------------------------------
+    # Deferred Endpoints (Phase B3+)
+    # -----------------------------------------------------------------------
     @app.get(
         "/api/v1/investigations/{investigation_id}/findings",
         response_model=FindingListResponse,

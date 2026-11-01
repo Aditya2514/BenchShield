@@ -139,8 +139,8 @@ def test_defect4_sse_endpoint_advertises_event_stream_not_json_array():
 
 def test_defect5_http_placeholder_and_validation_errors_match_error_response():
     """Defect 5: HTTP 501 and HTTP 422 error bodies must conform to ErrorResponse schema."""
-    # Test 501 placeholder
-    res_501 = client.get("/api/v1/investigations/inv_test_501")
+    # Test 501 placeholder on deferred B3 endpoint
+    res_501 = client.get("/api/v1/investigations/inv_test_501/findings")
     assert res_501.status_code == 501
     body_501 = res_501.json()
     # Must validate as ErrorResponse
@@ -496,9 +496,9 @@ def test_section_e_event_stream_documentation_and_contract():
     assert "event:" in desc
     assert "data:" in desc
 
-    # Endpoint returns 501 with ErrorResponse
+    # Endpoint requires auth and returns 401 with ErrorResponse
     res = client.get("/api/v1/investigations/inv_live_stream_test/events")
-    assert res.status_code == 501
+    assert res.status_code == 401
     err = ErrorResponse.model_validate(res.json())
-    assert err.error == ErrorCode.NOT_IMPLEMENTED
+    assert err.error == ErrorCode.FORBIDDEN or err.error == "forbidden"
     assert "detail" not in res.json()

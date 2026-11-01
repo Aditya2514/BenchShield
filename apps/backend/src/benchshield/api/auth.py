@@ -39,6 +39,8 @@ class Permission(StrEnum):
     READ_POLICY = "read_policy"
     CREATE_POLICY = "create_policy"
     LAUNCH_INVESTIGATION = "launch_investigation"
+    READ_INVESTIGATION = "read_investigation"
+    CANCEL_INVESTIGATION = "cancel_investigation"
     REVIEW_FINDINGS = "review_findings"
     EXPORT_REPORTS = "export_reports"
     ADMIN_WORKSPACE = "admin_workspace"
@@ -49,6 +51,7 @@ ROLE_PERMISSIONS: dict[WorkspaceRole, set[Permission]] = {
     WorkspaceRole.VIEWER: {
         Permission.READ_BENCHMARK,
         Permission.READ_POLICY,
+        Permission.READ_INVESTIGATION,
     },
     WorkspaceRole.OPERATOR: {
         Permission.READ_BENCHMARK,
@@ -56,6 +59,8 @@ ROLE_PERMISSIONS: dict[WorkspaceRole, set[Permission]] = {
         Permission.IMPORT_BENCHMARK,
         Permission.CREATE_POLICY,
         Permission.LAUNCH_INVESTIGATION,
+        Permission.READ_INVESTIGATION,
+        Permission.CANCEL_INVESTIGATION,
     },
     WorkspaceRole.EVALUATOR: {
         Permission.READ_BENCHMARK,
@@ -63,6 +68,8 @@ ROLE_PERMISSIONS: dict[WorkspaceRole, set[Permission]] = {
         Permission.IMPORT_BENCHMARK,
         Permission.CREATE_POLICY,
         Permission.LAUNCH_INVESTIGATION,
+        Permission.READ_INVESTIGATION,
+        Permission.CANCEL_INVESTIGATION,
         Permission.REVIEW_FINDINGS,
     },
     WorkspaceRole.ADMIN: {
@@ -71,6 +78,8 @@ ROLE_PERMISSIONS: dict[WorkspaceRole, set[Permission]] = {
         Permission.IMPORT_BENCHMARK,
         Permission.CREATE_POLICY,
         Permission.LAUNCH_INVESTIGATION,
+        Permission.READ_INVESTIGATION,
+        Permission.CANCEL_INVESTIGATION,
         Permission.REVIEW_FINDINGS,
         Permission.EXPORT_REPORTS,
         Permission.ADMIN_WORKSPACE,

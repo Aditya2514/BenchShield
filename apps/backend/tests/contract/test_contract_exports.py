@@ -104,27 +104,20 @@ def test_fixtures_manifest_structure_and_validity():
 
 def test_contract_app_placeholder_endpoints_return_501_error_response():
     """Verify that deferred endpoints return 501 matching declared ErrorResponse."""
-    res = client.post(
-        "/api/v1/investigations",
-        json={
-            "workspace_id": "ws",
-            "policy_version_id": "polv_1",
-            "benchmark_version_id": "bmv_1",
-            "budget_limits": {
-                "max_queries": 10,
-                "max_fetches": 10,
-                "max_duration_seconds": 60,
-                "cost_ceiling_usd": 5.0,
-            },
-        },
-        headers={"Idempotency-Key": "idemp_test_123"},
-    )
+    res = client.get("/api/v1/investigations/inv_123/findings")
     assert res.status_code == 501
     err = ErrorResponse.model_validate(res.json())
     assert err.error == ErrorCode.NOT_IMPLEMENTED
     assert "Contract placeholder only" in err.message
 
-    res_get = client.get("/api/v1/investigations/inv_123")
-    assert res_get.status_code == 501
-    err_get = ErrorResponse.model_validate(res_get.json())
-    assert err_get.error == ErrorCode.NOT_IMPLEMENTED
+    res_review = client.post(
+        "/api/v1/findings/find_123/reviews",
+        json={
+            "expected_version": 1,
+            "action": "confirm",
+            "reason": "Confirmed evidence match",
+        },
+    )
+    assert res_review.status_code == 501
+    err_review = ErrorResponse.model_validate(res_review.json())
+    assert err_review.error == ErrorCode.NOT_IMPLEMENTED

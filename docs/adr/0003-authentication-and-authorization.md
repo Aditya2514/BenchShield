@@ -51,3 +51,4 @@ Crucial boundaries must be enforced:
 - Strict tenant isolation enforced at both the API boundary and the database relational layer.
 - Zero reliance on client-asserted permissions.
 - Full test coverage in `tests/integration/test_b1_secure_foundation.py` verifying cross-workspace reads, writes, and composite foreign key rejections.
+

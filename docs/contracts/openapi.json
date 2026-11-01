@@ -3204,6 +3204,42 @@
               "title": "Idempotency-Key",
               "type": "string"
             }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
+            }
           }
         ],
         "requestBody": {
@@ -3326,6 +3362,42 @@
             "schema": {
               "title": "Investigation Id",
               "type": "string"
+            }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
             }
           }
         ],
@@ -3455,6 +3527,42 @@
                 }
               ],
               "title": "Idempotency-Key"
+            }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
             }
           }
         ],
@@ -3597,6 +3705,42 @@
               "description": "Reconnect cursor ID",
               "title": "Last-Event-Id"
             }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
+            }
           }
         ],
         "responses": {
@@ -3702,7 +3846,7 @@
                 }
               }
             },
-            "description": "Contract placeholder only (deferred to B2)"
+            "description": "Operation deferred to subsequent implementation phase"
           }
         },
         "summary": "Stream investigation events",

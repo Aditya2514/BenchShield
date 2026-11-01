@@ -230,3 +230,278 @@ class ProtectedAnswerModel(Base):
     gold_choice_id = Column(String(32), nullable=True)
     content_hash = Column(String(64), nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+
+
+# ---------------------------------------------------------------------------
+# Phase B2 Models: Investigations, Tasks, Hypotheses, Leases, Budgets, Sources
+# ---------------------------------------------------------------------------
+
+
+class InvestigationModel(Base):
+    """Investigation root execution entity."""
+
+    __tablename__ = "investigations"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "id", name="uq_investigations_ws_id"),
+        ForeignKeyConstraint(
+            ["workspace_id", "benchmark_version_id"],
+            ["public.benchmark_versions.workspace_id", "public.benchmark_versions.id"],
+            ondelete="RESTRICT",
+        ),
+        ForeignKeyConstraint(
+            ["workspace_id", "policy_version_id"],
+            [
+                "public.evaluation_policy_versions.workspace_id",
+                "public.evaluation_policy_versions.id",
+            ],
+            ondelete="RESTRICT",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(
+        String(64), ForeignKey("public.workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    benchmark_version_id = Column(String(64), nullable=False)
+    policy_version_id = Column(String(64), nullable=False)
+    actor_id = Column(String(64), nullable=False)
+    status = Column(String(32), nullable=False, default="queued")
+    substatus = Column(String(64), nullable=True)
+    is_partial = Column(Boolean, nullable=False, default=False)
+    total_items = Column(Integer, nullable=False, default=0)
+    investigated_items = Column(Integer, nullable=False, default=0)
+    strategy_version = Column(String(32), nullable=False, default="v1")
+    provider_config = Column(JSONB, nullable=False, default=dict)
+    budget_config = Column(JSONB, nullable=False, default=dict)
+    cancellation_reason = Column(Text, nullable=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+
+
+class InvestigationTaskModel(Base):
+    """Item-level discovery task queued or executing under an investigation."""
+
+    __tablename__ = "investigation_tasks"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "id", name="uq_inv_tasks_ws_id"),
+        UniqueConstraint(
+            "workspace_id", "investigation_id", "item_version_id", name="uq_inv_tasks_ws_inv_item"
+        ),
+        ForeignKeyConstraint(
+            ["workspace_id", "investigation_id"],
+            ["public.investigations.workspace_id", "public.investigations.id"],
+            ondelete="CASCADE",
+        ),
+        ForeignKeyConstraint(
+            ["workspace_id", "item_version_id"],
+            ["public.item_versions.workspace_id", "public.item_versions.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(String(64), nullable=False)
+    investigation_id = Column(String(64), nullable=False)
+    item_version_id = Column(String(64), nullable=False)
+    item_index = Column(Integer, nullable=False, default=1)
+    status = Column(String(32), nullable=False, default="pending")
+    current_attempt = Column(Integer, nullable=False, default=0)
+    max_attempts = Column(Integer, nullable=False, default=3)
+    claimed_by = Column(String(64), nullable=True)
+    lease_expires_at = Column(DateTime(timezone=True), nullable=True)
+    fencing_token = Column(Integer, nullable=False, default=0)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+
+
+class InvestigationHypothesisModel(Base):
+    """Planned query hypothesis for an investigation task."""
+
+    __tablename__ = "investigation_hypotheses"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "task_id"],
+            ["public.investigation_tasks.workspace_id", "public.investigation_tasks.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(String(64), nullable=False)
+    investigation_id = Column(String(64), nullable=False)
+    task_id = Column(String(64), nullable=False)
+    hypothesis_type = Column(String(64), nullable=False)
+    rationale = Column(Text, nullable=False)
+    planned_queries = Column(JSONB, nullable=False)
+    status = Column(String(32), nullable=False, default="planned")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+
+
+class TaskAttemptModel(Base):
+    """Execution attempt log and lease tracking."""
+
+    __tablename__ = "task_attempts"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "task_id"],
+            ["public.investigation_tasks.workspace_id", "public.investigation_tasks.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(String(64), nullable=False)
+    task_id = Column(String(64), nullable=False)
+    attempt_number = Column(Integer, nullable=False)
+    worker_id = Column(String(64), nullable=False)
+    fencing_token = Column(Integer, nullable=False)
+    started_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+    heartbeat_at = Column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+    finished_at = Column(DateTime(timezone=True), nullable=True)
+    status = Column(String(32), nullable=False, default="running")
+    error_message = Column(Text, nullable=True)
+
+
+class BudgetReservationModel(Base):
+    """Resource reservation tracking for queries, fetches, tokens, and spend."""
+
+    __tablename__ = "budget_reservations"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "investigation_id"],
+            ["public.investigations.workspace_id", "public.investigations.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(String(64), nullable=False)
+    investigation_id = Column(String(64), nullable=False)
+    task_id = Column(String(64), nullable=True)
+    resource_type = Column(String(32), nullable=False)  # queries, fetches, tokens, cost_cents
+    reserved_amount = Column(Integer, nullable=False)
+    used_amount = Column(Integer, nullable=False, default=0)
+    status = Column(String(32), nullable=False, default="reserved")  # reserved, committed, released
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+
+
+class SearchExecutionModel(Base):
+    """Executed search query audit record."""
+
+    __tablename__ = "search_executions"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "task_id"],
+            ["public.investigation_tasks.workspace_id", "public.investigation_tasks.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(String(64), nullable=False)
+    investigation_id = Column(String(64), nullable=False)
+    task_id = Column(String(64), nullable=False)
+    specialist = Column(String(64), nullable=False)
+    query = Column(Text, nullable=False)
+    provider = Column(String(64), nullable=False)
+    result_count = Column(Integer, nullable=False, default=0)
+    results_summary = Column(JSONB, nullable=False, default=list)
+    cost_cents = Column(Integer, nullable=False, default=0)
+    latency_ms = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+
+
+class CandidateSourceModel(Base):
+    """Candidate evidence source discovered in Phase B2 (pending scientific verification)."""
+
+    __tablename__ = "candidate_sources"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "task_id"],
+            ["public.investigation_tasks.workspace_id", "public.investigation_tasks.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(String(64), nullable=False)
+    investigation_id = Column(String(64), nullable=False)
+    task_id = Column(String(64), nullable=False)
+    url = Column(Text, nullable=False)
+    source_domain = Column(String(255), nullable=False)
+    title = Column(String(512), nullable=True)
+    snapshot_content = Column(Text, nullable=True)
+    content_sha256 = Column(String(64), nullable=True)
+    status = Column(String(32), nullable=False, default="candidate")
+    evidence_metadata = Column(JSONB, nullable=False, default=dict)
+    retrieved_at = Column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+
+
+class OperationalEventModel(Base):
+    """Durable event outbox record for SSE streaming and replay."""
+
+    __tablename__ = "operational_events"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id", "investigation_id", "sequence_number", name="uq_op_events_seq"
+        ),
+        ForeignKeyConstraint(
+            ["workspace_id", "investigation_id"],
+            ["public.investigations.workspace_id", "public.investigations.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(String(64), nullable=False)
+    investigation_id = Column(String(64), nullable=False)
+    sequence_number = Column(Integer, nullable=False)
+    event_type = Column(String(64), nullable=False)
+    payload = Column(JSONB, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+
+
+class InvestigationIdempotencyModel(Base):
+    """Idempotency tracking record for investigation launch and cancellation."""
+
+    __tablename__ = "investigation_idempotency_records"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id", "idempotency_key", "operation", name="uq_inv_idempotency_ws_key_op"
+        ),
+        ForeignKeyConstraint(
+            ["workspace_id", "investigation_id"],
+            ["public.investigations.workspace_id", "public.investigations.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(
+        String(64), ForeignKey("public.workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    idempotency_key = Column(String(255), nullable=False)
+    operation = Column(String(64), nullable=False)
+    request_hash = Column(String(64), nullable=False)
+    investigation_id = Column(String(64), nullable=False)
+    response_status = Column(Integer, nullable=False)
+    response_body = Column(JSONB, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
