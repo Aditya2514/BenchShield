@@ -4,6 +4,7 @@ import type {
   EvaluationPolicyVersion,
   ExperimentConfig,
   ExperimentCreateRequest,
+  ExperimentResultsResponse,
   FindingListResponse,
   FindingView,
   InvestigationCancelResponse,
@@ -103,6 +104,10 @@ export function launchExperiment(investigationId: string, payload: ExperimentCre
     method: 'POST',
     json: payload,
   });
+}
+
+export function getExperiment(experimentId: string) {
+  return request<ExperimentResultsResponse>(`${API}/experiments/${enc(experimentId)}`);
 }
 
 export function createReport(investigationId: string) {

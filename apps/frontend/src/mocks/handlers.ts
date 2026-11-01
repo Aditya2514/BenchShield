@@ -331,10 +331,40 @@ export const handlers = [
     return HttpResponse.json(decision, { status: 201 });
   }),
 
-  http.post(`${API}/investigations/:id/experiments`, ({ request }) => {
+  http.post(`${API}/investigations/:id/experiments`, async ({ request, params }) => {
     const denied = authFailure(request);
     if (denied) return denied;
-    return error(501, 'not_implemented', 'Contract placeholder only. Operational endpoint implementation is deferred to B4+.');
+    const run = getRun(String(params.id));
+    if (!run) return error(404, 'not_found', `Investigation '${params.id}' not found.`);
+    const body = (await request.json()) as { conditions: string[]; provider_id: string; model_identifier: string; model_revision?: string | null };
+    const id = `exp_mock_${++mockDb.counter}`;
+    const conditions = body.conditions?.length ? body.conditions : ['control', 'blind', 'evaluation_aware'];
+    const items = run.findings.length ? [...new Set(run.findings.map((f) => f.item_version_id))] : ['itv_mock'];
+    const runs = conditions.flatMap((c) => items.map((itv, k) => ({
+      run_id: `run_${id}_${c}_${k}`, experiment_id: id, item_version_id: itv, condition: c, run_status: 'completed',
+      grader_outcome: c === 'control' ? 'incorrect' : 'correct', attribution: c === 'control' ? 'none' : 'retrieval_observed',
+      policy_compliance: c === 'control' ? 'permitted' : 'violated', observable_tool_calls: c === 'control' ? [] : ['search(...)', 'fetch(...)'],
+    })));
+    mockDb.experiments.set(id, runs);
+    return HttpResponse.json({
+      experiment_id: id, investigation_id: params.id, benchmark_version_id: 'bmv_mock', policy_version_id: 'polv_mock',
+      conditions, provider_id: body.provider_id, model_identifier: body.model_identifier, model_revision: body.model_revision ?? null,
+      prompt_version: 'prompt_v1.0', grader_version: 'grader_v1.0', reasoning_budget: 1000, repetitions: 1, created_at: new Date().toISOString(),
+    }, { status: 202 });
+  }),
+
+  http.get(`${API}/experiments/:id`, ({ request, params }) => {
+    const denied = authFailure(request);
+    if (denied) return denied;
+    const runs = mockDb.experiments.get(String(params.id));
+    if (!runs) return error(404, 'not_found', `Experiment '${params.id}' not found.`);
+    return HttpResponse.json({
+      experiment_id: params.id, runs,
+      completed_runs_count: runs.filter((r) => r.run_status === 'completed').length,
+      incomplete_runs_count: runs.filter((r) => r.run_status !== 'completed').length,
+      prohibited_retrieval_count: runs.filter((r) => r.policy_compliance === 'violated').length,
+      correct_answer_count: runs.filter((r) => r.grader_outcome === 'correct').length,
+    });
   }),
 
   http.post(`${API}/investigations/:id/reports`, ({ request, params }) => {

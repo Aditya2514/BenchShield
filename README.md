@@ -318,6 +318,8 @@ npm install && npm run dev --workspace=apps/frontend
 
 Open http://localhost:5173 and click a dev user to sign in. Vite proxies `/api` to the backend on port 8000. Flow: **Benchmarks** → **Policies** → **Investigations** (live events, then *Run Verification*) → **Findings** (append-only reviews) → **Reports** (freeze + authorized download). Experiments show "not available" until backend phase B4.
 
+End-to-end browser check (with both servers running): `node scripts/e2e_browser.cjs` drives the full audit in Chromium and saves screenshots to `e2e-results/`.
+
 Demo mode without a backend: set `VITE_ENABLE_MSW=true` in `apps/frontend/.env`. Mock data in `fixtures/scenarios` was captured from the real backend and is schema-checked against `docs/contracts/openapi.json`.
 
 

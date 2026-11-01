@@ -101,6 +101,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/experiments/{experiment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get experiment results
+         * @description Retrieve aggregated results and raw observable execution runs for an attacker experiment.
+         */
+        get: operations["get_experiment_api_v1_experiments__experiment_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/findings/{finding_id}": {
         parameters: {
             query?: never;
@@ -402,6 +422,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/retention/cleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger retention cleanup
+         * @description Trigger asynchronous retention cleanup and evidence deletion (B5).
+         */
+        post: operations["cleanup_retention_api_v1_retention_cleanup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -441,11 +481,86 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AdversarialRun
+         * @description Detailed execution record for an item in a specific experimental condition.
+         */
+        AdversarialRun: {
+            /**
+             * Answer Bearing Content Retrieved
+             * @description Whether answer-bearing text was pulled into model context
+             * @default unknown
+             * @enum {string}
+             */
+            answer_bearing_content_retrieved: "yes" | "no" | "unknown";
+            /**
+             * @description Level of causal or observable attribution
+             * @default none
+             */
+            attribution: components["schemas"]["AttributionLevel"];
+            /** @description Control, blind, or evaluation-aware */
+            condition: components["schemas"]["ExperimentCondition"];
+            /**
+             * Experiment Id
+             * @description Parent experiment ID
+             */
+            experiment_id: string;
+            /**
+             * Failure Reason
+             * @description Reason if failed or incomplete
+             */
+            failure_reason?: string | null;
+            /**
+             * Generated Output
+             * @description Attacker model's generated answer text
+             */
+            generated_output?: string | null;
+            /**
+             * @description Grading outcome from trusted grading service
+             * @default unsupported
+             */
+            grader_outcome: components["schemas"]["GraderOutcome"];
+            /**
+             * Item Version Id
+             * @description Target item version ID
+             */
+            item_version_id: string;
+            /**
+             * Observable Tool Calls
+             * @description Observable tool actions
+             */
+            observable_tool_calls?: components["schemas"]["ObservableToolCall"][];
+            /**
+             * @description Whether evaluation policy rules were violated
+             * @default unknown
+             */
+            policy_compliance: components["schemas"]["PolicyCompliance"];
+            /**
+             * Run Id
+             * @description Unique run identifier
+             */
+            run_id: string;
+            /** @description Status of the run */
+            run_status: components["schemas"]["ExperimentRunStatus"];
+            /**
+             * Source Discovered
+             * @description Whether an external source containing task answers was discovered
+             * @default unknown
+             * @enum {string}
+             */
+            source_discovered: "yes" | "no" | "unknown";
+        };
+        /**
          * AnswerMatch
          * @description Assessment of answer agreement between discovered content and reference.
          * @enum {string}
          */
         AnswerMatch: "exact" | "normalized" | "task_specific" | "mismatch" | "not_applicable";
+        /**
+         * AttributionLevel
+         * @description Degree of attribution observed between retrieval and model output.
+         * @enum {string}
+         */
+        AttributionLevel: "none" | "retrieval_observed" | "use_supported" | "intervention_supported";
         /**
          * BenchmarkImportRequest
          * @description Benchmark creation payload containing items and metadata.
@@ -1166,6 +1281,48 @@ export interface components {
             reasoning_budget: number;
         };
         /**
+         * ExperimentResultsResponse
+         * @description Summary and details of completed experiment runs.
+         */
+        ExperimentResultsResponse: {
+            /**
+             * Completed Runs Count
+             * @description Runs completed cleanly
+             */
+            completed_runs_count: number;
+            /**
+             * Correct Answer Count
+             * @description Runs graded correct
+             */
+            correct_answer_count: number;
+            /**
+             * Experiment Id
+             * @description Experiment ID
+             */
+            experiment_id: string;
+            /**
+             * Incomplete Runs Count
+             * @description Runs interrupted or failed
+             */
+            incomplete_runs_count: number;
+            /**
+             * Prohibited Retrieval Count
+             * @description Runs with prohibited retrieval observed
+             */
+            prohibited_retrieval_count: number;
+            /**
+             * Runs
+             * @description Run records
+             */
+            runs?: components["schemas"]["AdversarialRun"][];
+        };
+        /**
+         * ExperimentRunStatus
+         * @description Execution status of an individual experimental run.
+         * @enum {string}
+         */
+        ExperimentRunStatus: "not_requested" | "queued" | "running" | "completed" | "failed" | "cancelled" | "policy_blocked" | "budget_exhausted" | "incomplete";
+        /**
          * ExposureType
          * @description Independent exposure claim types.
          * @enum {string}
@@ -1256,6 +1413,12 @@ export interface components {
              */
             version: number;
         };
+        /**
+         * GraderOutcome
+         * @description Outcome of grading an attacker experiment model output.
+         * @enum {string}
+         */
+        GraderOutcome: "correct" | "incorrect" | "unsupported" | "error";
         /**
          * ImportRowError
          * @description Detailed validation error for a single row in an import batch.
@@ -1571,6 +1734,41 @@ export interface components {
              */
             total_count: number;
         };
+        /**
+         * ObservableToolCall
+         * @description Observable tool action recorded during an experimental run.
+         *
+         *     BenchShield records observable external tool actions rather than speculative internal reasoning.
+         */
+        ObservableToolCall: {
+            /**
+             * Observed At
+             * Format: date-time
+             * @description Observation timestamp
+             */
+            observed_at?: string;
+            /**
+             * Query Or Action
+             * @description Action parameters (e.g. search keywords or URL)
+             */
+            query_or_action: string;
+            /**
+             * Response Summary
+             * @description Sanitized summary of tool response
+             */
+            response_summary: string;
+            /**
+             * Tool Name
+             * @description Name of the invoked tool (e.g. 'web_search', 'fetch_page')
+             */
+            tool_name: string;
+        };
+        /**
+         * PolicyCompliance
+         * @description Policy compliance result for an experiment run.
+         * @enum {string}
+         */
+        PolicyCompliance: "permitted" | "violated" | "unknown";
         /**
          * PublicItemMetadata
          * @description Allowlisted, strictly typed public item metadata.
@@ -2473,6 +2671,105 @@ export interface operations {
             };
         };
     };
+    get_experiment_api_v1_experiments__experiment_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Active workspace ID */
+                "X-Workspace-ID"?: string | null;
+                /** @description Bearer <JWT> */
+                authorization?: string | null;
+            };
+            path: {
+                experiment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentResultsResponse"];
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden or policy blocked */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Version or idempotency conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable entity validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Operation deferred to subsequent implementation phase */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_finding_api_v1_findings__finding_id__get: {
         parameters: {
             query?: never;
@@ -3194,7 +3491,12 @@ export interface operations {
     launch_experiment_api_v1_investigations__investigation_id__experiments_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Active workspace ID */
+                "X-Workspace-ID"?: string | null;
+                /** @description Bearer <JWT> */
+                authorization?: string | null;
+            };
             path: {
                 investigation_id: string;
             };
@@ -4022,6 +4324,100 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden or policy blocked */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Version or idempotency conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable entity validation error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Operation deferred to subsequent implementation phase */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cleanup_retention_api_v1_retention_cleanup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
                 };
             };
             /** @description Validation error */
