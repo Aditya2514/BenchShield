@@ -7,7 +7,7 @@ import { setActiveScenario } from '../src/mocks/scenarios.js';
 describe('Frontend Mock Contract Validation & Vocabulary', () => {
   it('renders application shell and displays verified exposure finding dimensions without an opaque score', () => {
     setActiveScenario('1-successful-audit');
-    render(<App />);
+    render(<App defaultTab="findings" />);
 
     expect(screen.getByText('BenchShield')).toBeInTheDocument();
     expect(screen.getByText('Independent Finding Dimensions')).toBeInTheDocument();
@@ -23,7 +23,7 @@ describe('Frontend Mock Contract Validation & Vocabulary', () => {
 
   it('visibly displays partial coverage warning banner in Scenario 2', () => {
     setActiveScenario('2-partial-coverage-outage');
-    render(<App />);
+    render(<App defaultTab="findings" />);
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('Partial Coverage Audit Warning')).toBeInTheDocument();
@@ -34,14 +34,14 @@ describe('Frontend Mock Contract Validation & Vocabulary', () => {
 
   it('displays policy_blocked state banner in Scenario 3', () => {
     setActiveScenario('3-policy-blocked');
-    render(<App />);
+    render(<App defaultTab="findings" />);
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText(/Audit Execution Halted \(policy_blocked\)/)).toBeInTheDocument();
   });
 
   it('allows switching scenarios via the accessible select dropdown', () => {
-    render(<App />);
+    render(<App defaultTab="findings" />);
 
     const select = screen.getByLabelText(/Active Mock Scenario:/i);
     expect(select).toBeInTheDocument();
