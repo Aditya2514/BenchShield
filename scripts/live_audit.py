@@ -236,8 +236,13 @@ async def main(args) -> int:
             ).json()
             dl = (await c.get(rep["download_url"], headers=hdr)).json()
             print(f"  {rep['report_version']} {json.dumps(dl['summary_counts'])}")
+            for cv in dl.get("coverage", []):
+                print(f"  coverage {cv['external_id']:16} sources={cv['sources_retrieved']}")
             for lim in dl["limitations"]:
                 print(f"  - {lim}")
+            starved = [
+                cv["external_id"] for cv in dl.get("coverage", []) if not cv["sources_retrieved"]
+            ]
 
             h("Verdict")
             if adapter.searches and len(adapter.search_errors) == adapter.searches:
@@ -249,8 +254,10 @@ async def main(args) -> int:
                 print(
                     "  WARN: searches ran but no page was fetched/kept. Check fetch errors above."
                 )
+            elif starved:
+                print(f"  WARN: pipeline ran, but no sources retrieved for: {', '.join(starved)}")
             else:
-                print("  OK: discovery, verification and reporting all ran.")
+                print("  OK: discovery, verification and reporting all ran for every item.")
     finally:
         await close_database_connections()
         stack["server"].cleanup()
