@@ -1,0 +1,73 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1080px;height:1350px;font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;color:#E2E8F0;
+background:radial-gradient(900px 600px at 15% 10%,rgba(99,102,241,.35),transparent 60%),radial-gradient(800px 700px at 100% 100%,rgba(192,132,252,.28),transparent 60%),linear-gradient(160deg,#070B1A,#0E1736 55%,#1B0F3D);overflow:hidden;position:relative}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(148,163,184,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.07) 1px,transparent 1px);background-size:44px 44px}
+.wrap{position:relative;padding:72px 76px}
+.top{display:flex;align-items:center;gap:22px}
+.brand{font-weight:800;font-size:46px;letter-spacing:-1px;background:linear-gradient(90deg,#22D3EE,#818CF8,#C084FC);-webkit-background-clip:text;color:transparent}
+.pill{margin-left:auto;font-size:17px;font-weight:700;letter-spacing:2px;color:#FDE68A;border:1.5px solid rgba(245,158,11,.6);background:rgba(245,158,11,.08);padding:10px 18px;border-radius:999px}
+h1{margin-top:66px;font-size:82px;line-height:1.02;font-weight:800;letter-spacing:-2.5px;color:#F8FAFC}
+h1 span{background:linear-gradient(90deg,#22D3EE,#A78BFA);-webkit-background-clip:text;color:transparent}
+.lead{margin-top:26px;font-size:28px;line-height:1.45;color:#CBD5E1;max-width:880px}
+.flow{margin-top:52px;display:flex;align-items:stretch;gap:0}
+.step{flex:1;background:linear-gradient(180deg,rgba(30,42,90,.9),rgba(13,20,48,.9));border:1.5px solid rgba(129,140,248,.45);border-radius:20px;padding:22px 18px;text-align:center}
+.step .ic{font-size:38px}.step b{display:block;margin-top:10px;font-size:22px;color:#F1F5F9}.step small{display:block;margin-top:6px;font-size:16px;color:#94A3B8;line-height:1.35}
+.arr{width:34px;display:flex;align-items:center;justify-content:center;color:#64748B;font-size:26px}
+.feat{margin-top:44px;display:grid;grid-template-columns:1fr 1fr;gap:16px 26px}
+.f{display:flex;gap:14px;align-items:flex-start;font-size:21px;line-height:1.35;color:#CBD5E1}
+.f i{font-style:normal;flex:none;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.35)}
+.f b{color:#F1F5F9}
+.team{position:absolute;left:76px;right:76px;bottom:70px;border-top:1.5px solid rgba(148,163,184,.2);padding-top:34px}
+.team h3{font-size:16px;letter-spacing:3px;color:#94A3B8;font-weight:700}
+.people{margin-top:20px;display:flex;gap:34px}
+.p{display:flex;align-items:center;gap:14px}
+.av{width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:#0B1022}
+.p span{font-size:23px;font-weight:700;color:#F1F5F9}
+.shield{position:absolute;right:40px;top:150px;opacity:.10}
+.road{margin-top:46px;padding:24px 28px;border-radius:20px;background:rgba(15,23,42,.6);border:1.5px solid rgba(148,163,184,.18)}
+.road h3{font-size:16px;letter-spacing:3px;color:#94A3B8;font-weight:700}
+.ms{margin-top:18px;display:flex;align-items:center;gap:10px}
+.m{display:flex;align-items:center;gap:9px;font-size:19px;font-weight:700;color:#E2E8F0;white-space:nowrap}
+.d{width:16px;height:16px;border-radius:50%}
+.bar{flex:1;height:3px;border-radius:2px;background:#334155}
+</style></head><body><div class="grid"></div>
+<svg class="shield" width="420" height="480" viewBox="0 0 200 230"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs><path d="M100 5 L195 40 V115 C195 175 155 210 100 228 C45 210 5 175 5 115 V40 Z" fill="none" stroke="url(#g)" stroke-width="8"/><circle cx="92" cy="105" r="36" fill="none" stroke="#fff" stroke-width="8"/><line x1="118" y1="131" x2="148" y2="161" stroke="#fff" stroke-width="10" stroke-linecap="round"/></svg>
+<div class="wrap">
+ <div class="top">
+  <svg width="58" height="66" viewBox="0 0 200 230"><defs><linearGradient id="h" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs><path d="M100 8 L192 42 V115 C192 172 154 207 100 224 C46 207 8 172 8 115 V42 Z" fill="#111A3A" stroke="url(#h)" stroke-width="12"/><path d="M62 118 L90 146 L142 90" fill="none" stroke="#4ADE80" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="brand">BenchShield</div>
+  <div class="pill">BUILD IN PUBLIC</div>
+ </div>
+ <h1>Is your AI benchmark<br/><span>already leaked?</span></h1>
+ <p class="lead">We're building an evidence-first audit system that finds public copies of benchmark questions and answers, verifies what they reveal, and tests whether browsing agents exploit them.</p>
+ <div class="flow">
+  <div class="step"><div class="ic">📥</div><b>Import</b><small>answers sealed<br/>in a vault</small></div><div class="arr">›</div>
+  <div class="step"><div class="ic">🛰️</div><b>Discover</b><small>bounded web<br/>search &amp; fetch</small></div><div class="arr">›</div>
+  <div class="step"><div class="ic">🔬</div><b>Verify</b><small>task, answer<br/>&amp; timing</small></div><div class="arr">›</div>
+  <div class="step"><div class="ic">🧑‍⚖️</div><b>Review</b><small>human-approved<br/>reports</small></div>
+ </div>
+ <div class="feat">
+  <div class="f"><i>🔐</i><div><b>AES-256-GCM vault.</b> The app can write answers but never read them back.</div></div>
+  <div class="f"><i>🪪</i><div><b>Multi-tenant auth.</b> JWT plus server-side workspace checks.</div></div>
+  <div class="f"><i>⛓️</i><div><b>Durable workers.</b> Leases, heartbeats and fencing tokens.</div></div>
+  <div class="f"><i>🌐</i><div><b>SSRF-guarded fetching.</b> Web pages are evidence, never instructions.</div></div>
+ </div>
+ <div class="road"><h3>WHERE WE ARE</h3>
+  <div class="ms">
+   <div class="m"><div class="d" style="background:#22C55E"></div>Contracts</div><div class="bar" style="background:#22C55E"></div>
+   <div class="m"><div class="d" style="background:#22C55E"></div>Secure core</div><div class="bar" style="background:linear-gradient(90deg,#22C55E,#F59E0B)"></div>
+   <div class="m"><div class="d" style="background:#F59E0B;box-shadow:0 0 14px #F59E0B"></div>Discovery</div><div class="bar"></div>
+   <div class="m" style="color:#94A3B8"><div class="d" style="border:2px solid #64748B"></div>Verification</div><div class="bar"></div>
+   <div class="m" style="color:#94A3B8"><div class="d" style="border:2px solid #64748B"></div>Experiments</div>
+  </div>
+ </div>
+ </div>
+ <div class="team"><h3>BUILT BY</h3>
+  <div class="people">
+   <div class="p"><div class="av" style="background:linear-gradient(135deg,#22D3EE,#818CF8)">AS</div><span>Aditya Singh</span></div>
+   <div class="p"><div class="av" style="background:linear-gradient(135deg,#818CF8,#C084FC)">RP</div><span>Ridham Prajapati</span></div>
+   <div class="p"><div class="av" style="background:linear-gradient(135deg,#C084FC,#F472B6)">RP</div><span>Rudra Patel</span></div>
+  </div>
+ </div>
+</body></html>
