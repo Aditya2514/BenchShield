@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="250" viewBox="0 0 1200 250" role="img" aria-label="Delivery roadmap: B0 and B1 done, B2 in verification, B3 to B5 planned">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0A1022"/><stop offset="1" stop-color="#151036"/></linearGradient>
+<linearGradient id="prog" gradientUnits="userSpaceOnUse" x1="110" y1="0" x2="502" y2="0"><stop offset="0" stop-color="#22C55E"/><stop offset="1" stop-color="#F59E0B"/></linearGradient>
+<filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="6"/></filter>
+<style>
+.ph{font:800 20px 'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;fill:#F8FAFC}
+.fe{font:600 12px 'SFMono-Regular',Consolas,Menlo,monospace;fill:#64748B}
+.l{font:500 14px 'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;fill:#CBD5E1}
+.t{font:700 15px 'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;fill:#CBD5E1;letter-spacing:2px}
+</style>
+</defs>
+<rect width="1200" height="250" rx="20" fill="url(#bg)"/>
+<text x="24" y="40" class="t">DELIVERY ROADMAP</text>
+<line x1="110" y1="110" x2="1090" y2="110" stroke="#1E293B" stroke-width="8" stroke-linecap="round"/>
+<line x1="110" y1="110" x2="502" y2="110" stroke="url(#prog)" stroke-width="8" stroke-linecap="round" stroke-dasharray="392" stroke-dashoffset="392">
+<animate attributeName="stroke-dashoffset" values="392;0;0" keyTimes="0;0.4;1" dur="5s" repeatCount="indefinite"/></line>
+<circle cx="110" cy="110" r="18" fill="#22C55E" stroke="#22C55E" stroke-width="3"/>
+<path d="M102 110 L108 116 L119 104" fill="none" stroke="#04210F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="110" y="74" text-anchor="middle" class="ph">B0</text>
+<text x="110" y="156" text-anchor="middle" class="fe">frontend F0</text>
+<text x="110" y="184" text-anchor="middle" class="l">Contracts</text><text x="110" y="204" text-anchor="middle" class="l">&amp; fixtures</text>
+<circle cx="306" cy="110" r="18" fill="#22C55E" stroke="#22C55E" stroke-width="3"/>
+<path d="M298 110 L304 116 L315 104" fill="none" stroke="#04210F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="306" y="74" text-anchor="middle" class="ph">B1</text>
+<text x="306" y="156" text-anchor="middle" class="fe">frontend F1</text>
+<text x="306" y="184" text-anchor="middle" class="l">Secure</text><text x="306" y="204" text-anchor="middle" class="l">foundation</text>
+<circle cx="502" cy="110" r="22" fill="#F59E0B" filter="url(#glow)"><animate attributeName="opacity" values="0.15;0.8;0.15" dur="2s" repeatCount="indefinite"/></circle>
+<circle cx="502" cy="110" r="20" fill="none" stroke="#F59E0B" stroke-width="2"><animate attributeName="r" values="20;34" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="2s" repeatCount="indefinite"/></circle>
+<circle cx="502" cy="110" r="18" fill="#F59E0B" stroke="#F59E0B" stroke-width="3"/>
+<circle cx="502" cy="110" r="5" fill="#2A1A02"/>
+<text x="502" y="74" text-anchor="middle" class="ph">B2</text>
+<text x="502" y="156" text-anchor="middle" class="fe">frontend F2</text>
+<text x="502" y="184" text-anchor="middle" class="l">Discovery &amp;</text><text x="502" y="204" text-anchor="middle" class="l">durable execution</text>
+<circle cx="698" cy="110" r="18" fill="#0F172A" stroke="#475569" stroke-width="3"/>
+<text x="698" y="74" text-anchor="middle" class="ph">B3</text>
+<text x="698" y="156" text-anchor="middle" class="fe">frontend F3</text>
+<text x="698" y="184" text-anchor="middle" class="l">Verified evidence</text><text x="698" y="204" text-anchor="middle" class="l">&amp; audit MVP</text>
+<circle cx="894" cy="110" r="18" fill="#0F172A" stroke="#475569" stroke-width="3"/>
+<text x="894" y="74" text-anchor="middle" class="ph">B4</text>
+<text x="894" y="156" text-anchor="middle" class="fe">frontend F4</text>
+<text x="894" y="184" text-anchor="middle" class="l">Attacker</text><text x="894" y="204" text-anchor="middle" class="l">experiments</text>
+<circle cx="1090" cy="110" r="18" fill="#0F172A" stroke="#475569" stroke-width="3"/>
+<text x="1090" y="74" text-anchor="middle" class="ph">B5</text>
+<text x="1090" y="156" text-anchor="middle" class="fe">frontend F5</text>
+<text x="1090" y="184" text-anchor="middle" class="l">Pilot</text><text x="1090" y="204" text-anchor="middle" class="l">hardening</text>
+</svg>
