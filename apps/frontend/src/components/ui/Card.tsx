@@ -50,3 +50,4 @@ export function CardFooter({ className = '', children, ...props }: React.HTMLAtt
     </div>
   );
 }
+

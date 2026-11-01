@@ -48,6 +48,40 @@
     line-height: 1.5;
   }
 
+  /* Modern subtle custom scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  ::-webkit-resizer {
+    border-style: solid;
+    border-width: 0 0 6px 6px;
+    border-color: transparent transparent #cbd5e1 transparent;
+  }
+
   *:focus-visible {
     outline: 2px solid #4338ca !important;
     outline-offset: 2px !important;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sliders, ShieldCheck, Check, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
+import { Sliders, ShieldCheck, Check, DollarSign, Clock, CheckCircle2, ChevronDown } from 'lucide-react';
 import type { PolicyResponse, BudgetCeilings } from '@benchshield/api-client';
 import {
   Card,
@@ -114,17 +114,20 @@ export function PolicyForm({ onPolicyCreated }: PolicyFormProps) {
                 <label htmlFor="timezone-select" className="block text-xs font-semibold text-slate-700 mb-1">
                   Cutoff Timezone <span className="text-red-600">*</span>
                 </label>
-                <select
-                  id="timezone-select"
-                  value={timezone}
-                  onChange={(e) => setTimezone(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm text-slate-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600"
-                >
-                  <option value="UTC">UTC (Coordinated Universal Time)</option>
-                  <option value="America/New_York">America/New_York (EST/EDT)</option>
-                  <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
-                  <option value="Europe/London">Europe/London (GMT/BST)</option>
-                </select>
+                <div className="relative inline-flex items-center w-full">
+                  <select
+                    id="timezone-select"
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    className="w-full appearance-none bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-400 rounded-lg pl-3 pr-8 py-2 text-xs sm:text-sm text-slate-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 cursor-pointer"
+                  >
+                    <option value="UTC">UTC (Coordinated Universal Time)</option>
+                    <option value="America/New_York">America/New_York (EST/EDT)</option>
+                    <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
+                    <option value="Europe/London">Europe/London (GMT/BST)</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 pointer-events-none" aria-hidden="true" />
+                </div>
               </div>
             </div>
 

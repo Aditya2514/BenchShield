@@ -49,3 +49,4 @@ export function TableCell({ className = '', children, ...props }: React.TdHTMLAt
     </td>
   );
 }
+

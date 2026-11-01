@@ -21,3 +21,4 @@ export function Spinner({ label = 'Loading...', size = 'md', className = '' }: S
     </div>
   );
 }
+

@@ -9,6 +9,7 @@ import {
   FileCheck,
   AlertTriangle,
   RotateCw,
+  ChevronDown,
 } from 'lucide-react';
 
 export type NavTab = 'benchmarks' | 'policies' | 'investigations' | 'findings' | 'experiments' | 'reports';
@@ -80,22 +81,25 @@ export function Shell({
           )}
 
           <div className="flex items-center gap-2">
-            <label htmlFor="scenario-selector" className="text-xs font-medium text-slate-600">
+            <label htmlFor="scenario-selector" className="text-xs font-semibold text-slate-600">
               Active Mock Scenario:
             </label>
-            <select
-              id="scenario-selector"
-              aria-label="Active Mock Scenario:"
-              value={selectedScenario}
-              onChange={(e) => onScenarioChange(e.target.value)}
-              className="text-xs bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600"
-            >
-              {scenarioList.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative inline-flex items-center">
+              <select
+                id="scenario-selector"
+                aria-label="Active Mock Scenario:"
+                value={selectedScenario}
+                onChange={(e) => onScenarioChange(e.target.value)}
+                className="appearance-none bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-400 rounded-lg pl-3 pr-8 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all cursor-pointer"
+              >
+                {scenarioList.map((s) => (
+                  <option key={s.id} value={s.id} className="text-slate-800 py-1 bg-white">
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-500 absolute right-2.5 pointer-events-none" aria-hidden="true" />
+            </div>
           </div>
         </div>
       </header>

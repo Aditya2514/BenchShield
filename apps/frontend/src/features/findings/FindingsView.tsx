@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   X,
   ExternalLink,
+  ChevronDown,
 } from 'lucide-react';
 import { getTemporalStatusMeta, getClaimStatusMeta } from '../../types/status.js';
 import { ReviewDecisionModal } from '../reviews/ReviewDecisionModal.js';
@@ -101,34 +102,40 @@ export function FindingsView({
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <div className="flex items-center gap-1.5">
                 <label htmlFor="filter-dim" className="font-semibold text-slate-700">Dimension:</label>
-                <select
-                  id="filter-dim"
-                  value={filterDimension}
-                  onChange={(e) => setFilterDimension(e.target.value)}
-                  className="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                >
-                  <option value="all">All Dimensions</option>
-                  <option value="reference_answer">Reference Answer</option>
-                  <option value="worked_solution">Worked Solution</option>
-                  <option value="question_context">Question Context</option>
-                  <option value="metadata">Metadata</option>
-                </select>
+                <div className="relative inline-flex items-center">
+                  <select
+                    id="filter-dim"
+                    value={filterDimension}
+                    onChange={(e) => setFilterDimension(e.target.value)}
+                    className="appearance-none bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-400 rounded-lg pl-2.5 pr-7 py-1.5 text-xs font-medium text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all cursor-pointer"
+                  >
+                    <option value="all">All Dimensions</option>
+                    <option value="reference_answer">Reference Answer</option>
+                    <option value="worked_solution">Worked Solution</option>
+                    <option value="question_context">Question Context</option>
+                    <option value="metadata">Metadata</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-2 pointer-events-none" aria-hidden="true" />
+                </div>
               </div>
 
               <div className="flex items-center gap-1.5">
                 <label htmlFor="filter-stat" className="font-semibold text-slate-700">Status:</label>
-                <select
-                  id="filter-stat"
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="verified">Verified</option>
-                  <option value="candidate">Candidate</option>
-                  <option value="needs_review">Needs Review</option>
-                  <option value="rejected">Rejected</option>
-                </select>
+                <div className="relative inline-flex items-center">
+                  <select
+                    id="filter-stat"
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="appearance-none bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-400 rounded-lg pl-2.5 pr-7 py-1.5 text-xs font-medium text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all cursor-pointer"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="verified">Verified</option>
+                    <option value="candidate">Candidate</option>
+                    <option value="needs_review">Needs Review</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-2 pointer-events-none" aria-hidden="true" />
+                </div>
               </div>
             </div>
           </div>
