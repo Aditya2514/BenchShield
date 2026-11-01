@@ -40,6 +40,8 @@ BLOCKED_HOSTNAMES = {
     "169.254.169.254",
 }
 
+NAT64_PREFIX = ipaddress.ip_network("64:ff9b::/96")
+
 
 class SSRFViolationError(Exception):
     """Raised when an outbound URL violates SSRF safety boundaries."""
@@ -51,6 +53,11 @@ class SSRFViolationError(Exception):
 
 def is_ip_blocked(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
     """Check if an IP address belongs to any blocked or private subnet."""
+    # RFC 6052 well-known prefix for NAT64/DNS64 IPv4/IPv6 translation
+    if isinstance(ip, ipaddress.IPv6Address) and ip in NAT64_PREFIX:
+        embedded_v4 = ipaddress.IPv4Address(int(ip) & 0xFFFFFFFF)
+        return is_ip_blocked(embedded_v4)
+
     if (
         ip.is_private
         or ip.is_loopback

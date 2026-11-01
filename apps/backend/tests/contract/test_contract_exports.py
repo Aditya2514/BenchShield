@@ -104,16 +104,8 @@ def test_fixtures_manifest_structure_and_validity():
 
 def test_contract_app_placeholder_endpoints_return_501_error_response():
     """Verify that deferred endpoints return 501 matching declared ErrorResponse."""
-    # B3 endpoints are operational; optional B4 experiments remain a contract placeholder.
-    res = client.post(
-        "/api/v1/investigations/inv_123/experiments",
-        json={
-            "investigation_id": "inv_123",
-            "conditions": ["control"],
-            "provider_id": "fake",
-            "model_identifier": "fake-model",
-        },
-    )
+    # B4 endpoints are operational; deferred B5 retention cleanup remains a contract placeholder.
+    res = client.post("/api/v1/retention/cleanup")
     assert res.status_code == 501
     err = ErrorResponse.model_validate(res.json())
     assert err.error == ErrorCode.NOT_IMPLEMENTED

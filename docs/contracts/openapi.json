@@ -1,6 +1,115 @@
 {
   "components": {
     "schemas": {
+      "AdversarialRun": {
+        "description": "Detailed execution record for an item in a specific experimental condition.",
+        "properties": {
+          "answer_bearing_content_retrieved": {
+            "default": "unknown",
+            "description": "Whether answer-bearing text was pulled into model context",
+            "enum": [
+              "yes",
+              "no",
+              "unknown"
+            ],
+            "title": "Answer Bearing Content Retrieved",
+            "type": "string"
+          },
+          "attribution": {
+            "$ref": "#/components/schemas/AttributionLevel",
+            "default": "none",
+            "description": "Level of causal or observable attribution"
+          },
+          "condition": {
+            "$ref": "#/components/schemas/ExperimentCondition",
+            "description": "Control, blind, or evaluation-aware"
+          },
+          "experiment_id": {
+            "description": "Parent experiment ID",
+            "minLength": 1,
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Reason if failed or incomplete",
+            "title": "Failure Reason"
+          },
+          "generated_output": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Attacker model's generated answer text",
+            "title": "Generated Output"
+          },
+          "grader_outcome": {
+            "$ref": "#/components/schemas/GraderOutcome",
+            "default": "unsupported",
+            "description": "Grading outcome from trusted grading service"
+          },
+          "item_version_id": {
+            "description": "Target item version ID",
+            "minLength": 1,
+            "title": "Item Version Id",
+            "type": "string"
+          },
+          "observable_tool_calls": {
+            "description": "Observable tool actions",
+            "items": {
+              "$ref": "#/components/schemas/ObservableToolCall"
+            },
+            "title": "Observable Tool Calls",
+            "type": "array"
+          },
+          "policy_compliance": {
+            "$ref": "#/components/schemas/PolicyCompliance",
+            "default": "unknown",
+            "description": "Whether evaluation policy rules were violated"
+          },
+          "run_id": {
+            "description": "Unique run identifier",
+            "minLength": 1,
+            "title": "Run Id",
+            "type": "string"
+          },
+          "run_status": {
+            "$ref": "#/components/schemas/ExperimentRunStatus",
+            "description": "Status of the run"
+          },
+          "source_discovered": {
+            "default": "unknown",
+            "description": "Whether an external source containing task answers was discovered",
+            "enum": [
+              "yes",
+              "no",
+              "unknown"
+            ],
+            "title": "Source Discovered",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "experiment_id",
+          "item_version_id",
+          "condition",
+          "run_status"
+        ],
+        "title": "AdversarialRun",
+        "type": "object"
+      },
       "AnswerMatch": {
         "description": "Assessment of answer agreement between discovered content and reference.",
         "enum": [
@@ -11,6 +120,17 @@
           "not_applicable"
         ],
         "title": "AnswerMatch",
+        "type": "string"
+      },
+      "AttributionLevel": {
+        "description": "Degree of attribution observed between retrieval and model output.",
+        "enum": [
+          "none",
+          "retrieval_observed",
+          "use_supported",
+          "intervention_supported"
+        ],
+        "title": "AttributionLevel",
         "type": "string"
       },
       "BenchmarkImportRequest": {
@@ -1093,6 +1213,73 @@
         "title": "ExperimentCreateRequest",
         "type": "object"
       },
+      "ExperimentResultsResponse": {
+        "description": "Summary and details of completed experiment runs.",
+        "properties": {
+          "completed_runs_count": {
+            "description": "Runs completed cleanly",
+            "minimum": 0.0,
+            "title": "Completed Runs Count",
+            "type": "integer"
+          },
+          "correct_answer_count": {
+            "description": "Runs graded correct",
+            "minimum": 0.0,
+            "title": "Correct Answer Count",
+            "type": "integer"
+          },
+          "experiment_id": {
+            "description": "Experiment ID",
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "incomplete_runs_count": {
+            "description": "Runs interrupted or failed",
+            "minimum": 0.0,
+            "title": "Incomplete Runs Count",
+            "type": "integer"
+          },
+          "prohibited_retrieval_count": {
+            "description": "Runs with prohibited retrieval observed",
+            "minimum": 0.0,
+            "title": "Prohibited Retrieval Count",
+            "type": "integer"
+          },
+          "runs": {
+            "description": "Run records",
+            "items": {
+              "$ref": "#/components/schemas/AdversarialRun"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "experiment_id",
+          "completed_runs_count",
+          "incomplete_runs_count",
+          "prohibited_retrieval_count",
+          "correct_answer_count"
+        ],
+        "title": "ExperimentResultsResponse",
+        "type": "object"
+      },
+      "ExperimentRunStatus": {
+        "description": "Execution status of an individual experimental run.",
+        "enum": [
+          "not_requested",
+          "queued",
+          "running",
+          "completed",
+          "failed",
+          "cancelled",
+          "policy_blocked",
+          "budget_exhausted",
+          "incomplete"
+        ],
+        "title": "ExperimentRunStatus",
+        "type": "string"
+      },
       "ExposureType": {
         "description": "Independent exposure claim types.",
         "enum": [
@@ -1230,6 +1417,17 @@
         ],
         "title": "FindingView",
         "type": "object"
+      },
+      "GraderOutcome": {
+        "description": "Outcome of grading an attacker experiment model output.",
+        "enum": [
+          "correct",
+          "incorrect",
+          "unsupported",
+          "error"
+        ],
+        "title": "GraderOutcome",
+        "type": "string"
       },
       "ImportRowError": {
         "additionalProperties": false,
@@ -1695,6 +1893,49 @@
         ],
         "title": "ItemVersionListResponse",
         "type": "object"
+      },
+      "ObservableToolCall": {
+        "description": "Observable tool action recorded during an experimental run.\n\nBenchShield records observable external tool actions rather than speculative internal reasoning.",
+        "properties": {
+          "observed_at": {
+            "description": "Observation timestamp",
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "query_or_action": {
+            "description": "Action parameters (e.g. search keywords or URL)",
+            "title": "Query Or Action",
+            "type": "string"
+          },
+          "response_summary": {
+            "description": "Sanitized summary of tool response",
+            "title": "Response Summary",
+            "type": "string"
+          },
+          "tool_name": {
+            "description": "Name of the invoked tool (e.g. 'web_search', 'fetch_page')",
+            "title": "Tool Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tool_name",
+          "query_or_action",
+          "response_summary"
+        ],
+        "title": "ObservableToolCall",
+        "type": "object"
+      },
+      "PolicyCompliance": {
+        "description": "Policy compliance result for an experiment run.",
+        "enum": [
+          "permitted",
+          "violated",
+          "unknown"
+        ],
+        "title": "PolicyCompliance",
+        "type": "string"
       },
       "PublicItemMetadata": {
         "additionalProperties": false,
@@ -3131,6 +3372,155 @@
         ]
       }
     },
+    "/api/v1/experiments/{experiment_id}": {
+      "get": {
+        "description": "Retrieve aggregated results and raw observable execution runs for an attacker experiment.",
+        "operationId": "get_experiment_api_v1_experiments__experiment_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentResultsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden or policy blocked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version or idempotency conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Get experiment results",
+        "tags": [
+          "Experiments"
+        ]
+      }
+    },
     "/api/v1/findings/{finding_id}": {
       "get": {
         "operationId": "get_finding_api_v1_findings__finding_id__get",
@@ -4263,6 +4653,42 @@
             "schema": {
               "title": "Investigation Id",
               "type": "string"
+            }
+          },
+          {
+            "description": "Active workspace ID",
+            "in": "header",
+            "name": "X-Workspace-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Active workspace ID",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "description": "Bearer <JWT>",
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bearer <JWT>",
+              "title": "Authorization"
             }
           }
         ],
@@ -5653,6 +6079,112 @@
         "summary": "Download frozen report",
         "tags": [
           "Reports"
+        ]
+      }
+    },
+    "/api/v1/retention/cleanup": {
+      "post": {
+        "description": "Trigger asynchronous retention cleanup and evidence deletion (B5).",
+        "operationId": "cleanup_retention_api_v1_retention_cleanup_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Cleanup Retention Api V1 Retention Cleanup Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden or policy blocked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version or idempotency conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Trigger retention cleanup",
+        "tags": [
+          "Maintenance"
         ]
       }
     },

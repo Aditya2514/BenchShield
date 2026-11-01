@@ -44,9 +44,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.UniqueConstraint("workspace_id", "id", name="uq_findings_ws_id"),
-        sa.UniqueConstraint(
-            "workspace_id", "candidate_source_id", name="uq_findings_ws_candidate"
-        ),
+        sa.UniqueConstraint("workspace_id", "candidate_source_id", name="uq_findings_ws_candidate"),
         sa.ForeignKeyConstraint(
             ["workspace_id", "investigation_id"],
             ["public.investigations.workspace_id", "public.investigations.id"],

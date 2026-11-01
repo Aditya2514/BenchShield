@@ -596,3 +596,61 @@ class ReportModel(Base):
     error_message = Column(Text, nullable=True)
     frozen_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
     completed_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class ExperimentModel(Base):
+    """Pinned, controlled attacker experiment configuration and status."""
+
+    __tablename__ = "experiments"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "id", name="uq_experiments_ws_id"),
+        ForeignKeyConstraint(
+            ["workspace_id", "investigation_id"],
+            ["public.investigations.workspace_id", "public.investigations.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(String(64), nullable=False)
+    investigation_id = Column(String(64), nullable=False, index=True)
+    benchmark_version_id = Column(String(64), nullable=False)
+    policy_version_id = Column(String(64), nullable=False)
+    status = Column(String(32), nullable=False, default="running")
+    config = Column(JSONB, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+
+
+class AdversarialRunModel(Base):
+    """Detailed observable execution record of an adversarial run."""
+
+    __tablename__ = "adversarial_runs"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "id", name="uq_adversarial_runs_ws_id"),
+        ForeignKeyConstraint(
+            ["workspace_id", "experiment_id"],
+            ["public.experiments.workspace_id", "public.experiments.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(String(64), nullable=False)
+    experiment_id = Column(String(64), nullable=False, index=True)
+    item_version_id = Column(String(64), nullable=False)
+    condition = Column(String(32), nullable=False)
+    run_status = Column(String(32), nullable=False)
+    source_discovered = Column(String(16), nullable=False, default="unknown")
+    answer_bearing_content_retrieved = Column(String(16), nullable=False, default="unknown")
+    grader_outcome = Column(String(32), nullable=False, default="unsupported")
+    attribution = Column(String(32), nullable=False, default="none")
+    policy_compliance = Column(String(32), nullable=False, default="unknown")
+    observable_tool_calls = Column(JSONB, nullable=False, default=list)
+    generated_output = Column(Text, nullable=True)
+    failure_reason = Column(Text, nullable=True)
+    cost_cents = Column(Integer, nullable=False, default=0)
+    latency_ms = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))

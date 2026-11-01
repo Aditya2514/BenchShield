@@ -42,7 +42,11 @@ from benchshield.domain.models.benchmarks import (
     ItemVersionListResponse,
 )
 from benchshield.domain.models.errors import ErrorDetail, ErrorResponse
-from benchshield.domain.models.experiments import ExperimentConfig, ExperimentCreateRequest
+from benchshield.domain.models.experiments import (
+    ExperimentConfig,
+    ExperimentCreateRequest,
+    ExperimentResultsResponse,
+)
 from benchshield.domain.models.findings import (
     FindingListResponse,
     FindingView,
@@ -69,6 +73,7 @@ from benchshield.domain.models.reviews import (
 from benchshield.persistence.database import check_database_readiness, get_db_session
 from benchshield.services.audit_service import AuditService
 from benchshield.services.benchmark_service import BenchmarkService
+from benchshield.services.experiment_service import ExperimentService
 from benchshield.services.intake_service import BenchmarkIntakeService
 from benchshield.services.investigation_service import InvestigationService
 from benchshield.services.policy_service import PolicyService
@@ -647,8 +652,45 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def launch_experiment(
         investigation_id: str,
         payload: ExperimentCreateRequest,
+        request: Request,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.RUN_EXPERIMENTS)),
+        db: AsyncSession = Depends(get_db_session),
     ):
-        _raise_contract_placeholder("B4")
+        if payload.investigation_id != investigation_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Payload investigation_id does not match path parameter.",
+            )
+        correlation_id = getattr(request.state, "correlation_id", "req_anon")
+        return await ExperimentService(db, settings=cfg).launch_experiment(
+            investigation_id, payload=payload, actor=actor, correlation_id=correlation_id
+        )
+
+    @app.get(
+        "/api/v1/experiments/{experiment_id}",
+        response_model=ExperimentResultsResponse,
+        status_code=status.HTTP_200_OK,
+        summary="Get experiment results",
+        description="Retrieve aggregated results and raw observable execution runs for an attacker experiment.",
+        tags=["Experiments"],
+    )
+    async def get_experiment(
+        experiment_id: str,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.READ_EXPERIMENTS)),
+        db: AsyncSession = Depends(get_db_session),
+    ):
+        return await ExperimentService(db, settings=cfg).get_experiment(experiment_id, actor=actor)
+
+    @app.post(
+        "/api/v1/retention/cleanup",
+        response_model=dict[str, str],
+        status_code=status.HTTP_202_ACCEPTED,
+        summary="Trigger retention cleanup",
+        description="Trigger asynchronous retention cleanup and evidence deletion (B5).",
+        tags=["Maintenance"],
+    )
+    async def cleanup_retention():
+        _raise_contract_placeholder("B5")
 
     @app.post(
         "/api/v1/investigations/{investigation_id}/reports",
