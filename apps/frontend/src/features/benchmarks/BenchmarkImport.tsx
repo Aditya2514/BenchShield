@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Upload,
   AlertOctagon,
@@ -6,6 +6,8 @@ import {
   FileText,
   ArrowRight,
   FileCode,
+  FileUp,
+  X,
 } from 'lucide-react';
 import type { ImportRowError } from '@benchshield/api-client';
 import { uploadBenchmark } from '../../api/endpoints.js';
@@ -121,7 +123,34 @@ export function BenchmarkImport({ staged, onImportSuccess, onContinue }: Benchma
   const [result, setResult] = useState<ImportResult | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; size: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reads a dropped or picked file into the editor; the backend does the parsing.
+  const handleFile = async (file: File) => {
+    const lower = file.name.toLowerCase();
+    const isCsv = lower.endsWith('.csv') || file.type === 'text/csv' || file.type === 'application/vnd.ms-excel';
+    const isJson = lower.endsWith('.json') || file.type === 'application/json';
+    if (!isCsv && !isJson) {
+      setSubmitError(`Unsupported file format "${file.name}". Please upload a .csv or .json file.`);
+      return;
+    }
+    try {
+      setInputText(await file.text());
+      setFormat(isCsv ? 'csv' : 'json');
+      setUploadedFile({ name: file.name, size: file.size });
+      setResult(null);
+      setSubmitError(null);
+      const clean = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ').trim();
+      if (clean) setBenchmarkName(clean.charAt(0).toUpperCase() + clean.slice(1));
+    } catch (err) {
+      setSubmitError(`Failed to read file: ${errorMessage(err)}`);
+    }
+  };
+
   const chooseFormat = (f: 'json' | 'csv') => {
+    setUploadedFile(null);
     setFormat(f);
     setInputText(f === 'csv' ? VALID_CSV : VALID_JSON);
     setResult(null);
@@ -201,6 +230,49 @@ export function BenchmarkImport({ staged, onImportSuccess, onContinue }: Benchma
                 <Badge variant="success">Multiple-Choice</Badge>
               </div>
             </div>
+          </div>
+
+          {/* Drag-and-drop / file picker */}
+          <div
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              const f = e.dataTransfer.files?.[0];
+              if (f) void handleFile(f);
+            }}
+            className={`border-2 border-dashed rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 transition-colors ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 bg-white'}`}
+          >
+            <div className="flex items-center gap-2 text-xs text-slate-600">
+              <FileUp className="w-5 h-5 text-indigo-600" aria-hidden="true" />
+              {uploadedFile ? (
+                <span>
+                  Loaded <strong className="text-slate-900">{uploadedFile.name}</strong> ({(uploadedFile.size / 1024).toFixed(1)} KB, {format.toUpperCase()})
+                  <button type="button" onClick={() => setUploadedFile(null)} aria-label="Clear uploaded file" className="ml-2 align-middle cursor-pointer">
+                    <X className="w-3.5 h-3.5 inline" aria-hidden="true" />
+                  </button>
+                </span>
+              ) : (
+                <span>Drop a .csv or .json file here, or choose one. Format is detected automatically.</span>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              id="benchmark-file"
+              type="file"
+              accept=".csv,.json,text/csv,application/json"
+              className="sr-only"
+              aria-label="Choose benchmark file"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void handleFile(f);
+                e.target.value = '';
+              }}
+            />
+            <Button type="button" variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>
+              Choose file
+            </Button>
           </div>
 
           <form onSubmit={handleValidateAndStage} className="space-y-5">

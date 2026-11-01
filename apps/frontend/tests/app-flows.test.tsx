@@ -131,3 +131,23 @@ describe('Session and accessibility', () => {
     expect(parseSseFrame(': heartbeat')).toBeNull();
   });
 });
+
+describe('Benchmark file upload', () => {
+  it('loads a picked CSV file, detects the format and imports it', async () => {
+    render(<App />);
+    const csv = 'external_id,task_type,question,choices,gold_answer\nC-1,exact_short_answer,What is 2+2?,,4\n';
+    const file = new File([csv], 'my_bench.csv', { type: 'text/csv' });
+    fireEvent.change(screen.getByLabelText(/Choose benchmark file/i), { target: { files: [file] } });
+    expect(await screen.findByText('my_bench.csv')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('My bench')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Validate & Stage Items/i }));
+    expect(await screen.findByText(/Version: bmv_/)).toBeInTheDocument();
+  });
+
+  it('rejects unsupported file types', async () => {
+    render(<App />);
+    const file = new File(['x'], 'notes.txt', { type: 'text/plain' });
+    fireEvent.change(screen.getByLabelText(/Choose benchmark file/i), { target: { files: [file] } });
+    expect(await screen.findByText(/Unsupported file format "notes.txt"/)).toBeInTheDocument();
+  });
+});
