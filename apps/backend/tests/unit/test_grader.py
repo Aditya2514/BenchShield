@@ -51,14 +51,24 @@ def test_reordered_choices_match_on_option_text():
     assert r.claim_status == ClaimStatus.VERIFIED
 
 
-def test_common_answer_collision_needs_review():
-    r = grade(
-        "exact_short_answer",
-        "What is the atomic number of carbon?",
-        "6",
-        "What is the atomic number of carbon? 6",
-    )
+def test_short_answer_far_from_question_needs_review():
+    page = "What is the atomic number of carbon? " + "filler text " * 200 + "page 6"
+    r = grade("exact_short_answer", "What is the atomic number of carbon?", "6", page)
     assert r.common_answer_risk and r.claim_status == ClaimStatus.NEEDS_REVIEW
+
+
+def test_short_answer_right_after_question_is_verified():
+    q = "Janet\u2019s ducks lay 16 eggs per day. How much does she make?"
+    page = "Janet's ducks lay 16 eggs per day. How much does she make? #### 18"
+    r = grade("exact_short_answer", q, "18", page)
+    assert not r.common_answer_risk and r.claim_status == ClaimStatus.VERIFIED
+
+
+def test_short_answer_with_only_equivalent_identity_needs_review():
+    q = "Janet's ducks lay 16 eggs per day. How much does she make?"
+    page = "janet ducks lay 16 eggs per day how much make she does 18"
+    r = grade("exact_short_answer", q, "18", page)
+    assert r.claim_status == ClaimStatus.NEEDS_REVIEW
 
 
 def test_answer_without_task_identity_is_not_assessed():
@@ -109,3 +119,24 @@ def test_commit_time_before_cutoff_verifies_pre_cutoff():
 def test_no_timestamps_is_unknown():
     s, _ = assess_temporal(CUTOFF, None, {})
     assert s == TemporalStatus.UNKNOWN
+
+
+def test_preview_masks_answer_only_where_grader_found_it():
+    from benchshield.services.audit_service import (
+        REDACTION_TOKEN,
+        WITHHELD_PREVIEW,
+        safe_preview,
+    )
+
+    page = "Quiz 3. What is the atomic number of carbon? Answer: 6. Next: page 6 of 10."
+    # Answer found on the page: masked in place (the finding reports this exposure).
+    masked = safe_preview(page, "6", "exact")
+    assert "6" not in masked and REDACTION_TOKEN in masked
+
+    # Answer only occurs incidentally: masking would reveal it, so withhold.
+    unrelated = "Travel blog: see page 6 of 10 for the ring tour."
+    assert safe_preview(unrelated, "6", "not_applicable") == WITHHELD_PREVIEW
+    assert safe_preview(unrelated, "6", "mismatch") == WITHHELD_PREVIEW
+
+    # No occurrence at all: preview unchanged.
+    assert safe_preview("nothing here", "6", "mismatch") == "nothing here"

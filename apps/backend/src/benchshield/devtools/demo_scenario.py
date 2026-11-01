@@ -94,7 +94,9 @@ DEMO_PAGES: dict[str, list[tuple[str, str, str]]] = {
         (
             "https://chem-quiz.example-edu.org/carbon",
             "Chemistry quiz",
-            "Quiz 3. What is the atomic number of carbon? Answer: 6. Next: page 6 of 10.",
+            "Quiz 3. What is the atomic number of carbon? (Answer key at the end.)\n"
+            + "Filler practice text about the periodic table and electron shells. " * 40
+            + "\nAnswer key: 1) 6",
         ),
     ],
     "meridia": [

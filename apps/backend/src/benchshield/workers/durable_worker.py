@@ -11,6 +11,7 @@ Key Architectural Guarantees:
 """
 
 import logging
+import urllib.parse
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
@@ -227,6 +228,10 @@ class DurableTaskWorker:
         # 5. Execute searches and candidate retrieval bounded by budget
         already_fetched: set[str] = set()
         candidate_count = 0
+        # Per-item fetch cap across ALL queries, so one item cannot starve the others
+        # of the shared investigation budget.
+        item_fetch_cap = policy.max_fetches_per_item or 5
+        item_fetches = 0
 
         for hyp in planned_hypotheses:
             # Check cancellation between operations
@@ -249,6 +254,7 @@ class DurableTaskWorker:
                 except BudgetExhaustedException:
                     logger.warning("Query budget exhausted for investigation %s", inv.id)
                     inv.substatus = "budget_exhausted"
+                    inv.is_partial = True
                     break
 
                 # Search
@@ -279,14 +285,18 @@ class DurableTaskWorker:
                 await self.db.flush()
 
                 # Select candidate URLs for fetching
+                remaining_fetches = item_fetch_cap - item_fetches
+                if remaining_fetches <= 0:
+                    continue
                 urls_to_fetch = MirrorDiscovery.select_candidate_urls(
                     search_results,
                     already_fetched=already_fetched,
-                    max_fetches=policy.max_fetches_per_item or 5,
+                    max_fetches=remaining_fetches,
                 )
 
                 for url in urls_to_fetch:
                     already_fetched.add(url)
+                    item_fetches += 1
 
                     # Reserve fetch budget
                     try:
@@ -296,6 +306,7 @@ class DurableTaskWorker:
                     except BudgetExhaustedException:
                         logger.warning("Fetch budget exhausted for investigation %s", inv.id)
                         inv.substatus = "budget_exhausted"
+                        inv.is_partial = True
                         break
 
                     try:
@@ -320,8 +331,10 @@ class DurableTaskWorker:
                         investigation_id=task.investigation_id,
                         task_id=task.id,
                         url=snapshot.final_url or url,
-                        source_domain=snapshot.title or "unknown",
-                        title=snapshot.title,
+                        source_domain=(
+                            urllib.parse.urlsplit(snapshot.final_url or url).hostname or "unknown"
+                        )[:255],
+                        title=(snapshot.title or "")[:512] or None,
                         # Bounded evidence text for the verifier; clients only ever see a short redacted preview.
                         snapshot_content=snapshot.content[:200_000],
                         content_sha256=snapshot.content_sha256,

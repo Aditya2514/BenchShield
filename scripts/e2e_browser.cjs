@@ -110,6 +110,18 @@ const GOLD = ['Sub-surface thorium reactor', 'Vellan Stream'];
     });
     check('Stale review rejected with 409', conflict === 409, `HTTP ${conflict}`);
 
+    const leak = await page.evaluate(async () => {
+      const s = JSON.parse(sessionStorage.getItem('benchshield.session'));
+      const inv = JSON.parse(sessionStorage.getItem('benchshield.workflow')).investigationId;
+      const h = { Authorization: `Bearer ${s.token}`, 'X-Workspace-ID': s.workspaceId };
+      const list = await (await fetch(`/api/v1/investigations/${inv}/findings?size=100`, { headers: h })).json();
+      const found = new Set(['exact', 'normalized', 'task_specific']);
+      return list.items
+        .filter((f) => (f.snapshot.raw_content_preview || '').includes('[REDACTED_REFERENCE_ANSWER]') && !found.has(f.verification.answer_match))
+        .map((f) => `${f.external_id}/${f.verification.answer_match}`);
+    });
+    check('No answer-revealing masks on pages where the answer was not found', leak.length === 0, leak.join(', ') || 'clean');
+
     await tab('Reports');
     await page.getByRole('button', { name: /Freeze & Generate Report/ }).click();
     await page.getByText('COMPLETED').waitFor({ timeout: T });
