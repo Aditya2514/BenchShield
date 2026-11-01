@@ -46,6 +46,32 @@ describe('Phase F1: Shell, Benchmark Intake, and Policy Setup', () => {
     expect(sessionStorage.getItem('gold_answer')).toBeNull();
   });
 
+  it('allows uploading a CSV file and validates staging with auto-detected format', async () => {
+    render(<App />);
+
+    const fileInput = screen.getByTestId('benchmark-file-input');
+    expect(fileInput).toBeInTheDocument();
+
+    const csvContent = `item_id,question,options,reference_answer\nSYN-014,"Which fictional station has code K7?","North, East, South, West",East\nSYN-015,"","Alpha, Beta",Alpha`;
+
+    const csvFile = new File([csvContent], 'reasoning_benchmarks.csv', { type: 'text/csv' });
+    fireEvent.change(fileInput, { target: { files: [csvFile] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('reasoning_benchmarks.csv')).toBeInTheDocument();
+      expect(screen.getByText('CSV')).toBeInTheDocument();
+    });
+
+    const validateBtn = screen.getByRole('button', { name: /Validate & Stage Items/i });
+    fireEvent.click(validateBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Validation Notice')).toBeInTheDocument();
+      expect(screen.getByText('Actionable Row Errors:')).toBeInTheDocument();
+      expect(screen.getByText('empty_question')).toBeInTheDocument();
+    });
+  });
+
   it('switches to Policies tab and configures immutable evaluation policy with review summary', async () => {
     render(<App />);
 

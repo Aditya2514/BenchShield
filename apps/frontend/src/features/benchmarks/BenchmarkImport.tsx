@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Upload,
   AlertOctagon,
@@ -6,6 +6,9 @@ import {
   FileText,
   ArrowRight,
   FileCode,
+  FileSpreadsheet,
+  X,
+  FileUp,
 } from 'lucide-react';
 import type { RowError } from '@benchshield/api-client';
 import {
@@ -62,9 +65,123 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
     )
   );
 
+  const [uploadedFile, setUploadedFile] = useState<{
+    name: string;
+    size: number;
+    type: 'json' | 'csv';
+  } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<StagedBenchmark | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleFileProcess = async (file: File) => {
+    if (!file) return;
+
+    const lowerName = file.name.toLowerCase();
+    const isCsv = lowerName.endsWith('.csv') || file.type === 'text/csv' || file.type === 'application/vnd.ms-excel';
+    const isJson = lowerName.endsWith('.json') || file.type === 'application/json';
+
+    if (!isCsv && !isJson) {
+      setSubmitError(`Unsupported file format "${file.name}". Please upload a valid .csv or .json file.`);
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const detectedFormat: 'json' | 'csv' = isCsv ? 'csv' : 'json';
+      setInputText(text);
+      setFormat(detectedFormat);
+      setUploadedFile({
+        name: file.name,
+        size: file.size,
+        type: detectedFormat,
+      });
+      setSubmitError(null);
+
+      // If benchmark name is untouched default, derive from file name
+      if (benchmarkName === 'Synthetic Reasoning Suite v1') {
+        const cleanName = file.name
+          .replace(/\.[^/.]+$/, '')
+          .replace(/[-_]/g, ' ')
+          .trim();
+        if (cleanName) {
+          setBenchmarkName(cleanName.charAt(0).toUpperCase() + cleanName.slice(1));
+        }
+      }
+    } catch (err: any) {
+      setSubmitError(`Failed to read file: ${err.message || 'Unknown file error'}`);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      await handleFileProcess(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      await handleFileProcess(e.target.files[0]);
+      e.target.value = '';
+    }
+  };
+
+  const handleClearUploadedFile = () => {
+    setUploadedFile(null);
+  };
+
+  const handleFormatChange = (newFormat: 'json' | 'csv') => {
+    if (newFormat === format) return;
+    setFormat(newFormat);
+    // If the input text is the default sample, convert to the selected format's sample
+    if (newFormat === 'csv' && inputText.includes('Which fictional station has code K7?')) {
+      setInputText(
+`item_id,question,options,reference_answer
+SYN-014,"Which fictional station has code K7?","North, East, South, West",East
+SYN-015,"","Alpha, Beta",Alpha`
+      );
+    } else if (newFormat === 'json' && inputText.includes('Which fictional station has code K7?')) {
+      setInputText(
+        JSON.stringify(
+          [
+            {
+              item_id: 'SYN-014',
+              question: 'Which fictional station has code K7?',
+              options: ['North', 'East', 'South', 'West'],
+              reference_answer: 'East',
+            },
+            {
+              item_id: 'SYN-015',
+              question: '',
+              options: ['Alpha', 'Beta'],
+              reference_answer: 'Alpha',
+            },
+          ],
+          null,
+          2
+        )
+      );
+    }
+  };
 
   const handleValidateAndStage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,17 +196,68 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
           throw new Error('JSON input must be an array of benchmark item objects.');
         }
       } else {
-        // Lean CSV parser
-        const lines = inputText.trim().split('\n');
+        // Robust CSV parser supporting quotes and standard headers
+        const lines = inputText
+          .trim()
+          .split(/\r?\n/)
+          .filter((l) => l.trim().length > 0);
         if (lines.length < 2) {
           throw new Error('CSV must contain a header and at least one item row.');
         }
-        const headers = lines[0].split(',').map((h) => h.trim());
+
+        const parseCsvLine = (line: string): string[] => {
+          const cols: string[] = [];
+          let cur = '';
+          let inQuotes = false;
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+              if (inQuotes && line[i + 1] === '"') {
+                cur += '"';
+                i++;
+              } else {
+                inQuotes = !inQuotes;
+              }
+            } else if (char === ',' && !inQuotes) {
+              cols.push(cur.trim());
+              cur = '';
+            } else {
+              cur += char;
+            }
+          }
+          cols.push(cur.trim());
+          return cols;
+        };
+
+        const headers = parseCsvLine(lines[0]);
         parsedItems = lines.slice(1).map((line) => {
-          const cols = line.split(',').map((c) => c.trim());
-          const item: Record<string, string> = {};
+          const cols = parseCsvLine(line);
+          const item: Record<string, any> = {};
           headers.forEach((h, i) => {
-            item[h] = cols[i] || '';
+            let val = cols[i] !== undefined ? cols[i] : '';
+            if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) {
+              val = val.slice(1, -1).replace(/""/g, '"');
+            }
+            if (h === 'options') {
+              if (val.startsWith('[') && val.endsWith(']')) {
+                try {
+                  item[h] = JSON.parse(val);
+                } catch {
+                  item[h] = val
+                    .slice(1, -1)
+                    .split(/[;,]/)
+                    .map((s) => s.trim().replace(/^['"]|['"]$/g, ''));
+                }
+              } else if (val.includes(';') || val.includes('|')) {
+                item[h] = val.split(/[;|]/).map((s) => s.trim());
+              } else if (val) {
+                item[h] = val.split(',').map((s) => s.trim());
+              } else {
+                item[h] = [];
+              }
+            } else {
+              item[h] = val;
+            }
           });
           return item;
         });
@@ -163,25 +331,107 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Obvious Pre-Upload Drop Zone / Format Guide */}
-          <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 bg-slate-50/60 hover:bg-slate-100/60 transition-colors">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <FileCode className="w-6 h-6 text-indigo-600 shrink-0 mt-0.5" aria-hidden="true" />
-                <div>
-                  <h4 className="text-xs sm:text-sm font-semibold text-slate-900">Supported Ingestion Formats &amp; Schemas</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    JSON Array or CSV with standard headers: <code className="text-slate-700 font-semibold">item_id</code>, <code className="text-slate-700 font-semibold">question</code>, <code className="text-slate-700 font-semibold">options</code>, <code className="text-slate-700 font-semibold">reference_answer</code>.
-                  </p>
+          {/* Interactive Pre-Upload Drop Zone & File Selector */}
+          <div
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-xl p-5 transition-all ${
+              isDragging
+                ? 'border-indigo-500 bg-indigo-50/80 ring-2 ring-indigo-500/20'
+                : 'border-slate-300 bg-slate-50/60 hover:bg-slate-100/60'
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.json,text/csv,application/json"
+              onChange={handleFileInputChange}
+              className="hidden"
+              id="benchmark-file-input"
+              data-testid="benchmark-file-input"
+              aria-label="Upload CSV or JSON Benchmark File"
+            />
+
+            {uploadedFile ? (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-indigo-100 text-indigo-700 rounded-lg">
+                    {uploadedFile.type === 'csv' ? (
+                      <FileSpreadsheet className="w-5 h-5" aria-hidden="true" />
+                    ) : (
+                      <FileCode className="w-5 h-5" aria-hidden="true" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-900">{uploadedFile.name}</span>
+                      <Badge variant="info">{(uploadedFile.size / 1024).toFixed(1)} KB</Badge>
+                      <Badge variant="neutral">{uploadedFile.type.toUpperCase()}</Badge>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      File loaded into staging editor. Click &quot;Validate &amp; Stage Items&quot; below to ingest.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    icon={<FileUp className="w-3.5 h-3.5" aria-hidden="true" />}
+                  >
+                    Replace File
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearUploadedFile}
+                    icon={<X className="w-3.5 h-3.5" aria-hidden="true" />}
+                  >
+                    Clear
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-                <Badge variant="info">JSON</Badge>
-                <Badge variant="info">CSV</Badge>
-                <Badge variant="success">Short-Answer</Badge>
-                <Badge variant="success">Multiple-Choice</Badge>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2.5 bg-indigo-50 border border-indigo-200 text-indigo-600 rounded-lg shrink-0">
+                    <FileUp className="w-5 h-5" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
+                      Drag &amp; drop your CSV or JSON benchmark file
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Or browse your local machine. Standard CSV headers:{' '}
+                      <code className="text-slate-700 font-semibold">item_id</code>,{' '}
+                      <code className="text-slate-700 font-semibold">question</code>,{' '}
+                      <code className="text-slate-700 font-semibold">options</code>,{' '}
+                      <code className="text-slate-700 font-semibold">reference_answer</code>.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    icon={<Upload className="w-3.5 h-3.5" aria-hidden="true" />}
+                  >
+                    Browse File
+                  </Button>
+                  <div className="hidden sm:flex items-center gap-1.5 pl-2 border-l border-slate-200">
+                    <Badge variant="info">CSV</Badge>
+                    <Badge variant="info">JSON</Badge>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <form onSubmit={handleValidateAndStage} className="space-y-5">
@@ -210,7 +460,7 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
                         name="format"
                         value="json"
                         checked={format === 'json'}
-                        onChange={() => setFormat('json')}
+                        onChange={() => handleFormatChange('json')}
                         className="text-indigo-600 focus:ring-indigo-600"
                       />
                       JSON Array
@@ -221,7 +471,7 @@ export function BenchmarkImport({ onImportSuccess }: BenchmarkImportProps) {
                         name="format"
                         value="csv"
                         checked={format === 'csv'}
-                        onChange={() => setFormat('csv')}
+                        onChange={() => handleFormatChange('csv')}
                         className="text-indigo-600 focus:ring-indigo-600"
                       />
                       CSV Format
