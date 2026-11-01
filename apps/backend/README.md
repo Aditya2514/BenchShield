@@ -9,7 +9,12 @@ cd apps/backend
 uv sync --all-extras
 uv run python ../../scripts/demo_audit.py   # full B1->B3 audit, prints every step
 uv run python ../../scripts/dev_server.py   # live API on :8000 (+ /docs), prints bearer tokens
+
+# live web discovery instead of the scripted fake web:
+TINYFISH_API_KEY=your_key uv run python ../../scripts/dev_server.py
 ```
+
+`TINYFISH_API_KEY` is read from the process environment (not from `.env`). Never commit it.
 
 Both start an embedded PostgreSQL, run migrations, seed dev users and use an offline,
 scripted web (`benchshield/devtools/demo_scenario.py`). The demo walks through: exact leak,
