@@ -7,7 +7,9 @@ Phase B1 Capabilities:
 - Operational immutable evaluation policy creation and retrieval.
 - Request correlation ID tracking and structured sanitized error handling.
 - Health liveness and readiness endpoints.
-- Deferred B2+ endpoints return HTTP 501 Not Implemented.
+- Phase B2: investigations, SSE progress, cancellation.
+- Phase B3: verification, findings, append-only reviews, frozen reports.
+- Optional B4 experiments return HTTP 501 Not Implemented.
 """
 
 import json
@@ -33,7 +35,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from benchshield.api.auth import AuthenticatedActor, Permission, require_permission
 from benchshield.config import Settings, get_settings
-from benchshield.domain.enums import ErrorCode, ExposureType, TemporalStatus
+from benchshield.domain.enums import ClaimStatus, ErrorCode, ExposureType, TemporalStatus
 from benchshield.domain.models.benchmarks import (
     BenchmarkRecord,
     BenchmarkVersion,
@@ -41,7 +43,11 @@ from benchshield.domain.models.benchmarks import (
 )
 from benchshield.domain.models.errors import ErrorDetail, ErrorResponse
 from benchshield.domain.models.experiments import ExperimentConfig, ExperimentCreateRequest
-from benchshield.domain.models.findings import FindingListResponse
+from benchshield.domain.models.findings import (
+    FindingListResponse,
+    FindingView,
+    VerificationRunResponse,
+)
 from benchshield.domain.models.intake import BenchmarkImportRequest, BenchmarkImportResponse
 from benchshield.domain.models.investigations import (
     InvestigationCancelRequest,
@@ -55,8 +61,13 @@ from benchshield.domain.models.policies import (
     EvaluationPolicyVersion,
 )
 from benchshield.domain.models.reports import ReportCreateRequest, ReportStatusResponse
-from benchshield.domain.models.reviews import ReviewCreateRequest, ReviewDecision
+from benchshield.domain.models.reviews import (
+    ReviewCreateRequest,
+    ReviewDecision,
+    ReviewHistoryResponse,
+)
 from benchshield.persistence.database import check_database_readiness, get_db_session
+from benchshield.services.audit_service import AuditService
 from benchshield.services.benchmark_service import BenchmarkService
 from benchshield.services.intake_service import BenchmarkIntakeService
 from benchshield.services.investigation_service import InvestigationService
@@ -518,14 +529,36 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     # -----------------------------------------------------------------------
-    # Deferred Endpoints (Phase B3+)
+    # Operational Endpoints (Phase B3): verification, findings, reviews, reports
     # -----------------------------------------------------------------------
+    @app.post(
+        "/api/v1/investigations/{investigation_id}/verify",
+        response_model=VerificationRunResponse,
+        status_code=status.HTTP_200_OK,
+        summary="Verify discovered candidates",
+        description=(
+            "Run the trusted grader over every not-yet-verified candidate source: task identity "
+            "first, then answer agreement, then temporal assessment. Idempotent."
+        ),
+        tags=["Findings"],
+    )
+    async def verify_investigation(
+        investigation_id: str,
+        request: Request,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.LAUNCH_INVESTIGATION)),
+        db: AsyncSession = Depends(get_db_session),
+    ):
+        correlation_id = getattr(request.state, "correlation_id", "req_anon")
+        return await AuditService(db, settings=cfg).verify_investigation(
+            investigation_id, actor=actor, correlation_id=correlation_id
+        )
+
     @app.get(
         "/api/v1/investigations/{investigation_id}/findings",
         response_model=FindingListResponse,
         status_code=status.HTTP_200_OK,
         summary="List investigation findings",
-        description="Paginated list of findings with independent exposure, task identity, answer match, and temporal dimensions.",
+        description="Paginated list of findings with independent exposure, task identity, answer match, and temporal dimensions. Rejected and unresolved claims are included.",
         tags=["Findings"],
     )
     async def list_findings(
@@ -538,8 +571,35 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         temporal_status: Annotated[
             TemporalStatus | None, Query(description="Filter by temporal status")
         ] = None,
+        claim_status: Annotated[
+            ClaimStatus | None, Query(description="Filter by claim status")
+        ] = None,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.READ_INVESTIGATION)),
+        db: AsyncSession = Depends(get_db_session),
     ):
-        _raise_contract_placeholder("B3")
+        return await AuditService(db, settings=cfg).list_findings(
+            investigation_id,
+            actor=actor,
+            page=page,
+            size=size,
+            exposure_type=exposure_type,
+            temporal_status=temporal_status,
+            claim_status=claim_status,
+        )
+
+    @app.get(
+        "/api/v1/findings/{finding_id}",
+        response_model=FindingView,
+        status_code=status.HTTP_200_OK,
+        summary="Get finding",
+        tags=["Findings"],
+    )
+    async def get_finding(
+        finding_id: str,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.READ_INVESTIGATION)),
+        db: AsyncSession = Depends(get_db_session),
+    ):
+        return await AuditService(db, settings=cfg).get_finding(finding_id, actor=actor)
 
     @app.post(
         "/api/v1/findings/{finding_id}/reviews",
@@ -552,8 +612,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def submit_review(
         finding_id: str,
         payload: ReviewCreateRequest,
+        request: Request,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.REVIEW_FINDINGS)),
+        db: AsyncSession = Depends(get_db_session),
     ):
-        _raise_contract_placeholder("B3")
+        correlation_id = getattr(request.state, "correlation_id", "req_anon")
+        return await AuditService(db, settings=cfg).submit_review(
+            finding_id, payload, actor=actor, correlation_id=correlation_id
+        )
+
+    @app.get(
+        "/api/v1/findings/{finding_id}/reviews",
+        response_model=ReviewHistoryResponse,
+        status_code=status.HTTP_200_OK,
+        summary="Get review history",
+        description="Append-only reviewer decision history in version order.",
+        tags=["Reviews"],
+    )
+    async def get_review_history(
+        finding_id: str,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.READ_INVESTIGATION)),
+        db: AsyncSession = Depends(get_db_session),
+    ):
+        return await AuditService(db, settings=cfg).review_history(finding_id, actor=actor)
 
     @app.post(
         "/api/v1/investigations/{investigation_id}/experiments",
@@ -574,14 +655,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response_model=ReportStatusResponse,
         status_code=status.HTTP_202_ACCEPTED,
         summary="Create frozen report export",
-        description="Freeze report inputs and queue an asynchronous export job.",
+        description="Freeze findings, reviewer decisions, policy and scope into an immutable versioned report.",
         tags=["Reports"],
     )
     async def create_report(
         investigation_id: str,
         payload: ReportCreateRequest,
+        request: Request,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.EXPORT_REPORTS)),
+        db: AsyncSession = Depends(get_db_session),
     ):
-        _raise_contract_placeholder("B3")
+        if payload.investigation_id != investigation_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Body investigation_id does not match path.",
+            )
+        correlation_id = getattr(request.state, "correlation_id", "req_anon")
+        return await AuditService(db, settings=cfg).create_report(
+            investigation_id, actor=actor, correlation_id=correlation_id
+        )
 
     @app.get(
         "/api/v1/reports/{report_id}",
@@ -591,8 +683,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         description="Check export generation status and retrieve authorized download reference.",
         tags=["Reports"],
     )
-    async def get_report(report_id: str):
-        _raise_contract_placeholder("B3")
+    async def get_report(
+        report_id: str,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.EXPORT_REPORTS)),
+        db: AsyncSession = Depends(get_db_session),
+    ):
+        return await AuditService(db, settings=cfg).get_report(report_id, actor=actor)
+
+    @app.get(
+        "/api/v1/reports/{report_id}/download",
+        status_code=status.HTTP_200_OK,
+        summary="Download frozen report",
+        description="Return the frozen report JSON. Authorization is re-checked on every download.",
+        tags=["Reports"],
+    )
+    async def download_report(
+        report_id: str,
+        actor: AuthenticatedActor = Depends(require_permission(Permission.EXPORT_REPORTS)),
+        db: AsyncSession = Depends(get_db_session),
+    ):
+        return await AuditService(db, settings=cfg).download_report(report_id, actor=actor)
 
     return app
 

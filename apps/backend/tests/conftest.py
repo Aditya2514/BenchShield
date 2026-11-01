@@ -2,7 +2,6 @@
 
 import pathlib
 import tempfile
-import urllib.parse
 from collections.abc import AsyncGenerator
 
 import httpx
@@ -16,6 +15,7 @@ from embedded_postgres import PostgresServer
 from benchshield.api.app import create_app
 from benchshield.api.auth import create_jwt_token
 from benchshield.config import Settings, set_settings
+from benchshield.devtools.embedded_db import build_url
 from benchshield.persistence.database import close_database_connections
 
 TEST_VAULT_KEY_HEX = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
@@ -45,31 +45,27 @@ def real_postgres_env():
         cur.execute("CREATE DATABASE benchshield_migration_test OWNER benchshield_owner")
 
     # Also apply init.sql on the migration test database
-    parsed = urllib.parse.urlparse(superuser_uri)
-    host = parsed.hostname
-    port = parsed.port
-    mig_db_uri = f"postgresql://postgres:@{host}:{port}/benchshield_migration_test"
+    mig_db_uri = build_url(superuser_uri, "postgres", dbname="benchshield_migration_test")
     with psycopg.connect(mig_db_uri, autocommit=True) as conn, conn.cursor() as cur:
         cur.execute(init_sql)
 
-    dbname = parsed.path.lstrip("/")
+    # Socket-aware URLs: embedded Postgres uses a Unix socket on Linux/macOS, TCP on Windows.
+    owner_sync_url = build_url(superuser_uri, "benchshield_owner", "psycopg")
+    owner_raw_uri = build_url(superuser_uri, "benchshield_owner")
+    app_async_url = build_url(superuser_uri, "benchshield_app", "asyncpg")
+    verifier_async_url = build_url(superuser_uri, "benchshield_verifier", "asyncpg")
 
-    owner_sync_url = (
-        f"postgresql+psycopg://benchshield_owner:owner_dev_password@{host}:{port}/{dbname}"
+    migration_owner_sync_url = build_url(
+        superuser_uri, "benchshield_owner", "psycopg", dbname="benchshield_migration_test"
     )
-    owner_raw_uri = f"postgresql://benchshield_owner:owner_dev_password@{host}:{port}/{dbname}"
-    app_async_url = f"postgresql+asyncpg://benchshield_app:app_dev_password@{host}:{port}/{dbname}"
-    verifier_async_url = (
-        f"postgresql+asyncpg://benchshield_verifier:verifier_dev_password@{host}:{port}/{dbname}"
+    migration_owner_raw_uri = build_url(
+        superuser_uri, "benchshield_owner", dbname="benchshield_migration_test"
     )
-
-    migration_owner_sync_url = f"postgresql+psycopg://benchshield_owner:owner_dev_password@{host}:{port}/benchshield_migration_test"
-    migration_owner_raw_uri = f"postgresql://benchshield_owner:owner_dev_password@{host}:{port}/benchshield_migration_test"
 
     # 2. Run Alembic upgrade to head using owner role on main test db
     alembic_ini_path = pathlib.Path(__file__).parents[1] / "alembic.ini"
     alembic_cfg = Config(str(alembic_ini_path))
-    alembic_cfg.set_main_option("sqlalchemy.url", owner_sync_url)
+    alembic_cfg.set_main_option("sqlalchemy.url", owner_sync_url.replace("%", "%%"))
     command.upgrade(alembic_cfg, "head")
 
     # 3. Seed test users and workspaces synchronously

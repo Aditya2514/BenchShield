@@ -108,3 +108,15 @@ class FindingListResponse(BaseModel):
     total: int = Field(..., description="Total findings matching query", ge=0)
     page: int = Field(default=1, description="1-indexed current page", ge=1)
     size: int = Field(default=20, description="Items per page", ge=1, le=100)
+
+
+class VerificationRunResponse(BaseModel):
+    """Result of running the trusted grader over an investigation's candidates."""
+
+    investigation_id: str = Field(..., description="Investigation ID")
+    findings_created: int = Field(..., description="New findings created in this run", ge=0)
+    grader_version: str = Field(..., description="Grader version applied")
+    normalization_version: str = Field(..., description="Normalization version applied")
+    claim_status_counts: dict[str, int] = Field(
+        default_factory=dict, description="Total findings per claim status after this run"
+    )

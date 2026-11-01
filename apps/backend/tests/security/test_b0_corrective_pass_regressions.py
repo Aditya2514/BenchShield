@@ -139,8 +139,16 @@ def test_defect4_sse_endpoint_advertises_event_stream_not_json_array():
 
 def test_defect5_http_placeholder_and_validation_errors_match_error_response():
     """Defect 5: HTTP 501 and HTTP 422 error bodies must conform to ErrorResponse schema."""
-    # Test 501 placeholder on deferred B3 endpoint
-    res_501 = client.get("/api/v1/investigations/inv_test_501/findings")
+    # Test 501 placeholder on deferred B4 endpoint
+    res_501 = client.post(
+        "/api/v1/investigations/inv_test_501/experiments",
+        json={
+            "investigation_id": "inv_test_501",
+            "conditions": ["control"],
+            "provider_id": "fake",
+            "model_identifier": "fake-model",
+        },
+    )
     assert res_501.status_code == 501
     body_501 = res_501.json()
     # Must validate as ErrorResponse

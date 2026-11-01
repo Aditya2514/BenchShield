@@ -57,7 +57,9 @@ from tests.conftest import (
 def test_migration_and_upgrade_path(real_postgres_env):
     """Verify upgrade, downgrade to base, and upgrade back to head on an isolated database."""
     cfg = Config(real_postgres_env["alembic_ini_path"])
-    cfg.set_main_option("sqlalchemy.url", real_postgres_env["migration_owner_sync_url"])
+    cfg.set_main_option(
+        "sqlalchemy.url", real_postgres_env["migration_owner_sync_url"].replace("%", "%%")
+    )
 
     # 1. Upgrade to head
     command.upgrade(cfg, "head")
