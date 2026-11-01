@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="280" viewBox="0 0 1200 280" role="img" aria-label="BenchShield workflow: Import, Policy and Scope, Discovery, Verification, Review and Report, optional Experiments">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0A1022"/><stop offset="1" stop-color="#151036"/></linearGradient>
+<linearGradient id="card" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#162042"/><stop offset="1" stop-color="#0D1430"/></linearGradient>
+<filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>
+<style>
+.h{font:700 19px 'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;fill:#F1F5F9}
+.c{font:400 13.5px 'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;fill:#94A3B8}
+.p{font:700 12px 'SFMono-Regular',Consolas,Menlo,monospace;fill:#0B1022}
+.s{font:700 10.5px 'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:1px}
+.t{font:700 15px 'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;fill:#CBD5E1;letter-spacing:2px}
+.n{font:800 44px 'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;fill:#FFFFFF;opacity:0.05}
+</style>
+</defs>
+<rect width="1200" height="280" rx="20" fill="url(#bg)"/>
+<text x="24" y="40" class="t">FROM UPLOAD TO REVIEWED EVIDENCE</text>
+<g transform="translate(900 26)">
+<circle cx="6" cy="8" r="5" fill="#22C55E"/><text x="16" y="12" class="s" fill="#94A3B8">DONE</text>
+<circle cx="76" cy="8" r="5" fill="#F59E0B"/><text x="86" y="12" class="s" fill="#94A3B8">VERIFYING</text>
+<circle cx="180" cy="8" r="5" fill="#64748B"/><text x="190" y="12" class="s" fill="#94A3B8">PLANNED</text>
+</g>
+<line x1="180" y1="145.0" x2="206" y2="145.0" stroke="#475569" stroke-width="2" stroke-dasharray="5 5"><animate attributeName="stroke-dashoffset" values="20;0" dur="1s" repeatCount="indefinite"/></line>
+<path d="M204 140.0 L212 145.0 L204 150.0" fill="#475569"/>
+<line x1="382" y1="145.0" x2="408" y2="145.0" stroke="#475569" stroke-width="2" stroke-dasharray="5 5"><animate attributeName="stroke-dashoffset" values="20;0" dur="1s" repeatCount="indefinite"/></line>
+<path d="M406 140.0 L414 145.0 L406 150.0" fill="#475569"/>
+<line x1="584" y1="145.0" x2="610" y2="145.0" stroke="#475569" stroke-width="2" stroke-dasharray="5 5"><animate attributeName="stroke-dashoffset" values="20;0" dur="1s" repeatCount="indefinite"/></line>
+<path d="M608 140.0 L616 145.0 L608 150.0" fill="#475569"/>
+<line x1="786" y1="145.0" x2="812" y2="145.0" stroke="#475569" stroke-width="2" stroke-dasharray="5 5"><animate attributeName="stroke-dashoffset" values="20;0" dur="1s" repeatCount="indefinite"/></line>
+<path d="M810 140.0 L818 145.0 L810 150.0" fill="#475569"/>
+<line x1="988" y1="145.0" x2="1014" y2="145.0" stroke="#475569" stroke-width="2" stroke-dasharray="5 5"><animate attributeName="stroke-dashoffset" values="20;0" dur="1s" repeatCount="indefinite"/></line>
+<path d="M1012 140.0 L1020 145.0 L1012 150.0" fill="#475569"/>
+<rect x="10" y="70" width="170" height="150" rx="16" fill="url(#card)" stroke="#22C55E" stroke-opacity="0.9" stroke-width="1.6"/>
+<text x="166" y="206" text-anchor="end" class="n">1</text>
+<rect x="24" y="84" width="36" height="20" rx="10" fill="#22C55E"/><text x="42" y="98" text-anchor="middle" class="p">B1</text>
+<text x="24" y="132" class="h">Import</text>
+<text x="24" y="156" class="c">Validate items,</text><text x="24" y="174" class="c">vault the answers</text>
+<circle cx="30" cy="200" r="4" fill="#22C55E"></circle>
+<text x="40" y="204" class="s" fill="#22C55E">DONE</text>
+<rect x="212" y="70" width="170" height="150" rx="16" fill="url(#card)" stroke="#22C55E" stroke-opacity="0.9" stroke-width="1.6"/>
+<text x="368" y="206" text-anchor="end" class="n">2</text>
+<rect x="226" y="84" width="36" height="20" rx="10" fill="#22C55E"/><text x="244" y="98" text-anchor="middle" class="p">B1</text>
+<text x="226" y="132" class="h">Policy &amp; Scope</text>
+<text x="226" y="156" class="c">Freeze rules,</text><text x="226" y="174" class="c">sources &amp; budget</text>
+<circle cx="232" cy="200" r="4" fill="#22C55E"></circle>
+<text x="242" y="204" class="s" fill="#22C55E">DONE</text>
+<rect x="414" y="70" width="170" height="150" rx="16" fill="none" stroke="#F59E0B" stroke-width="4" filter="url(#glow)"><animate attributeName="opacity" values="0.2;0.9;0.2" dur="2.2s" repeatCount="indefinite"/></rect>
+<rect x="414" y="70" width="170" height="150" rx="16" fill="url(#card)" stroke="#F59E0B" stroke-opacity="0.9" stroke-width="1.6"/>
+<text x="570" y="206" text-anchor="end" class="n">3</text>
+<rect x="428" y="84" width="36" height="20" rx="10" fill="#F59E0B"/><text x="446" y="98" text-anchor="middle" class="p">B2</text>
+<text x="428" y="132" class="h">Discovery</text>
+<text x="428" y="156" class="c">Bounded search</text><text x="428" y="174" class="c">&amp; snapshot fetch</text>
+<circle cx="434" cy="200" r="4" fill="#F59E0B"><animate attributeName="r" values="3;6;3" dur="1.4s" repeatCount="indefinite"/></circle>
+<text x="444" y="204" class="s" fill="#F59E0B">IN VERIFICATION</text>
+<rect x="616" y="70" width="170" height="150" rx="16" fill="url(#card)" stroke="#64748B" stroke-opacity="0.6" stroke-width="1.6" stroke-dasharray="6 5"/>
+<text x="772" y="206" text-anchor="end" class="n">4</text>
+<rect x="630" y="84" width="36" height="20" rx="10" fill="#64748B"/><text x="648" y="98" text-anchor="middle" class="p">B3</text>
+<text x="630" y="132" class="h">Verification</text>
+<text x="630" y="156" class="c">Task match, answer</text><text x="630" y="174" class="c">&amp; timing checks</text>
+<circle cx="636" cy="200" r="4" fill="#64748B"></circle>
+<text x="646" y="204" class="s" fill="#64748B">PLANNED</text>
+<rect x="818" y="70" width="170" height="150" rx="16" fill="url(#card)" stroke="#64748B" stroke-opacity="0.6" stroke-width="1.6" stroke-dasharray="6 5"/>
+<text x="974" y="206" text-anchor="end" class="n">5</text>
+<rect x="832" y="84" width="36" height="20" rx="10" fill="#64748B"/><text x="850" y="98" text-anchor="middle" class="p">B3</text>
+<text x="832" y="132" class="h">Review &amp; Report</text>
+<text x="832" y="156" class="c">Human decisions,</text><text x="832" y="174" class="c">frozen exports</text>
+<circle cx="838" cy="200" r="4" fill="#64748B"></circle>
+<text x="848" y="204" class="s" fill="#64748B">PLANNED</text>
+<rect x="1020" y="70" width="170" height="150" rx="16" fill="url(#card)" stroke="#64748B" stroke-opacity="0.6" stroke-width="1.6" stroke-dasharray="6 5"/>
+<text x="1176" y="206" text-anchor="end" class="n">6</text>
+<rect x="1034" y="84" width="36" height="20" rx="10" fill="#64748B"/><text x="1052" y="98" text-anchor="middle" class="p">B4</text>
+<text x="1034" y="132" class="h">Experiments</text>
+<text x="1034" y="156" class="c">Optional, isolated</text><text x="1034" y="174" class="c">attacker runs</text>
+<circle cx="1040" cy="200" r="4" fill="#64748B"></circle>
+<text x="1050" y="204" class="s" fill="#64748B">PLANNED</text>
+<line x1="10" y1="242" x2="1190" y2="242" stroke="#334155" stroke-width="1.5"/>
+<g><circle r="12" fill="#22D3EE" opacity="0.25" filter="url(#glow)"/><circle r="5" fill="#E0F2FE"/>
+<animateMotion dur="7s" repeatCount="indefinite" path="M10 242 H1190"/>
+<animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.92;1" dur="7s" repeatCount="indefinite"/></g>
+</svg>
