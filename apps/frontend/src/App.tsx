@@ -20,6 +20,7 @@ export default function App({
   const [selectedScenario, setSelectedScenario] = useState<string>(
     initialScenario || getActiveScenario().scenario_id
   );
+  const [isSessionExpired, setIsSessionExpired] = useState<boolean>(false);
   const [_stagedBenchmark, setStagedBenchmark] = useState<StagedBenchmark | null>(null);
   const [_activePolicy, setActivePolicy] = useState<PolicyResponse | null>(null);
 
@@ -42,6 +43,9 @@ export default function App({
       selectedScenario={selectedScenario}
       onScenarioChange={handleScenarioChange}
       scenarioList={scenarioList}
+      isSessionExpired={isSessionExpired}
+      onReauthenticate={() => setIsSessionExpired(false)}
+      onSimulateExpiry={() => setIsSessionExpired((prev) => !prev)}
     >
       {activeTab === 'benchmarks' && (
         <BenchmarkImport onImportSuccess={setStagedBenchmark} />

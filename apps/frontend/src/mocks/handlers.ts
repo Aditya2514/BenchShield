@@ -290,6 +290,22 @@ export const handlers = [
     return HttpResponse.json(scenario.report, { status: 202 });
   }),
 
+  // Get report by investigation ID
+  http.get('/api/v1/investigations/:id/reports', () => {
+    const scenario = getActiveScenario();
+    if (!scenario.report) {
+      return HttpResponse.json(
+        {
+          error_code: 'not_found',
+          message: 'No report found for this investigation.',
+          retryable: false,
+        },
+        { status: 404 }
+      );
+    }
+    return HttpResponse.json(scenario.report, { status: 200 });
+  }),
+
   // Get report
   http.get('/api/v1/reports/:id', () => {
     const scenario = getActiveScenario();

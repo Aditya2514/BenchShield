@@ -6,8 +6,14 @@ import {
   Lock,
   Clock,
   ShieldAlert,
+  RefreshCw,
+  FileText,
 } from 'lucide-react';
 import type { ReportResponse } from '@benchshield/api-client';
+
+interface ExtendedReportResponse extends ReportResponse {
+  download_expires_at?: string;
+}
 
 interface ReportsViewProps {
   initialReport: ReportResponse | null;
@@ -18,9 +24,27 @@ export function ReportsView({
   initialReport,
   investigationId,
 }: ReportsViewProps) {
-  const [report, setReport] = useState<ReportResponse | null>(initialReport);
+  const [report, setReport] = useState<ExtendedReportResponse | null>(() => {
+    if (!initialReport) return null;
+    return {
+      ...initialReport,
+      // Default expiration 1 hour from now for mock data if not set
+      download_expires_at: (initialReport as ExtendedReportResponse).download_expires_at ||
+        new Date(Date.now() + 3600 * 1000).toISOString(),
+    };
+  });
+
   const [isFreezing, setIsFreezing] = useState(false);
+  const [isRefreshingDownload, setIsRefreshingDownload] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [refreshNotice, setRefreshNotice] = useState<string | null>(null);
+  const [forceExpired, setForceExpired] = useState<boolean>(false);
+
+  const isDownloadExpired = forceExpired || (
+    report?.download_expires_at
+      ? new Date(report.download_expires_at).getTime() <= Date.now()
+      : false
+  );
 
   const handleFreezeReport = async () => {
     setIsFreezing(true);
@@ -34,18 +58,57 @@ export function ReportsView({
       if (!res.ok) {
         throw new Error(data.message || 'Failed to trigger report freeze.');
       }
-      setReport(data);
-    } catch (err: any) {
-      setActionError(err.message || 'Error creating report export job.');
+      setReport({
+        ...data,
+        download_expires_at: new Date(Date.now() + 3600 * 1000).toISOString(),
+      });
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Error creating report export job.');
     } finally {
       setIsFreezing(false);
     }
   };
 
-  const handleDownload = () => {
-    if (report?.download_url) {
-      window.open(report.download_url, '_blank');
+  const handleDownload = async () => {
+    if (!report?.download_url) return;
+
+    // Expired Download Flow
+    // If the pre-signed download URL is expired, request a fresh pre-signed link
+    if (isDownloadExpired) {
+      setIsRefreshingDownload(true);
+      setRefreshNotice('Secure download link has expired. Fetching fresh pre-signed link...');
+      setActionError(null);
+
+      try {
+        const res = await fetch(`/api/v1/investigations/${investigationId}/reports`);
+        if (!res.ok) {
+          throw new Error('Failed to refresh expired download link');
+        }
+        const freshData = await res.json();
+        const freshExpiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
+
+        setReport({
+          ...freshData,
+          download_url: freshData.download_url || report.download_url,
+          download_expires_at: freshExpiresAt,
+        });
+        setForceExpired(false);
+        setRefreshNotice('Download link successfully refreshed.');
+
+        // Trigger download with fresh URL
+        if (freshData.download_url || report.download_url) {
+          window.open(freshData.download_url || report.download_url, '_blank');
+        }
+      } catch (err: unknown) {
+        setActionError(err instanceof Error ? err.message : 'Failed to refresh download link.');
+      } finally {
+        setIsRefreshingDownload(false);
+      }
+      return;
     }
+
+    // Direct download when active
+    window.open(report.download_url, '_blank');
   };
 
   return (
@@ -61,13 +124,15 @@ export function ReportsView({
               <div className="flex items-center gap-3">
                 <h2 className="text-lg font-bold text-white">Versioned Audit Report</h2>
                 {report && (
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold ${
-                    report.status === 'completed'
-                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/60'
-                      : report.status === 'failed'
-                      ? 'bg-red-950 text-red-300 border border-red-800/60'
-                      : 'bg-indigo-950 text-indigo-300 border border-indigo-700/60'
-                  }`}>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold ${
+                      report.status === 'completed'
+                        ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/60'
+                        : report.status === 'failed'
+                        ? 'bg-red-950 text-red-300 border border-red-800/60'
+                        : 'bg-indigo-950 text-indigo-300 border border-indigo-700/60'
+                    }`}
+                  >
                     {report.status.toUpperCase()}
                   </span>
                 )}
@@ -78,9 +143,10 @@ export function ReportsView({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {!report && (
               <button
+                type="button"
                 onClick={handleFreezeReport}
                 disabled={isFreezing}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50"
@@ -91,20 +157,82 @@ export function ReportsView({
             )}
 
             {report?.status === 'completed' && report.download_url && (
-              <button
-                onClick={handleDownload}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" aria-hidden="true" />
-                Download Authorized Report
-              </button>
+              <div className="flex items-center gap-2">
+                {isDownloadExpired && (
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
+                    URL Expired
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  disabled={isRefreshingDownload}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors ${
+                    isDownloadExpired
+                      ? 'bg-amber-600 hover:bg-amber-500 text-slate-950'
+                      : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                  }`}
+                  aria-label={isDownloadExpired ? 'Download Expired: Click to Refresh & Download' : 'Download Authorized Report'}
+                >
+                  {isRefreshingDownload ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                  )}
+                  {isRefreshingDownload
+                    ? 'Refreshing URL...'
+                    : isDownloadExpired
+                    ? 'Refresh & Download Report'
+                    : 'Download Authorized Report'}
+                </button>
+
+                {/* Simulation toggle for test / verification */}
+                <button
+                  type="button"
+                  onClick={() => setForceExpired(!forceExpired)}
+                  className="px-2 py-1 rounded text-[10px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700"
+                  title="Simulate expired pre-signed link"
+                >
+                  {forceExpired ? 'Reset Expiry' : 'Simulate Expired Link'}
+                </button>
+              </div>
             )}
           </div>
         </div>
 
+        {refreshNotice && (
+          <div
+            role="status"
+            className="p-3 bg-blue-950/70 border border-blue-700/60 rounded-lg text-xs text-blue-200 flex items-center gap-2"
+          >
+            <Clock className="w-4 h-4 text-blue-400 shrink-0" aria-hidden="true" />
+            <span>{refreshNotice}</span>
+          </div>
+        )}
+
         {actionError && (
           <div role="alert" className="p-3 bg-red-950/70 border border-red-700/60 rounded-lg text-xs text-red-200">
             {actionError}
+          </div>
+        )}
+
+        {/* Empty State when no report has been generated */}
+        {!report && (
+          <div className="p-8 text-center bg-slate-950 rounded-xl border border-slate-800 space-y-3">
+            <FileText className="w-10 h-10 text-slate-600 mx-auto" aria-hidden="true" />
+            <h3 className="text-base font-semibold text-slate-200">No Frozen Report Generated</h3>
+            <p className="text-xs text-slate-400 max-w-lg mx-auto">
+              Report freezing creates an immutable, cryptographically verifiable record of the current audit state. All verified findings, temporal evidence, and reviewer adjudications will be permanently version-locked.
+            </p>
+            <button
+              type="button"
+              onClick={handleFreezeReport}
+              disabled={isFreezing}
+              className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition"
+            >
+              <Lock className="w-3.5 h-3.5" aria-hidden="true" />
+              {isFreezing ? 'Freezing Report...' : 'Freeze & Generate Report'}
+            </button>
           </div>
         )}
 
@@ -182,4 +310,3 @@ export function ReportsView({
     </div>
   );
 }
-

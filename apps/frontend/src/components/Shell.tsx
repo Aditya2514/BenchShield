@@ -1,4 +1,15 @@
-import { Shield, Database, Sliders, Activity, ListFilter, Cpu, FileCheck } from 'lucide-react';
+import React from 'react';
+import {
+  Shield,
+  Database,
+  Sliders,
+  Activity,
+  ListFilter,
+  Cpu,
+  FileCheck,
+  AlertTriangle,
+  RotateCw,
+} from 'lucide-react';
 
 export type NavTab = 'benchmarks' | 'policies' | 'investigations' | 'findings' | 'experiments' | 'reports';
 
@@ -8,6 +19,9 @@ interface ShellProps {
   selectedScenario: string;
   onScenarioChange: (scenarioId: string) => void;
   scenarioList: { id: string; name: string }[];
+  isSessionExpired?: boolean;
+  onReauthenticate?: () => void;
+  onSimulateExpiry?: () => void;
   children: React.ReactNode;
 }
 
@@ -17,6 +31,9 @@ export function Shell({
   selectedScenario,
   onScenarioChange,
   scenarioList,
+  isSessionExpired = false,
+  onReauthenticate,
+  onSimulateExpiry,
   children,
 }: ShellProps) {
   const tabs = [
@@ -49,26 +66,69 @@ export function Shell({
           </div>
         </div>
 
-        {/* Mock Scenario Switcher */}
-        <div className="flex items-center gap-2">
-          <label htmlFor="scenario-selector" className="text-xs text-slate-400">
-            Active Mock Scenario:
-          </label>
-          <select
-            id="scenario-selector"
-            aria-label="Active Mock Scenario:"
-            value={selectedScenario}
-            onChange={(e) => onScenarioChange(e.target.value)}
-            className="text-xs bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:ring-2 focus:ring-indigo-500"
-          >
-            {scenarioList.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+        {/* Right Header Actions: Mock Switcher & 401 Simulation */}
+        <div className="flex items-center gap-3">
+          {onSimulateExpiry && (
+            <button
+              type="button"
+              onClick={onSimulateExpiry}
+              className="px-2 py-1 rounded text-[10px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition"
+              title="Simulate HTTP 401 Session Expiry"
+            >
+              Simulate 401
+            </button>
+          )}
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="scenario-selector" className="text-xs text-slate-400">
+              Active Mock Scenario:
+            </label>
+            <select
+              id="scenario-selector"
+              aria-label="Active Mock Scenario:"
+              value={selectedScenario}
+              onChange={(e) => onScenarioChange(e.target.value)}
+              className="text-xs bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:ring-2 focus:ring-indigo-500"
+            >
+              {scenarioList.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </header>
+
+      {/* Accessible Session Expiry Banner (HTTP 401 Interception) */}
+      {isSessionExpired && (
+        <aside
+          role="alert"
+          aria-live="assertive"
+          className="bg-amber-950/95 border-b border-amber-600/80 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 text-amber-200"
+        >
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" aria-hidden="true" />
+            <div>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                Session Expired (HTTP 401 Unauthorized)
+              </h3>
+              <p className="text-xs text-amber-300/90 mt-0.5">
+                Your authentication token has expired. Re-authenticate to resume secure investigation operations and view confidential benchmark audit records.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onReauthenticate}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-amber-300 shadow-sm"
+          >
+            <RotateCw className="w-3.5 h-3.5" aria-hidden="true" />
+            Re-authenticate Session
+          </button>
+        </aside>
+      )}
 
       {/* Navigation Sub-header */}
       <nav aria-label="Main Navigation" className="border-b border-slate-800/80 bg-slate-900/40 px-6">
@@ -79,6 +139,7 @@ export function Shell({
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => onTabChange(tab.id)}
                 className={`flex items-center gap-2 px-3.5 py-2 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
                   isActive
