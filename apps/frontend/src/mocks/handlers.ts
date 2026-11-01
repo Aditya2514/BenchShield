@@ -94,6 +94,7 @@ export const handlers = [
   // Cancel investigation
   http.post('/api/v1/investigations/:id/cancel', () => {
     const scenario = getActiveScenario();
+    scenario.investigation.state = 'cancelled';
     return HttpResponse.json(
       {
         ...scenario.investigation,

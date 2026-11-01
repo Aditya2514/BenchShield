@@ -2,14 +2,23 @@ import { useState } from 'react';
 import { Shell, NavTab } from './components/Shell.js';
 import { BenchmarkImport, StagedBenchmark } from './features/benchmarks/BenchmarkImport.js';
 import { PolicyForm } from './features/policies/PolicyForm.js';
+import { InvestigationView } from './features/investigations/InvestigationView.js';
 import { SCENARIOS, getActiveScenario, setActiveScenario } from './mocks/scenarios.js';
 import { getTemporalStatusMeta, getClaimStatusMeta } from './types/status.js';
 import { AlertTriangle } from 'lucide-react';
 import type { PolicyResponse } from '@benchshield/api-client';
 
-export default function App({ defaultTab = 'benchmarks' }: { defaultTab?: NavTab } = {}) {
+export default function App({
+  defaultTab = 'benchmarks',
+  initialScenario,
+}: {
+  defaultTab?: NavTab;
+  initialScenario?: string;
+} = {}) {
   const [activeTab, setActiveTab] = useState<NavTab>(defaultTab);
-  const [selectedScenario, setSelectedScenario] = useState<string>('1-successful-audit');
+  const [selectedScenario, setSelectedScenario] = useState<string>(
+    initialScenario || getActiveScenario().scenario_id
+  );
   const [_stagedBenchmark, setStagedBenchmark] = useState<StagedBenchmark | null>(null);
   const [_activePolicy, setActivePolicy] = useState<PolicyResponse | null>(null);
 
@@ -41,7 +50,15 @@ export default function App({ defaultTab = 'benchmarks' }: { defaultTab?: NavTab
         <PolicyForm onPolicyCreated={setActivePolicy} />
       )}
 
-      {(activeTab === 'investigations' || activeTab === 'findings' || activeTab === 'experiments' || activeTab === 'reports') && (
+      {activeTab === 'investigations' && (
+        <InvestigationView
+          key={selectedScenario}
+          initialInvestigation={scenario.investigation}
+          eventsSequence={scenario.events}
+        />
+      )}
+
+      {(activeTab === 'findings' || activeTab === 'experiments' || activeTab === 'reports') && (
         <div className="space-y-6">
           {/* Active Scenario Overview Card */}
           <section aria-labelledby="scenario-title" className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
