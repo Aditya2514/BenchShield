@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchshield.ai/schemas/events.schema.json",
+  "title": "BenchShield Server-Sent Event Envelope",
+  "type": "object",
+  "required": [
+    "event_id",
+    "entity_id",
+    "type",
+    "schema_version",
+    "time",
+    "data"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Monotonically increasing event ID for reconnect cursors"
+    },
+    "entity_id": {
+      "type": "string",
+      "description": "Investigation ID or Report ID being tracked"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "investigation.queued",
+        "investigation.validating",
+        "investigation.discovering",
+        "investigation.verifying",
+        "investigation.awaiting_review",
+        "investigation.completed",
+        "investigation.failed",
+        "investigation.cancelled",
+        "investigation.policy_blocked",
+        "investigation.budget_exhausted",
+        "investigation.progress",
+        "investigation.finding_discovered",
+        "report.generating",
+        "report.completed",
+        "report.export_failed"
+      ]
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": {
+          "type": "string"
+        },
+        "processed_items": {
+          "type": "integer"
+        },
+        "total_items": {
+          "type": "integer"
+        },
+        "candidate_findings": {
+          "type": "integer"
+        },
+        "verified_findings": {
+          "type": "integer"
+        },
+        "queries_executed": {
+          "type": "integer"
+        },
+        "pages_fetched": {
+          "type": "integer"
+        },
+        "spend_usd": {
+          "type": "number"
+        },
+        "partial_coverage": {
+          "type": "boolean"
+        },
+        "coverage_limitations": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "failure_reason": {
+          "type": "string"
+        },
+        "report_id": {
+          "type": "string"
+        },
+        "error_code": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
+

@@ -1,0 +1,70 @@
+{
+  "scenario_id": "4-failed-audit",
+  "name": "Investigation Failed (Fatal Infrastructure Outage)",
+  "description": "Investigation terminated in failed state after exhaustive provider retries failed.",
+  "investigation": {
+    "id": "inv-syn014-failed",
+    "benchmark_version_id": "bm-syn014-v1",
+    "policy_version_id": "pol-syn014-v1",
+    "state": "failed",
+    "partial_coverage": false,
+    "coverage_limitations": [
+      "Fatal infrastructure outage: web investigation specialist service unreachable."
+    ],
+    "counts": {
+      "total_items": 1,
+      "processed_items": 0,
+      "candidate_findings": 0,
+      "verified_findings": 0
+    },
+    "budget_usage": {
+      "queries_executed": 1,
+      "pages_fetched": 0,
+      "spend_usd": 0.05
+    },
+    "failure_reason": "provider_unavailable: 3 consecutive network timeouts contacting primary and secondary search providers."
+  },
+  "findings": [],
+  "report": null,
+  "events": [
+    {
+      "event_id": "evt-301",
+      "entity_id": "inv-syn014-failed",
+      "type": "investigation.queued",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:00:00Z",
+      "data": {
+        "state": "queued",
+        "total_items": 1,
+        "processed_items": 0,
+        "candidate_findings": 0,
+        "verified_findings": 0,
+        "queries_executed": 0,
+        "pages_fetched": 0,
+        "spend_usd": 0.0,
+        "partial_coverage": false
+      }
+    },
+    {
+      "event_id": "evt-302",
+      "entity_id": "inv-syn014-failed",
+      "type": "investigation.failed",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:02:30Z",
+      "data": {
+        "state": "failed",
+        "total_items": 1,
+        "processed_items": 0,
+        "candidate_findings": 0,
+        "verified_findings": 0,
+        "queries_executed": 1,
+        "pages_fetched": 0,
+        "spend_usd": 0.05,
+        "partial_coverage": false,
+        "failure_reason": "provider_unavailable: 3 consecutive network timeouts contacting primary and secondary search providers.",
+        "error_code": "provider_unavailable"
+      }
+    }
+  ]
+}
+

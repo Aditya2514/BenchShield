@@ -1,0 +1,142 @@
+{
+  "scenario_id": "1-successful-audit",
+  "name": "Successful Audit with Verified Answer Exposure",
+  "description": "Completed investigation for SYN-014 with verified reference-answer exposure and frozen report R-001.",
+  "investigation": {
+    "id": "inv-syn014-success",
+    "benchmark_version_id": "bm-syn014-v1",
+    "policy_version_id": "pol-syn014-v1",
+    "state": "completed",
+    "partial_coverage": false,
+    "coverage_limitations": [],
+    "counts": {
+      "total_items": 1,
+      "processed_items": 1,
+      "candidate_findings": 2,
+      "verified_findings": 1
+    },
+    "budget_usage": {
+      "queries_executed": 2,
+      "pages_fetched": 3,
+      "spend_usd": 1.25
+    }
+  },
+  "findings": [
+    {
+      "id": "find-syn014-01",
+      "investigation_id": "inv-syn014-success",
+      "item_id": "SYN-014",
+      "item_version_id": "iv-syn014-01",
+      "claim_status": "verified",
+      "exposure_dimension": "reference_answer",
+      "task_identity": "exact",
+      "answer_match": "task_specific",
+      "temporal_status": "unknown",
+      "attribution": "none",
+      "policy_compliance": "violated",
+      "evidence": {
+        "snapshot_id": "snap-syn014-s01",
+        "source_url": "https://synthetic-repo.example.com/solutions/k7-station.html",
+        "retrieval_time": "2026-11-01T12:00:00Z",
+        "content_hash": "sha256-a1b2c3d4e5f60718293a4b5c6d7e8f90",
+        "excerpt_text": "Exam Question: Which fictional station has code K7? Options: [West, South, East, North]. Correct Answer: East (Code K7 corresponds to East station)."
+      },
+      "review_decision": {
+        "action": "confirmed",
+        "reason": "Source explicitly matches question task and maps answer to East despite reordered options.",
+        "reviewed_at": "2026-11-01T12:30:00Z",
+        "reviewer_id": "rev-maintainer-01"
+      },
+      "version": 2
+    }
+  ],
+  "report": {
+    "report_id": "rep-syn014-01",
+    "investigation_id": "inv-syn014-success",
+    "status": "completed",
+    "report_version_id": "R-001",
+    "frozen_at": "2026-11-01T12:45:00Z",
+    "download_url": "/api/v1/reports/rep-syn014-01/download",
+    "download_expires_at": "2026-11-02T12:45:00Z",
+    "reviewer_decisions_count": 1,
+    "unresolved_claims_count": 0,
+    "limitations": [
+      "Real-web temporal support unknown; page discovered post-cutoff without archive verification."
+    ]
+  },
+  "events": [
+    {
+      "event_id": "evt-001",
+      "entity_id": "inv-syn014-success",
+      "type": "investigation.queued",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T11:58:00Z",
+      "data": {
+        "state": "queued",
+        "total_items": 1,
+        "processed_items": 0,
+        "candidate_findings": 0,
+        "verified_findings": 0,
+        "queries_executed": 0,
+        "pages_fetched": 0,
+        "spend_usd": 0.0,
+        "partial_coverage": false
+      }
+    },
+    {
+      "event_id": "evt-002",
+      "entity_id": "inv-syn014-success",
+      "type": "investigation.discovering",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T11:59:00Z",
+      "data": {
+        "state": "discovering",
+        "total_items": 1,
+        "processed_items": 0,
+        "candidate_findings": 2,
+        "verified_findings": 0,
+        "queries_executed": 2,
+        "pages_fetched": 3,
+        "spend_usd": 0.85,
+        "partial_coverage": false
+      }
+    },
+    {
+      "event_id": "evt-003",
+      "entity_id": "inv-syn014-success",
+      "type": "investigation.verifying",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:00:00Z",
+      "data": {
+        "state": "verifying",
+        "total_items": 1,
+        "processed_items": 1,
+        "candidate_findings": 2,
+        "verified_findings": 1,
+        "queries_executed": 2,
+        "pages_fetched": 3,
+        "spend_usd": 1.25,
+        "partial_coverage": false
+      }
+    },
+    {
+      "event_id": "evt-004",
+      "entity_id": "inv-syn014-success",
+      "type": "investigation.completed",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:01:00Z",
+      "data": {
+        "state": "completed",
+        "total_items": 1,
+        "processed_items": 1,
+        "candidate_findings": 2,
+        "verified_findings": 1,
+        "queries_executed": 2,
+        "pages_fetched": 3,
+        "spend_usd": 1.25,
+        "partial_coverage": false
+      }
+    }
+  ]
+}
+
