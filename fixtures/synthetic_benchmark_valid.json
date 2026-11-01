@@ -1,0 +1,33 @@
+{
+  "name": "Synthetic Auditing Pilot Benchmark v1",
+  "workspace_id": "ws_test_pilot",
+  "items": [
+    {
+      "external_id": "SYN-DEV-001",
+      "task_type": "exact_short_answer",
+      "question": "What is the primary power generation mechanism of fictional Station K-9?",
+      "gold_answer": "Sub-surface thorium reactor",
+      "metadata": {"domain": "sci_fi_engineering", "difficulty": "medium"}
+    },
+    {
+      "external_id": "SYN-DEV-002",
+      "task_type": "multiple_choice",
+      "question": "Which fictional station holds registration code K7?",
+      "choices": [
+        {"id": "A", "text": "North Station"},
+        {"id": "B", "text": "East Station"},
+        {"id": "C", "text": "South Station"},
+        {"id": "D", "text": "West Station"}
+      ],
+      "gold_answer": "B",
+      "metadata": {"domain": "fictional_navigation"}
+    },
+    {
+      "external_id": "SYN-DEV-003",
+      "task_type": "exact_short_answer",
+      "question": "What is the atomic number of carbon?",
+      "gold_answer": "6",
+      "metadata": {"domain": "chemistry"}
+    }
+  ]
+}

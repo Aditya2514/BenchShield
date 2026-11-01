@@ -1,0 +1,685 @@
+{
+  "candidate_discovered_event": {
+    "$defs": {
+      "SourceFamily": {
+        "description": "Category of the source where evidence was discovered.",
+        "enum": [
+          "web_search",
+          "code_repository",
+          "academic_archive",
+          "discussion_forum",
+          "other"
+        ],
+        "title": "SourceFamily",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Payload when a candidate exposure source is found.",
+    "properties": {
+      "external_id": {
+        "description": "Item external ID",
+        "title": "External Id",
+        "type": "string"
+      },
+      "item_version_id": {
+        "description": "Target item version ID",
+        "title": "Item Version Id",
+        "type": "string"
+      },
+      "source_family": {
+        "$ref": "#/$defs/SourceFamily",
+        "description": "Source family category"
+      },
+      "source_url": {
+        "description": "Discovered source URL",
+        "title": "Source Url",
+        "type": "string"
+      }
+    },
+    "required": [
+      "item_version_id",
+      "external_id",
+      "source_url",
+      "source_family"
+    ],
+    "title": "CandidateDiscoveredPayload",
+    "type": "object"
+  },
+  "progress_event": {
+    "additionalProperties": false,
+    "description": "Payload tracking resource consumption.",
+    "properties": {
+      "cost_ceiling_usd": {
+        "description": "Cost ceiling in USD",
+        "minimum": 0.0,
+        "title": "Cost Ceiling Usd",
+        "type": "number"
+      },
+      "max_fetches": {
+        "description": "Max fetches allowed",
+        "minimum": 0,
+        "title": "Max Fetches",
+        "type": "integer"
+      },
+      "max_queries": {
+        "description": "Max queries allowed",
+        "minimum": 0,
+        "title": "Max Queries",
+        "type": "integer"
+      },
+      "used_cost_usd": {
+        "description": "Cost incurred in USD",
+        "minimum": 0.0,
+        "title": "Used Cost Usd",
+        "type": "number"
+      },
+      "used_fetches": {
+        "description": "Fetches consumed so far",
+        "minimum": 0,
+        "title": "Used Fetches",
+        "type": "integer"
+      },
+      "used_queries": {
+        "description": "Queries consumed so far",
+        "minimum": 0,
+        "title": "Used Queries",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "used_queries",
+      "max_queries",
+      "used_fetches",
+      "max_fetches",
+      "used_cost_usd",
+      "cost_ceiling_usd"
+    ],
+    "title": "BudgetUpdatedPayload",
+    "type": "object"
+  },
+  "snapshot_refresh_required_event": {
+    "additionalProperties": false,
+    "description": "Payload emitted when reconnect cursor is expired and state refresh is needed.",
+    "properties": {
+      "investigation_id": {
+        "description": "Investigation ID",
+        "title": "Investigation Id",
+        "type": "string"
+      },
+      "last_known_event_id": {
+        "description": "Client supplied cursor",
+        "title": "Last Known Event Id",
+        "type": "string"
+      },
+      "message": {
+        "default": "Reconnect cursor expired; please refresh full investigation snapshot from GET /api/v1/investigations/{id}",
+        "description": "Instruction to fetch full snapshot",
+        "title": "Message",
+        "type": "string"
+      }
+    },
+    "required": [
+      "last_known_event_id",
+      "investigation_id"
+    ],
+    "title": "SnapshotRefreshRequiredPayload",
+    "type": "object"
+  },
+  "sse_envelope": {
+    "$defs": {
+      "AnswerMatch": {
+        "description": "Assessment of answer agreement between discovered content and reference.",
+        "enum": [
+          "exact",
+          "normalized",
+          "task_specific",
+          "mismatch",
+          "not_applicable"
+        ],
+        "title": "AnswerMatch",
+        "type": "string"
+      },
+      "BudgetUpdatedPayload": {
+        "additionalProperties": false,
+        "description": "Payload tracking resource consumption.",
+        "properties": {
+          "cost_ceiling_usd": {
+            "description": "Cost ceiling in USD",
+            "minimum": 0.0,
+            "title": "Cost Ceiling Usd",
+            "type": "number"
+          },
+          "max_fetches": {
+            "description": "Max fetches allowed",
+            "minimum": 0,
+            "title": "Max Fetches",
+            "type": "integer"
+          },
+          "max_queries": {
+            "description": "Max queries allowed",
+            "minimum": 0,
+            "title": "Max Queries",
+            "type": "integer"
+          },
+          "used_cost_usd": {
+            "description": "Cost incurred in USD",
+            "minimum": 0.0,
+            "title": "Used Cost Usd",
+            "type": "number"
+          },
+          "used_fetches": {
+            "description": "Fetches consumed so far",
+            "minimum": 0,
+            "title": "Used Fetches",
+            "type": "integer"
+          },
+          "used_queries": {
+            "description": "Queries consumed so far",
+            "minimum": 0,
+            "title": "Used Queries",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "used_queries",
+          "max_queries",
+          "used_fetches",
+          "max_fetches",
+          "used_cost_usd",
+          "cost_ceiling_usd"
+        ],
+        "title": "BudgetUpdatedPayload",
+        "type": "object"
+      },
+      "CandidateDiscoveredPayload": {
+        "additionalProperties": false,
+        "description": "Payload when a candidate exposure source is found.",
+        "properties": {
+          "external_id": {
+            "description": "Item external ID",
+            "title": "External Id",
+            "type": "string"
+          },
+          "item_version_id": {
+            "description": "Target item version ID",
+            "title": "Item Version Id",
+            "type": "string"
+          },
+          "source_family": {
+            "$ref": "#/$defs/SourceFamily",
+            "description": "Source family category"
+          },
+          "source_url": {
+            "description": "Discovered source URL",
+            "title": "Source Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "item_version_id",
+          "external_id",
+          "source_url",
+          "source_family"
+        ],
+        "title": "CandidateDiscoveredPayload",
+        "type": "object"
+      },
+      "ClaimStatus": {
+        "description": "Status of an individual exposure claim.",
+        "enum": [
+          "candidate",
+          "verified",
+          "rejected",
+          "needs_review"
+        ],
+        "title": "ClaimStatus",
+        "type": "string"
+      },
+      "EventType": {
+        "description": "Types of Server-Sent Events emitted during an investigation.",
+        "enum": [
+          "investigation_queued",
+          "investigation_started",
+          "phase_transition",
+          "item_investigation_started",
+          "candidate_discovered",
+          "verification_completed",
+          "budget_updated",
+          "investigation_completed",
+          "investigation_failed",
+          "investigation_cancelled",
+          "investigation_blocked",
+          "snapshot_refresh_required"
+        ],
+        "title": "EventType",
+        "type": "string"
+      },
+      "ExposureType": {
+        "description": "Independent exposure claim types.",
+        "enum": [
+          "metadata",
+          "question_context",
+          "worked_solution",
+          "reference_answer"
+        ],
+        "title": "ExposureType",
+        "type": "string"
+      },
+      "InvestigationBlockedPayload": {
+        "additionalProperties": false,
+        "description": "Payload when investigation is blocked by policy.",
+        "properties": {
+          "reason": {
+            "description": "Policy rule that blocked investigation",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "InvestigationBlockedPayload",
+        "type": "object"
+      },
+      "InvestigationCancelledPayload": {
+        "additionalProperties": false,
+        "description": "Payload when investigation is cancelled.",
+        "properties": {
+          "cancelled_at": {
+            "description": "Cancellation timestamp",
+            "format": "date-time",
+            "title": "Cancelled At",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Sanitized cancellation reason",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cancelled_at",
+          "reason"
+        ],
+        "title": "InvestigationCancelledPayload",
+        "type": "object"
+      },
+      "InvestigationCompletedPayload": {
+        "additionalProperties": false,
+        "description": "Payload when investigation reaches terminal completion.",
+        "properties": {
+          "findings_count": {
+            "description": "Total findings verified or flagged",
+            "minimum": 0,
+            "title": "Findings Count",
+            "type": "integer"
+          },
+          "investigated_items": {
+            "description": "Items processed",
+            "minimum": 0,
+            "title": "Investigated Items",
+            "type": "integer"
+          },
+          "is_partial": {
+            "description": "Whether investigation coverage is partial",
+            "title": "Is Partial",
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/$defs/InvestigationStatus",
+            "description": "Terminal status"
+          },
+          "total_items": {
+            "description": "Total items in benchmark",
+            "minimum": 0,
+            "title": "Total Items",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "status",
+          "total_items",
+          "investigated_items",
+          "findings_count",
+          "is_partial"
+        ],
+        "title": "InvestigationCompletedPayload",
+        "type": "object"
+      },
+      "InvestigationFailedPayload": {
+        "additionalProperties": false,
+        "description": "Payload when investigation fails.",
+        "properties": {
+          "failure_code": {
+            "description": "Error code",
+            "title": "Failure Code",
+            "type": "string"
+          },
+          "message": {
+            "description": "Sanitized failure explanation",
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "failure_code",
+          "message"
+        ],
+        "title": "InvestigationFailedPayload",
+        "type": "object"
+      },
+      "InvestigationQueuedPayload": {
+        "additionalProperties": false,
+        "description": "Payload when investigation is placed in execution queue.",
+        "properties": {
+          "benchmark_version_id": {
+            "description": "Target benchmark version ID",
+            "title": "Benchmark Version Id",
+            "type": "string"
+          },
+          "policy_version_id": {
+            "description": "Active policy version ID",
+            "title": "Policy Version Id",
+            "type": "string"
+          },
+          "total_items": {
+            "description": "Total items in scope",
+            "minimum": 1,
+            "title": "Total Items",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "benchmark_version_id",
+          "total_items",
+          "policy_version_id"
+        ],
+        "title": "InvestigationQueuedPayload",
+        "type": "object"
+      },
+      "InvestigationStartedPayload": {
+        "additionalProperties": false,
+        "description": "Payload when investigation begins execution.",
+        "properties": {
+          "benchmark_version_id": {
+            "description": "Target benchmark version ID",
+            "title": "Benchmark Version Id",
+            "type": "string"
+          },
+          "total_items": {
+            "description": "Total items in scope",
+            "minimum": 1,
+            "title": "Total Items",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "benchmark_version_id",
+          "total_items"
+        ],
+        "title": "InvestigationStartedPayload",
+        "type": "object"
+      },
+      "InvestigationStatus": {
+        "description": "Lifecycle states of an investigation orchestrator.",
+        "enum": [
+          "queued",
+          "validating",
+          "discovering",
+          "verifying",
+          "awaiting_review",
+          "completed",
+          "failed",
+          "cancelled",
+          "policy_blocked",
+          "budget_exhausted"
+        ],
+        "title": "InvestigationStatus",
+        "type": "string"
+      },
+      "ItemInvestigationStartedPayload": {
+        "additionalProperties": false,
+        "description": "Payload when discovery begins on a specific benchmark item.",
+        "properties": {
+          "external_id": {
+            "description": "Item external ID",
+            "title": "External Id",
+            "type": "string"
+          },
+          "item_index": {
+            "description": "1-indexed item number",
+            "minimum": 1,
+            "title": "Item Index",
+            "type": "integer"
+          },
+          "item_version_id": {
+            "description": "Item version ID",
+            "title": "Item Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "item_version_id",
+          "external_id",
+          "item_index"
+        ],
+        "title": "ItemInvestigationStartedPayload",
+        "type": "object"
+      },
+      "PhaseTransitionPayload": {
+        "additionalProperties": false,
+        "description": "Payload when investigation transitions between orchestration phases.",
+        "properties": {
+          "from_phase": {
+            "description": "Previous phase name",
+            "title": "From Phase",
+            "type": "string"
+          },
+          "to_phase": {
+            "description": "New active phase name",
+            "title": "To Phase",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_phase",
+          "to_phase"
+        ],
+        "title": "PhaseTransitionPayload",
+        "type": "object"
+      },
+      "SnapshotRefreshRequiredPayload": {
+        "additionalProperties": false,
+        "description": "Payload emitted when reconnect cursor is expired and state refresh is needed.",
+        "properties": {
+          "investigation_id": {
+            "description": "Investigation ID",
+            "title": "Investigation Id",
+            "type": "string"
+          },
+          "last_known_event_id": {
+            "description": "Client supplied cursor",
+            "title": "Last Known Event Id",
+            "type": "string"
+          },
+          "message": {
+            "default": "Reconnect cursor expired; please refresh full investigation snapshot from GET /api/v1/investigations/{id}",
+            "description": "Instruction to fetch full snapshot",
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "last_known_event_id",
+          "investigation_id"
+        ],
+        "title": "SnapshotRefreshRequiredPayload",
+        "type": "object"
+      },
+      "SourceFamily": {
+        "description": "Category of the source where evidence was discovered.",
+        "enum": [
+          "web_search",
+          "code_repository",
+          "academic_archive",
+          "discussion_forum",
+          "other"
+        ],
+        "title": "SourceFamily",
+        "type": "string"
+      },
+      "TaskIdentity": {
+        "description": "Assessment of whether discovered content represents the same evaluation task.",
+        "enum": [
+          "exact",
+          "equivalent",
+          "ambiguous",
+          "different"
+        ],
+        "title": "TaskIdentity",
+        "type": "string"
+      },
+      "TemporalStatus": {
+        "description": "Temporal relationship of discovered evidence to the benchmark cutoff.",
+        "enum": [
+          "verified_pre_cutoff",
+          "observed_post_cutoff",
+          "verified_introduced_post_cutoff",
+          "unknown"
+        ],
+        "title": "TemporalStatus",
+        "type": "string"
+      },
+      "VerificationCompletedPayload": {
+        "additionalProperties": false,
+        "description": "Payload when evidence verification finishes for an item.",
+        "properties": {
+          "answer_match": {
+            "$ref": "#/$defs/AnswerMatch",
+            "description": "Answer agreement"
+          },
+          "claim_status": {
+            "$ref": "#/$defs/ClaimStatus",
+            "description": "Claim status"
+          },
+          "exposure_type": {
+            "$ref": "#/$defs/ExposureType",
+            "description": "Determined exposure type"
+          },
+          "external_id": {
+            "description": "Item external ID",
+            "title": "External Id",
+            "type": "string"
+          },
+          "item_version_id": {
+            "description": "Target item version ID",
+            "title": "Item Version Id",
+            "type": "string"
+          },
+          "task_identity": {
+            "$ref": "#/$defs/TaskIdentity",
+            "description": "Task correspondence"
+          },
+          "temporal_status": {
+            "$ref": "#/$defs/TemporalStatus",
+            "description": "Temporal classification"
+          }
+        },
+        "required": [
+          "item_version_id",
+          "external_id",
+          "exposure_type",
+          "claim_status",
+          "task_identity",
+          "answer_match",
+          "temporal_status"
+        ],
+        "title": "VerificationCompletedPayload",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Authoritative SSE event envelope with typed, allowlisted payload validation.\n\nCRITICAL BOUNDARY: Arbitrary payload dictionaries are forbidden. The payload must\nstrictly match the typed schema associated with the event type.",
+    "properties": {
+      "data": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/InvestigationQueuedPayload"
+          },
+          {
+            "$ref": "#/$defs/InvestigationStartedPayload"
+          },
+          {
+            "$ref": "#/$defs/PhaseTransitionPayload"
+          },
+          {
+            "$ref": "#/$defs/ItemInvestigationStartedPayload"
+          },
+          {
+            "$ref": "#/$defs/CandidateDiscoveredPayload"
+          },
+          {
+            "$ref": "#/$defs/VerificationCompletedPayload"
+          },
+          {
+            "$ref": "#/$defs/BudgetUpdatedPayload"
+          },
+          {
+            "$ref": "#/$defs/InvestigationCompletedPayload"
+          },
+          {
+            "$ref": "#/$defs/InvestigationFailedPayload"
+          },
+          {
+            "$ref": "#/$defs/InvestigationCancelledPayload"
+          },
+          {
+            "$ref": "#/$defs/InvestigationBlockedPayload"
+          },
+          {
+            "$ref": "#/$defs/SnapshotRefreshRequiredPayload"
+          }
+        ],
+        "description": "Strictly typed event payload (arbitrary dictionaries are rejected)",
+        "title": "Data"
+      },
+      "event_id": {
+        "description": "Monotonically increasing event ID for reconnect ordering",
+        "minLength": 1,
+        "title": "Event Id",
+        "type": "string"
+      },
+      "investigation_id": {
+        "description": "Target investigation identifier",
+        "minLength": 1,
+        "title": "Investigation Id",
+        "type": "string"
+      },
+      "schema_version": {
+        "default": "1.0",
+        "description": "Event contract schema version",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "timestamp": {
+        "description": "Event generation timestamp (UTC)",
+        "format": "date-time",
+        "title": "Timestamp",
+        "type": "string"
+      },
+      "type": {
+        "$ref": "#/$defs/EventType",
+        "description": "Machine-readable event type"
+      }
+    },
+    "required": [
+      "event_id",
+      "investigation_id",
+      "type",
+      "data"
+    ],
+    "title": "SSEEventEnvelope",
+    "type": "object"
+  }
+}

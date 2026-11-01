@@ -1,0 +1,457 @@
+{
+  "manifest_version": "1.0.0",
+  "created_at": "2026-11-01T12:00:00Z",
+  "description": "BenchShield synthetic evaluation fixtures covering development and held-out partitions. Content is 100% synthetic.",
+  "prompt_tuning_policy": {
+    "development_partition": "Permitted for development and validation tests",
+    "held_out_partition": "STRICTLY PROHIBITED from prompt tuning or heuristic fitting. Reserved for unbiased release gate evaluation."
+  },
+  "fixtures": [
+    {
+      "case_id": "FIX-DEV-001",
+      "partition": "development",
+      "category": "exact_question_and_answer_exposure",
+      "prompt_tuning_permitted": true,
+      "description": "Verbatim reproduction of synthetic short-answer question and solution on a public forum.",
+      "input": {
+        "item": {
+          "external_id": "SYN-DEV-001",
+          "task_type": "exact_short_answer",
+          "question": "What is the primary power generation mechanism of fictional Station K-9?",
+          "gold_answer": "Sub-surface thorium reactor"
+        },
+        "source": {
+          "url": "https://fictional-forums.example.com/threads/10928",
+          "snippet": "Question: What is the primary power generation mechanism of fictional Station K-9? Answer: Sub-surface thorium reactor.",
+          "retrieved_at": "2026-11-01T10:00:00Z"
+        }
+      },
+      "expected_outcome": {
+        "task_identity": "exact",
+        "answer_match": "exact",
+        "claim_status": "verified",
+        "exposure_type": "reference_answer",
+        "temporal_status": "unknown"
+      },
+      "label_rationale": "Verbatim question context and exact answer agreement confirm reference answer exposure. Since retrieval time is today and no archival proof exists, temporal status remains unknown."
+    },
+    {
+      "case_id": "FIX-DEV-002",
+      "partition": "development",
+      "category": "reordered_multiple_choice_options",
+      "prompt_tuning_permitted": true,
+      "description": "Multiple-choice item where options are reordered in discovered online study guide.",
+      "input": {
+        "item": {
+          "external_id": "SYN-DEV-002",
+          "task_type": "multiple_choice",
+          "question": "Which fictional station holds registration code K7?",
+          "choices": [
+            {"id": "A", "text": "North Station"},
+            {"id": "B", "text": "East Station"},
+            {"id": "C", "text": "South Station"},
+            {"id": "D", "text": "West Station"}
+          ],
+          "gold_answer": "B"
+        },
+        "source": {
+          "url": "https://study-guides.example.org/scifi-benchmarks",
+          "snippet": "Q: Which fictional station holds registration code K7? A. East Station B. North Station C. West Station D. South Station. Correct option is A.",
+          "retrieved_at": "2026-11-01T10:15:00Z"
+        }
+      },
+      "expected_outcome": {
+        "task_identity": "exact",
+        "answer_match": "task_specific",
+        "claim_status": "verified",
+        "exposure_type": "reference_answer",
+        "resolved_option_text": "East Station"
+      },
+      "label_rationale": "Option letters in source differ ('A' instead of 'B'), but the mapped option text 'East Station' agrees with the gold reference text. Answer agreement is task_specific."
+    },
+    {
+      "case_id": "FIX-DEV-003",
+      "partition": "development",
+      "category": "common_answer_collision",
+      "prompt_tuning_permitted": true,
+      "description": "A common number appearing in an unrelated web document without task correspondence.",
+      "input": {
+        "item": {
+          "external_id": "SYN-DEV-003",
+          "task_type": "exact_short_answer",
+          "question": "What is the atomic number of carbon?",
+          "gold_answer": "6"
+        },
+        "source": {
+          "url": "https://games.example.com/boardgame-rules",
+          "snippet": "Roll a standard six-sided die. Rolling a 6 allows the player to take another turn.",
+          "retrieved_at": "2026-11-01T10:20:00Z"
+        }
+      },
+      "expected_outcome": {
+        "task_identity": "different",
+        "answer_match": "mismatch",
+        "claim_status": "rejected",
+        "exposure_type": "reference_answer"
+      },
+      "label_rationale": "Task identity must be established prior to answer agreement. A matching character or number in an unrelated domain does not constitute exposure."
+    },
+    {
+      "case_id": "FIX-DEV-004",
+      "partition": "development",
+      "category": "mismatched_answers",
+      "prompt_tuning_permitted": true,
+      "description": "Question context appears verbatim, but the discovered source gives a completely incorrect answer.",
+      "input": {
+        "item": {
+          "external_id": "SYN-DEV-004",
+          "task_type": "exact_short_answer",
+          "question": "What is the capital of the fictional state of Oakhaven?",
+          "gold_answer": "Silverwood"
+        },
+        "source": {
+          "url": "https://fictional-geography.example.com/qa",
+          "snippet": "Question: What is the capital of the fictional state of Oakhaven? Answer: Highcrest City.",
+          "retrieved_at": "2026-11-01T10:30:00Z"
+        }
+      },
+      "expected_outcome": {
+        "task_identity": "exact",
+        "answer_match": "mismatch",
+        "claim_status": "verified_question_only",
+        "exposure_type": "question_context",
+        "reference_answer_claim": "rejected"
+      },
+      "label_rationale": "The question context is verified as exposed, but the reference answer is not exposed because the source provides an erroneous answer."
+    },
+    {
+      "case_id": "FIX-DEV-005",
+      "partition": "development",
+      "category": "ambiguous_task_identity",
+      "prompt_tuning_permitted": true,
+      "description": "A math or reasoning problem with altered numerical parameters in the retrieved text.",
+      "input": {
+        "item": {
+          "external_id": "SYN-DEV-005",
+          "task_type": "exact_short_answer",
+          "question": "A train travels 150 km in 2 hours. What is its average speed in km/h?",
+          "gold_answer": "75"
+        },
+        "source": {
+          "url": "https://math-homework.example.org/problems/train-speed",
+          "snippet": "A train travels 180 km in 3 hours. Its average speed is 60 km/h.",
+          "retrieved_at": "2026-11-01T10:35:00Z"
+        }
+      },
+      "expected_outcome": {
+        "task_identity": "ambiguous",
+        "answer_match": "not_applicable",
+        "claim_status": "needs_review",
+        "exposure_type": "question_context"
+      },
+      "label_rationale": "Different numerical constants indicate either a parametric variant or a generic problem template. It cannot be confirmed as an exact match automatically and requires human review."
+    },
+    {
+      "case_id": "FIX-DEV-006",
+      "partition": "development",
+      "category": "unknown_temporal_evidence",
+      "prompt_tuning_permitted": true,
+      "description": "Verified answer found online with no independent historical proof of pre-cutoff publication.",
+      "input": {
+        "item": {
+          "external_id": "SYN-DEV-006",
+          "task_type": "exact_short_answer",
+          "question": "Who was the chief architect of the fictional Citadel of Vael?",
+          "gold_answer": "Master Corin"
+        },
+        "cutoff": "2026-10-01T00:00:00Z",
+        "source": {
+          "url": "https://fictional-lore.example.org/corin",
+          "snippet": "Chief architect of the Citadel of Vael: Master Corin.",
+          "retrieved_at": "2026-11-01T10:40:00Z",
+          "archive_capture_time": null,
+          "commit_time": null
+        }
+      },
+      "expected_outcome": {
+        "task_identity": "exact",
+        "answer_match": "exact",
+        "claim_status": "verified",
+        "temporal_status": "unknown"
+      },
+      "label_rationale": "An unverified observation date on the open web cannot prove historical availability before the benchmark cutoff."
+    },
+    {
+      "case_id": "FIX-DEV-007",
+      "partition": "development",
+      "category": "content_observed_only_after_cutoff",
+      "prompt_tuning_permitted": true,
+      "description": "Source has proven earliest introduction date after the benchmark cutoff.",
+      "input": {
+        "item": {
+          "external_id": "SYN-DEV-007",
+          "task_type": "exact_short_answer",
+          "question": "What is the secret passphrase for fictional bunker Echo-4?",
+          "gold_answer": "Crimson Horizon"
+        },
+        "cutoff": "2026-10-01T00:00:00Z",
+        "source": {
+          "url": "https://github.com/synthetic-repo/echo4",
+          "snippet": "echo4_passphrase = 'Crimson Horizon'",
+          "commit_time": "2026-10-15T14:30:00Z",
+          "retrieved_at": "2026-11-01T10:45:00Z"
+        }
+      },
+      "expected_outcome": {
+        "task_identity": "exact",
+        "answer_match": "exact",
+        "temporal_status": "observed_post_cutoff"
+      },
+      "label_rationale": "Evidence was created/introduced post-cutoff. It does not establish pre-cutoff evaluation contamination."
+    },
+    {
+      "case_id": "FIX-DEV-008",
+      "partition": "development",
+      "category": "inaccessible_sources",
+      "prompt_tuning_permitted": true,
+      "description": "Candidate search result leads to a source returning HTTP 403 or connection timeout.",
+      "input": {
+        "candidate_url": "https://protected-vault.internal.example.org/solutions.pdf",
+        "http_status": 403
+      },
+      "expected_outcome": {
+        "snapshot_availability": "inaccessible",
+        "limitation_recorded": "inaccessible_sources",
+        "partial_coverage": true
+      },
+      "label_rationale": "Inaccessible sources must be recorded as explicit audit limitations rather than assumed clean or assumed leaking."
+    },
+    {
+      "case_id": "FIX-DEV-009",
+      "partition": "development",
+      "category": "partial_and_cancelled_investigations",
+      "prompt_tuning_permitted": true,
+      "description": "Active investigation cancelled midway through discovery.",
+      "input": {
+        "initial_status": "discovering",
+        "action": "cancel",
+        "reason": "Maintainer cancelled audit"
+      },
+      "expected_outcome": {
+        "final_status": "cancelled",
+        "is_partial": true,
+        "new_dispatch_prevented": true
+      },
+      "label_rationale": "Cancellation halts new tasks immediately while preserving partial evidence without marking the run as clean."
+    },
+    {
+      "case_id": "FIX-DEV-010",
+      "partition": "development",
+      "category": "policy_blocks_and_exhausted_budgets",
+      "prompt_tuning_permitted": true,
+      "description": "External discovery requested for confidential benchmark classification or run exceeding spend ceiling.",
+      "input": {
+        "data_classification": "confidential",
+        "requested_action": "external_web_search"
+      },
+      "expected_outcome": {
+        "status": "policy_blocked",
+        "error_code": "policy_blocked",
+        "message": "Confidential benchmark external discovery is prohibited."
+      },
+      "label_rationale": "Non-LLM deterministic policy gates must halt external outbound egress on confidential data."
+    },
+    {
+      "case_id": "FIX-DEV-011",
+      "partition": "development",
+      "category": "provider_errors",
+      "prompt_tuning_permitted": true,
+      "description": "Search provider returns 503 Service Unavailable during discovery.",
+      "input": {
+        "adapter": "FakeSearchAdapter",
+        "injected_error": "AdapterUnavailableError"
+      },
+      "expected_outcome": {
+        "error_caught": "AdapterUnavailableError",
+        "recorded_in_limitations": true,
+        "investigation_status": "failed"
+      },
+      "label_rationale": "Adapter outages must be recorded in operational limitations without silently retrying forever or crashing."
+    },
+    {
+      "case_id": "FIX-DEV-012",
+      "partition": "development",
+      "category": "reviewer_version_conflicts",
+      "prompt_tuning_permitted": true,
+      "description": "Two reviewers attempt to edit the same finding simultaneously.",
+      "input": {
+        "finding_version": 2,
+        "reviewer_expected_version": 1
+      },
+      "expected_outcome": {
+        "error_code": "version_conflict",
+        "http_status": 409
+      },
+      "label_rationale": "Optimistic concurrency ensures append-only reviewer adjudication records are never overwritten silently."
+    },
+    {
+      "case_id": "FIX-DEV-013",
+      "partition": "development",
+      "category": "incomplete_experiments",
+      "prompt_tuning_permitted": true,
+      "description": "Attacker model run experiences timeout or network interruption mid-trajectory.",
+      "input": {
+        "condition": "blind",
+        "event": "timeout"
+      },
+      "expected_outcome": {
+        "run_status": "incomplete",
+        "excluded_from_success_denominator": true,
+        "distinct_from_incorrect": true
+      },
+      "label_rationale": "Incomplete runs must be counted explicitly and excluded from completed-run success denominators."
+    },
+    {
+      "case_id": "FIX-HELD-001",
+      "partition": "held_out",
+      "category": "exact_question_and_answer_exposure",
+      "prompt_tuning_permitted": false,
+      "description": "Held-out synthetic exact short-answer match on a code repository issue tracker.",
+      "input": {
+        "item": {
+          "external_id": "SYN-HELD-001",
+          "task_type": "exact_short_answer",
+          "question": "What is the return type of the fictional function calculate_orbital_decay?",
+          "gold_answer": "float64"
+        },
+        "source": {
+          "url": "https://github.com/fictional-space/sim/issues/45",
+          "snippet": "calculate_orbital_decay returns float64 representing decay rate.",
+          "retrieved_at": "2026-11-01T11:00:00Z"
+        }
+      },
+      "expected_outcome": {
+        "task_identity": "exact",
+        "answer_match": "exact",
+        "claim_status": "verified"
+      },
+      "label_rationale": "Exact task correspondence and answer agreement. Held out from prompt tuning."
+    },
+    {
+      "case_id": "FIX-HELD-002",
+      "partition": "held_out",
+      "category": "reordered_multiple_choice_options",
+      "prompt_tuning_permitted": false,
+      "description": "Held-out multiple choice with 5 options reordered on an academic wiki.",
+      "input": {
+        "item": {
+          "external_id": "SYN-HELD-002",
+          "task_type": "multiple_choice",
+          "question": "Which fictional alloy is rated Class-IV heat resistant?",
+          "choices": [
+            {"id": "A", "text": "Pyronite-A"},
+            {"id": "B", "text": "Thermosteel-9"},
+            {"id": "C", "text": "Cryo-mesh"},
+            {"id": "D", "text": "Vulcanium"},
+            {"id": "E", "text": "Aero-flux"}
+          ],
+          "gold_answer": "B"
+        },
+        "source": {
+          "url": "https://wiki.fictional-metallurgy.org/alloys",
+          "snippet": "Class-IV heat resistance is achieved by Thermosteel-9.",
+          "retrieved_at": "2026-11-01T11:05:00Z"
+        }
+      },
+      "expected_outcome": {
+        "task_identity": "exact",
+        "answer_match": "task_specific",
+        "claim_status": "verified",
+        "resolved_option_text": "Thermosteel-9"
+      },
+      "label_rationale": "Correctly maps answer text despite option position variations in synthetic benchmarks."
+    },
+    {
+      "case_id": "FIX-HELD-003",
+      "partition": "held_out",
+      "category": "common_answer_collision",
+      "prompt_tuning_permitted": false,
+      "description": "Held-out boolean answer collision in software configuration.",
+      "input": {
+        "item": {
+          "external_id": "SYN-HELD-003",
+          "task_type": "exact_short_answer",
+          "question": "Is the fictional propulsion valve open by default?",
+          "gold_answer": "true"
+        },
+        "source": {
+          "url": "https://software-docs.example.org/nginx-config",
+          "snippet": "sendfile on; gzip true;",
+          "retrieved_at": "2026-11-01T11:10:00Z"
+        }
+      },
+      "expected_outcome": {
+        "task_identity": "different",
+        "answer_match": "mismatch",
+        "claim_status": "rejected"
+      },
+      "label_rationale": "Generic boolean keyword 'true' in an unrelated domain must not be classified as a leak."
+    },
+    {
+      "case_id": "FIX-HELD-004",
+      "partition": "held_out",
+      "category": "unknown_temporal_evidence",
+      "prompt_tuning_permitted": false,
+      "description": "Held-out post-cutoff observed item without pre-cutoff archival proof.",
+      "input": {
+        "item": {
+          "external_id": "SYN-HELD-004",
+          "task_type": "exact_short_answer",
+          "question": "What is the designated callsign for synthetic Beacon-X?",
+          "gold_answer": "Astra-9"
+        },
+        "cutoff": "2026-09-01T00:00:00Z",
+        "source": {
+          "url": "https://beacon-directory.example.org/entry/X",
+          "snippet": "Beacon-X callsign is Astra-9.",
+          "retrieved_at": "2026-11-01T11:15:00Z"
+        }
+      },
+      "expected_outcome": {
+        "temporal_status": "unknown"
+      },
+      "label_rationale": "Timing remains unknown without version-specific pre-cutoff verification."
+    },
+    {
+      "case_id": "FIX-HELD-005",
+      "partition": "held_out",
+      "category": "reviewer_version_conflicts",
+      "prompt_tuning_permitted": false,
+      "description": "Held-out optimistic concurrency version conflict check.",
+      "input": {
+        "finding_version": 3,
+        "reviewer_expected_version": 2
+      },
+      "expected_outcome": {
+        "error_code": "version_conflict"
+      },
+      "label_rationale": "Enforces version protection against concurrent reviewer edits."
+    },
+    {
+      "case_id": "FIX-HELD-006",
+      "partition": "held_out",
+      "category": "incomplete_experiments",
+      "prompt_tuning_permitted": false,
+      "description": "Held-out evaluation-aware run cancelled before response generated.",
+      "input": {
+        "condition": "evaluation_aware",
+        "event": "cancelled"
+      },
+      "expected_outcome": {
+        "run_status": "cancelled",
+        "attribution": "none"
+      },
+      "label_rationale": "Early termination preserves incomplete state without attributing exploit."
+    }
+  ]
+}

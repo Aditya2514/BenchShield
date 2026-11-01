@@ -1,0 +1,47 @@
+{
+  "$defs": {
+    "SourceFamily": {
+      "description": "Category of the source where evidence was discovered.",
+      "enum": [
+        "web_search",
+        "code_repository",
+        "academic_archive",
+        "discussion_forum",
+        "other"
+      ],
+      "title": "SourceFamily",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Payload when a candidate exposure source is found.",
+  "properties": {
+    "external_id": {
+      "description": "Item external ID",
+      "title": "External Id",
+      "type": "string"
+    },
+    "item_version_id": {
+      "description": "Target item version ID",
+      "title": "Item Version Id",
+      "type": "string"
+    },
+    "source_family": {
+      "$ref": "#/$defs/SourceFamily",
+      "description": "Source family category"
+    },
+    "source_url": {
+      "description": "Discovered source URL",
+      "title": "Source Url",
+      "type": "string"
+    }
+  },
+  "required": [
+    "item_version_id",
+    "external_id",
+    "source_url",
+    "source_family"
+  ],
+  "title": "CandidateDiscoveredPayload",
+  "type": "object"
+}

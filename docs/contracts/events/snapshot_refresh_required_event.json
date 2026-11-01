@@ -1,0 +1,28 @@
+{
+  "additionalProperties": false,
+  "description": "Payload emitted when reconnect cursor is expired and state refresh is needed.",
+  "properties": {
+    "investigation_id": {
+      "description": "Investigation ID",
+      "title": "Investigation Id",
+      "type": "string"
+    },
+    "last_known_event_id": {
+      "description": "Client supplied cursor",
+      "title": "Last Known Event Id",
+      "type": "string"
+    },
+    "message": {
+      "default": "Reconnect cursor expired; please refresh full investigation snapshot from GET /api/v1/investigations/{id}",
+      "description": "Instruction to fetch full snapshot",
+      "title": "Message",
+      "type": "string"
+    }
+  },
+  "required": [
+    "last_known_event_id",
+    "investigation_id"
+  ],
+  "title": "SnapshotRefreshRequiredPayload",
+  "type": "object"
+}

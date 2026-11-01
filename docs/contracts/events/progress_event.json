@@ -1,0 +1,52 @@
+{
+  "additionalProperties": false,
+  "description": "Payload tracking resource consumption.",
+  "properties": {
+    "cost_ceiling_usd": {
+      "description": "Cost ceiling in USD",
+      "minimum": 0.0,
+      "title": "Cost Ceiling Usd",
+      "type": "number"
+    },
+    "max_fetches": {
+      "description": "Max fetches allowed",
+      "minimum": 0,
+      "title": "Max Fetches",
+      "type": "integer"
+    },
+    "max_queries": {
+      "description": "Max queries allowed",
+      "minimum": 0,
+      "title": "Max Queries",
+      "type": "integer"
+    },
+    "used_cost_usd": {
+      "description": "Cost incurred in USD",
+      "minimum": 0.0,
+      "title": "Used Cost Usd",
+      "type": "number"
+    },
+    "used_fetches": {
+      "description": "Fetches consumed so far",
+      "minimum": 0,
+      "title": "Used Fetches",
+      "type": "integer"
+    },
+    "used_queries": {
+      "description": "Queries consumed so far",
+      "minimum": 0,
+      "title": "Used Queries",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "used_queries",
+    "max_queries",
+    "used_fetches",
+    "max_fetches",
+    "used_cost_usd",
+    "cost_ceiling_usd"
+  ],
+  "title": "BudgetUpdatedPayload",
+  "type": "object"
+}

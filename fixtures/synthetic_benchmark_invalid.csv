@@ -1,0 +1,7 @@
+external_id,task_type,question,choices,gold_answer
+SYN-DEV-001,exact_short_answer,What is the primary power generation mechanism of fictional Station K-9?,,Sub-surface thorium reactor
+SYN-DEV-001,exact_short_answer,Duplicate item ID test row?,,Any answer
+SYN-DEV-010,code_execution,Write a python script to sort a list.,,def sort(): pass
+SYN-DEV-011,exact_short_answer,Question with empty gold answer?,,
+SYN-DEV-012,multiple_choice,MCQ with only one choice?,A: Only One Choice,A
+SYN-DEV-013,multiple_choice,MCQ with unmapped gold answer?,A: Option One; B: Option Two,Z

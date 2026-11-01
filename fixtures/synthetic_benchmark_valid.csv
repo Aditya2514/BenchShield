@@ -1,0 +1,4 @@
+external_id,task_type,question,choices,gold_answer
+SYN-DEV-001,exact_short_answer,What is the primary power generation mechanism of fictional Station K-9?,,Sub-surface thorium reactor
+SYN-DEV-002,multiple_choice,Which fictional station holds registration code K7?,A: North Station; B: East Station; C: South Station; D: West Station,B
+SYN-DEV-003,exact_short_answer,What is the atomic number of carbon?,,6

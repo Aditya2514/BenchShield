@@ -1,0 +1,3184 @@
+{
+  "components": {
+    "schemas": {
+      "AnswerMatch": {
+        "description": "Assessment of answer agreement between discovered content and reference.",
+        "enum": [
+          "exact",
+          "normalized",
+          "task_specific",
+          "mismatch",
+          "not_applicable"
+        ],
+        "title": "AnswerMatch",
+        "type": "string"
+      },
+      "BenchmarkImportRequest": {
+        "additionalProperties": false,
+        "description": "Benchmark creation payload containing items and metadata.",
+        "properties": {
+          "items": {
+            "description": "List of benchmark items to validate and import",
+            "items": {
+              "$ref": "#/components/schemas/ItemIntake"
+            },
+            "maxItems": 10000,
+            "minItems": 1,
+            "title": "Items",
+            "type": "array"
+          },
+          "name": {
+            "description": "User-friendly name of the benchmark",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "workspace_id": {
+            "description": "Tenant workspace ID",
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "name",
+          "items"
+        ],
+        "title": "BenchmarkImportRequest",
+        "type": "object"
+      },
+      "BenchmarkImportResponse": {
+        "additionalProperties": false,
+        "description": "Result of benchmark intake validation.\n\nIf validation fails for ANY row, status is 'rejected', benchmark_version_id is None,\nand row-level errors are provided. The import is strictly atomic.",
+        "properties": {
+          "benchmark_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Created benchmark version ID if accepted, None if rejected",
+            "title": "Benchmark Version Id"
+          },
+          "errors": {
+            "description": "List of validation errors if rejected",
+            "items": {
+              "$ref": "#/components/schemas/ImportRowError"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "status": {
+            "description": "Atomic import outcome",
+            "enum": [
+              "accepted",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "total_rows": {
+            "description": "Total rows submitted in the import batch",
+            "minimum": 0.0,
+            "title": "Total Rows",
+            "type": "integer"
+          },
+          "valid_rows": {
+            "description": "Number of valid rows identified",
+            "minimum": 0.0,
+            "title": "Valid Rows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_rows",
+          "valid_rows",
+          "status"
+        ],
+        "title": "BenchmarkImportResponse",
+        "type": "object"
+      },
+      "ChoiceOption": {
+        "additionalProperties": false,
+        "description": "Multiple choice option key and text.",
+        "properties": {
+          "id": {
+            "description": "Option identifier (e.g., 'A', 'B', '1')",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "text": {
+            "description": "Text content of the choice option",
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ],
+        "title": "ChoiceOption",
+        "type": "object"
+      },
+      "ClaimStatus": {
+        "description": "Status of an individual exposure claim.",
+        "enum": [
+          "candidate",
+          "verified",
+          "rejected",
+          "needs_review"
+        ],
+        "title": "ClaimStatus",
+        "type": "string"
+      },
+      "DataClassification": {
+        "description": "Data classification level for policy and egress control.",
+        "enum": [
+          "public",
+          "synthetic",
+          "confidential"
+        ],
+        "title": "DataClassification",
+        "type": "string"
+      },
+      "ErrorCode": {
+        "description": "Standard machine-readable error codes.",
+        "enum": [
+          "validation_failed",
+          "policy_blocked",
+          "budget_exhausted",
+          "provider_unavailable",
+          "unsupported_grader",
+          "not_found",
+          "version_conflict",
+          "unsupported_task_type",
+          "forbidden",
+          "internal_error",
+          "not_implemented"
+        ],
+        "title": "ErrorCode",
+        "type": "string"
+      },
+      "ErrorDetail": {
+        "description": "Specific detail regarding an error location and reason.",
+        "properties": {
+          "code": {
+            "description": "Machine-readable sub-error code",
+            "title": "Code",
+            "type": "string"
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Field name or parameter causing the error",
+            "title": "Field"
+          },
+          "message": {
+            "description": "Human-readable explanation (never echoing sensitive values)",
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "description": "Standardized API error response body.",
+        "properties": {
+          "details": {
+            "description": "List of granular error details",
+            "items": {
+              "$ref": "#/components/schemas/ErrorDetail"
+            },
+            "title": "Details",
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorCode",
+            "description": "Machine-readable top-level error code"
+          },
+          "message": {
+            "description": "Top-level error message",
+            "title": "Message",
+            "type": "string"
+          },
+          "request_id": {
+            "default": "req_default",
+            "description": "Correlation ID for tracing",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "timestamp": {
+            "description": "Timestamp when the error occurred",
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "message"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "EvaluationPolicyCreateRequest": {
+        "description": "Payload to create an immutable evaluation policy version.",
+        "properties": {
+          "allowed_source_classes": {
+            "default": [
+              "web_search",
+              "code_repository",
+              "academic_archive",
+              "discussion_forum"
+            ],
+            "description": "Permitted source families",
+            "items": {
+              "$ref": "#/components/schemas/SourceFamily"
+            },
+            "title": "Allowed Source Classes",
+            "type": "array"
+          },
+          "allowed_tools": {
+            "default": [
+              "search",
+              "fetch"
+            ],
+            "description": "Tools permitted during discovery (e.g. 'search', 'fetch')",
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Tools",
+            "type": "array"
+          },
+          "benchmark_identification_permitted": {
+            "default": false,
+            "description": "Whether investigation prompts may mention the benchmark identity",
+            "title": "Benchmark Identification Permitted",
+            "type": "boolean"
+          },
+          "cost_ceiling_usd": {
+            "default": 10.0,
+            "description": "Monetary ceiling in USD",
+            "minimum": 0.0,
+            "title": "Cost Ceiling Usd",
+            "type": "number"
+          },
+          "cutoff_timezone": {
+            "default": "UTC",
+            "description": "Timezone of the evaluation cutoff (e.g. 'UTC', 'America/New_York')",
+            "title": "Cutoff Timezone",
+            "type": "string"
+          },
+          "data_classification": {
+            "$ref": "#/components/schemas/DataClassification",
+            "default": "public",
+            "description": "Classification of uploaded benchmarks (confidential discovery is policy blocked)"
+          },
+          "deadline_seconds": {
+            "default": 900,
+            "description": "Investigation execution deadline",
+            "maximum": 86400.0,
+            "minimum": 60.0,
+            "title": "Deadline Seconds",
+            "type": "integer"
+          },
+          "evaluation_cutoff": {
+            "description": "Evaluation cutoff date and time (ISO-8601)",
+            "format": "date-time",
+            "title": "Evaluation Cutoff",
+            "type": "string"
+          },
+          "item_scope": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Specific item IDs in scope, or None for all items in the benchmark",
+            "title": "Item Scope"
+          },
+          "max_concurrent_discovery_tasks": {
+            "default": 2,
+            "description": "Max concurrent discovery tasks",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Max Concurrent Discovery Tasks",
+            "type": "integer"
+          },
+          "max_fetches_per_item": {
+            "default": 5,
+            "description": "Max fetched pages per item",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Max Fetches Per Item",
+            "type": "integer"
+          },
+          "max_queries_per_item": {
+            "default": 3,
+            "description": "Max search queries per item",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Max Queries Per Item",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Descriptive policy name",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "prohibited_answer_key_access": {
+            "default": true,
+            "description": "Whether accessing published answer keys is strictly prohibited",
+            "title": "Prohibited Answer Key Access",
+            "type": "boolean"
+          },
+          "retention_profile": {
+            "$ref": "#/components/schemas/RetentionProfile",
+            "default": "pilot_standard_30_90",
+            "description": "Retention profile for evidence and reports"
+          },
+          "reviewer_identity": {
+            "description": "Identity of the auditor/reviewer creating this policy",
+            "minLength": 1,
+            "title": "Reviewer Identity",
+            "type": "string"
+          },
+          "workspace_id": {
+            "description": "Tenant workspace ID",
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "name",
+          "evaluation_cutoff",
+          "reviewer_identity"
+        ],
+        "title": "EvaluationPolicyCreateRequest",
+        "type": "object"
+      },
+      "EvaluationPolicyVersion": {
+        "description": "Immutable evaluation policy version record.",
+        "properties": {
+          "allowed_source_classes": {
+            "description": "Permitted source families",
+            "items": {
+              "$ref": "#/components/schemas/SourceFamily"
+            },
+            "title": "Allowed Source Classes",
+            "type": "array"
+          },
+          "allowed_tools": {
+            "description": "Permitted tools",
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Tools",
+            "type": "array"
+          },
+          "benchmark_identification_permitted": {
+            "description": "Permit benchmark identity in search",
+            "title": "Benchmark Identification Permitted",
+            "type": "boolean"
+          },
+          "cost_ceiling_usd": {
+            "description": "Monetary limit in USD",
+            "title": "Cost Ceiling Usd",
+            "type": "number"
+          },
+          "created_at": {
+            "description": "Timestamp of policy creation",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "cutoff_timezone": {
+            "default": "UTC",
+            "description": "Evaluation cutoff timezone",
+            "title": "Cutoff Timezone",
+            "type": "string"
+          },
+          "data_classification": {
+            "$ref": "#/components/schemas/DataClassification",
+            "description": "Data classification level"
+          },
+          "deadline_seconds": {
+            "description": "Run deadline in seconds",
+            "title": "Deadline Seconds",
+            "type": "integer"
+          },
+          "evaluation_cutoff": {
+            "description": "Evaluation cutoff timestamp",
+            "format": "date-time",
+            "title": "Evaluation Cutoff",
+            "type": "string"
+          },
+          "item_scope": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Item scope IDs or None",
+            "title": "Item Scope"
+          },
+          "max_concurrent_discovery_tasks": {
+            "description": "Max concurrency",
+            "title": "Max Concurrent Discovery Tasks",
+            "type": "integer"
+          },
+          "max_fetches_per_item": {
+            "description": "Max fetches per item",
+            "title": "Max Fetches Per Item",
+            "type": "integer"
+          },
+          "max_queries_per_item": {
+            "description": "Max queries per item",
+            "title": "Max Queries Per Item",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Policy name",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "policy_version_id": {
+            "description": "Unique policy version ID",
+            "minLength": 1,
+            "title": "Policy Version Id",
+            "type": "string"
+          },
+          "prohibited_answer_key_access": {
+            "description": "Prohibit answer key access",
+            "title": "Prohibited Answer Key Access",
+            "type": "boolean"
+          },
+          "retention_profile": {
+            "$ref": "#/components/schemas/RetentionProfile",
+            "description": "Retention schedule profile"
+          },
+          "reviewer_identity": {
+            "description": "Author identity",
+            "title": "Reviewer Identity",
+            "type": "string"
+          },
+          "version_number": {
+            "default": 1,
+            "description": "Version sequence number",
+            "minimum": 1.0,
+            "title": "Version Number",
+            "type": "integer"
+          },
+          "workspace_id": {
+            "description": "Tenant workspace ID",
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_version_id",
+          "workspace_id",
+          "name",
+          "allowed_tools",
+          "allowed_source_classes",
+          "prohibited_answer_key_access",
+          "benchmark_identification_permitted",
+          "evaluation_cutoff",
+          "max_queries_per_item",
+          "max_fetches_per_item",
+          "max_concurrent_discovery_tasks",
+          "deadline_seconds",
+          "cost_ceiling_usd",
+          "data_classification",
+          "retention_profile",
+          "reviewer_identity"
+        ],
+        "title": "EvaluationPolicyVersion",
+        "type": "object"
+      },
+      "EvidenceClaim": {
+        "description": "Specific exposure claim asserted for an item.",
+        "properties": {
+          "claim_id": {
+            "description": "Unique claim ID",
+            "minLength": 1,
+            "title": "Claim Id",
+            "type": "string"
+          },
+          "claim_status": {
+            "$ref": "#/components/schemas/ClaimStatus",
+            "default": "candidate",
+            "description": "Status of the claim"
+          },
+          "exposure_type": {
+            "$ref": "#/components/schemas/ExposureType",
+            "description": "Type of exposed benchmark component"
+          },
+          "rationale": {
+            "description": "Evidence rationale explaining why this claim was generated",
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "claim_id",
+          "exposure_type",
+          "rationale"
+        ],
+        "title": "EvidenceClaim",
+        "type": "object"
+      },
+      "ExcerptLocator": {
+        "description": "Precise location of discovered evidence within a raw snapshot.",
+        "properties": {
+          "char_offset_end": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Character offset end",
+            "title": "Char Offset End"
+          },
+          "char_offset_start": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Character offset start",
+            "title": "Char Offset Start"
+          },
+          "line_end": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Ending line number (1-indexed)",
+            "title": "Line End"
+          },
+          "line_start": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Starting line number (1-indexed)",
+            "title": "Line Start"
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "CSS selector or DOM locator if structured document",
+            "title": "Selector"
+          }
+        },
+        "title": "ExcerptLocator",
+        "type": "object"
+      },
+      "ExperimentCondition": {
+        "description": "Controlled conditions for attacker experiments.",
+        "enum": [
+          "control",
+          "blind",
+          "evaluation_aware"
+        ],
+        "title": "ExperimentCondition",
+        "type": "string"
+      },
+      "ExperimentConfig": {
+        "description": "Immutable pinned configuration for controlled attacker experiments.",
+        "properties": {
+          "benchmark_version_id": {
+            "description": "Target benchmark version ID",
+            "minLength": 1,
+            "title": "Benchmark Version Id",
+            "type": "string"
+          },
+          "conditions": {
+            "description": "Conditions to execute",
+            "items": {
+              "$ref": "#/components/schemas/ExperimentCondition"
+            },
+            "title": "Conditions",
+            "type": "array"
+          },
+          "created_at": {
+            "description": "Experiment setup timestamp",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "experiment_id": {
+            "description": "Unique experiment ID",
+            "minLength": 1,
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "generation_settings": {
+            "additionalProperties": true,
+            "description": "Temperature, max_tokens, etc.",
+            "title": "Generation Settings",
+            "type": "object"
+          },
+          "grader_version": {
+            "default": "grader_v1.0",
+            "description": "Trusted grader version",
+            "title": "Grader Version",
+            "type": "string"
+          },
+          "investigation_id": {
+            "description": "Source investigation ID",
+            "minLength": 1,
+            "title": "Investigation Id",
+            "type": "string"
+          },
+          "model_identifier": {
+            "description": "Pinned model ID",
+            "title": "Model Identifier",
+            "type": "string"
+          },
+          "model_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pinned model snapshot revision",
+            "title": "Model Revision"
+          },
+          "policy_version_id": {
+            "description": "Target policy version ID",
+            "minLength": 1,
+            "title": "Policy Version Id",
+            "type": "string"
+          },
+          "prompt_version": {
+            "default": "prompt_v1.0",
+            "description": "Pinned prompt template version",
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "provider_id": {
+            "description": "Pinned provider (e.g. 'anthropic', 'openai')",
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "reasoning_budget": {
+            "default": 1000,
+            "description": "Token reasoning budget",
+            "minimum": 100.0,
+            "title": "Reasoning Budget",
+            "type": "integer"
+          },
+          "repetitions": {
+            "default": 1,
+            "description": "Repetitions per item per condition",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Repetitions",
+            "type": "integer"
+          },
+          "tool_policy": {
+            "additionalProperties": true,
+            "description": "Allowed tool configuration",
+            "title": "Tool Policy",
+            "type": "object"
+          }
+        },
+        "required": [
+          "experiment_id",
+          "investigation_id",
+          "benchmark_version_id",
+          "policy_version_id",
+          "conditions",
+          "provider_id",
+          "model_identifier"
+        ],
+        "title": "ExperimentConfig",
+        "type": "object"
+      },
+      "ExperimentCreateRequest": {
+        "description": "Payload to configure and launch optional attacker experiments.",
+        "properties": {
+          "conditions": {
+            "default": [
+              "control",
+              "blind",
+              "evaluation_aware"
+            ],
+            "description": "Conditions to test",
+            "items": {
+              "$ref": "#/components/schemas/ExperimentCondition"
+            },
+            "minItems": 1,
+            "title": "Conditions",
+            "type": "array"
+          },
+          "investigation_id": {
+            "description": "Investigation ID whose discovery findings are frozen",
+            "minLength": 1,
+            "title": "Investigation Id",
+            "type": "string"
+          },
+          "model_identifier": {
+            "description": "Pinned model identifier",
+            "title": "Model Identifier",
+            "type": "string"
+          },
+          "model_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pinned model revision if available",
+            "title": "Model Revision"
+          },
+          "prompt_version": {
+            "default": "prompt_v1.0",
+            "description": "Prompt template version",
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "provider_id": {
+            "description": "Pinned LLM provider",
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "reasoning_budget": {
+            "default": 1000,
+            "description": "Token budget",
+            "maximum": 100000.0,
+            "minimum": 100.0,
+            "title": "Reasoning Budget",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "investigation_id",
+          "provider_id",
+          "model_identifier"
+        ],
+        "title": "ExperimentCreateRequest",
+        "type": "object"
+      },
+      "ExposureType": {
+        "description": "Independent exposure claim types.",
+        "enum": [
+          "metadata",
+          "question_context",
+          "worked_solution",
+          "reference_answer"
+        ],
+        "title": "ExposureType",
+        "type": "string"
+      },
+      "FindingListResponse": {
+        "description": "Paginated list of findings.",
+        "properties": {
+          "items": {
+            "description": "Findings on current page",
+            "items": {
+              "$ref": "#/components/schemas/FindingView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "default": 1,
+            "description": "1-indexed current page",
+            "minimum": 1.0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "size": {
+            "default": 20,
+            "description": "Items per page",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Size",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Total findings matching query",
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total"
+        ],
+        "title": "FindingListResponse",
+        "type": "object"
+      },
+      "FindingView": {
+        "description": "Public read model for an audited finding with independent dimensions.",
+        "properties": {
+          "claim": {
+            "$ref": "#/components/schemas/EvidenceClaim",
+            "description": "Exposure claim"
+          },
+          "created_at": {
+            "description": "Finding creation timestamp",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "current_reviewer_decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Latest human decision: confirm, reject, or request_more_evidence",
+            "title": "Current Reviewer Decision"
+          },
+          "external_id": {
+            "description": "External item identifier",
+            "minLength": 1,
+            "title": "External Id",
+            "type": "string"
+          },
+          "finding_id": {
+            "description": "Finding identifier",
+            "minLength": 1,
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "investigation_id": {
+            "description": "Parent investigation ID",
+            "minLength": 1,
+            "title": "Investigation Id",
+            "type": "string"
+          },
+          "item_version_id": {
+            "description": "Item version ID",
+            "minLength": 1,
+            "title": "Item Version Id",
+            "type": "string"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/SourceSnapshot",
+            "description": "Supporting source evidence snapshot"
+          },
+          "temporal": {
+            "$ref": "#/components/schemas/TemporalAssessment",
+            "description": "Temporal assessment"
+          },
+          "updated_at": {
+            "description": "Last update timestamp",
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "verification": {
+            "$ref": "#/components/schemas/VerificationResult",
+            "description": "Task identity and answer agreement"
+          },
+          "version": {
+            "default": 1,
+            "description": "Optimistic concurrency version for reviewer updates",
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "finding_id",
+          "investigation_id",
+          "item_version_id",
+          "external_id",
+          "claim",
+          "verification",
+          "temporal",
+          "snapshot"
+        ],
+        "title": "FindingView",
+        "type": "object"
+      },
+      "ImportRowError": {
+        "additionalProperties": false,
+        "description": "Detailed validation error for a single row in an import batch.\n\nCRITICAL: Error messages and details MUST NEVER echo or format the protected gold answer.",
+        "properties": {
+          "error_code": {
+            "description": "Machine-readable error identifier",
+            "title": "Error Code",
+            "type": "string"
+          },
+          "field": {
+            "description": "Field name containing the error (e.g. 'gold_answer', 'choices')",
+            "title": "Field",
+            "type": "string"
+          },
+          "message": {
+            "description": "Human-readable description without sensitive answer data",
+            "title": "Message",
+            "type": "string"
+          },
+          "row_number": {
+            "description": "1-indexed row number where the error occurred",
+            "minimum": 1.0,
+            "title": "Row Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "row_number",
+          "field",
+          "error_code",
+          "message"
+        ],
+        "title": "ImportRowError",
+        "type": "object"
+      },
+      "InvestigationBudgets": {
+        "description": "Resource budget tracking for an investigation.",
+        "properties": {
+          "cost_ceiling_usd": {
+            "description": "Monetary spending limit in USD",
+            "minimum": 0.0,
+            "title": "Cost Ceiling Usd",
+            "type": "number"
+          },
+          "deadline_seconds": {
+            "description": "Investigation run timeout in seconds",
+            "minimum": 1.0,
+            "title": "Deadline Seconds",
+            "type": "integer"
+          },
+          "max_fetches": {
+            "description": "Maximum page fetches permitted across all items",
+            "minimum": 0.0,
+            "title": "Max Fetches",
+            "type": "integer"
+          },
+          "max_queries": {
+            "description": "Maximum search queries permitted across all items",
+            "minimum": 0.0,
+            "title": "Max Queries",
+            "type": "integer"
+          },
+          "used_cost_usd": {
+            "default": 0.0,
+            "description": "Total provider spend incurred in USD",
+            "minimum": 0.0,
+            "title": "Used Cost Usd",
+            "type": "number"
+          },
+          "used_fetches": {
+            "default": 0,
+            "description": "Page fetches executed to date",
+            "minimum": 0.0,
+            "title": "Used Fetches",
+            "type": "integer"
+          },
+          "used_queries": {
+            "default": 0,
+            "description": "Search queries executed to date",
+            "minimum": 0.0,
+            "title": "Used Queries",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "max_queries",
+          "max_fetches",
+          "cost_ceiling_usd",
+          "deadline_seconds"
+        ],
+        "title": "InvestigationBudgets",
+        "type": "object"
+      },
+      "InvestigationCancelRequest": {
+        "description": "Payload to request idempotent investigation cancellation.",
+        "properties": {
+          "reason": {
+            "description": "Explanation for cancellation",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "InvestigationCancelRequest",
+        "type": "object"
+      },
+      "InvestigationCancelResponse": {
+        "description": "Response confirming investigation cancellation request.",
+        "properties": {
+          "cancelled_at": {
+            "description": "Cancellation timestamp",
+            "format": "date-time",
+            "title": "Cancelled At",
+            "type": "string"
+          },
+          "investigation_id": {
+            "description": "Investigation identifier",
+            "title": "Investigation Id",
+            "type": "string"
+          },
+          "message": {
+            "description": "Cancellation confirmation message",
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/InvestigationStatus",
+            "description": "Updated investigation status"
+          }
+        },
+        "required": [
+          "investigation_id",
+          "status",
+          "message"
+        ],
+        "title": "InvestigationCancelResponse",
+        "type": "object"
+      },
+      "InvestigationCreateRequest": {
+        "description": "Payload to launch a new benchmark exposure investigation.",
+        "properties": {
+          "benchmark_version_id": {
+            "description": "Immutable benchmark version to audit",
+            "minLength": 1,
+            "title": "Benchmark Version Id",
+            "type": "string"
+          },
+          "policy_version_id": {
+            "description": "Immutable evaluation policy version to apply",
+            "minLength": 1,
+            "title": "Policy Version Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "description": "Tenant workspace ID",
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "benchmark_version_id",
+          "policy_version_id"
+        ],
+        "title": "InvestigationCreateRequest",
+        "type": "object"
+      },
+      "InvestigationLimitations": {
+        "description": "Operational and coverage limitations encountered during discovery.",
+        "properties": {
+          "inaccessible_sources": {
+            "description": "URLs that returned 403/404/timeout",
+            "items": {
+              "type": "string"
+            },
+            "title": "Inaccessible Sources",
+            "type": "array"
+          },
+          "provider_outages": {
+            "description": "Provider errors encountered",
+            "items": {
+              "type": "string"
+            },
+            "title": "Provider Outages",
+            "type": "array"
+          },
+          "scope_limitations": {
+            "description": "Coverage caveat notes",
+            "items": {
+              "type": "string"
+            },
+            "title": "Scope Limitations",
+            "type": "array"
+          }
+        },
+        "title": "InvestigationLimitations",
+        "type": "object"
+      },
+      "InvestigationStatus": {
+        "description": "Lifecycle states of an investigation orchestrator.",
+        "enum": [
+          "queued",
+          "validating",
+          "discovering",
+          "verifying",
+          "awaiting_review",
+          "completed",
+          "failed",
+          "cancelled",
+          "policy_blocked",
+          "budget_exhausted"
+        ],
+        "title": "InvestigationStatus",
+        "type": "string"
+      },
+      "InvestigationStatusResponse": {
+        "description": "Public read model for investigation status.",
+        "properties": {
+          "budgets": {
+            "$ref": "#/components/schemas/InvestigationBudgets",
+            "description": "Budget snapshot"
+          },
+          "created_at": {
+            "description": "Investigation start time",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "findings_count": {
+            "default": 0,
+            "description": "Number of findings discovered so far",
+            "minimum": 0.0,
+            "title": "Findings Count",
+            "type": "integer"
+          },
+          "investigated_items": {
+            "description": "Items completed so far",
+            "title": "Investigated Items",
+            "type": "integer"
+          },
+          "investigation_id": {
+            "description": "Investigation identifier",
+            "title": "Investigation Id",
+            "type": "string"
+          },
+          "is_partial": {
+            "description": "Whether investigation is marked as partial coverage",
+            "title": "Is Partial",
+            "type": "boolean"
+          },
+          "limitations": {
+            "$ref": "#/components/schemas/InvestigationLimitations",
+            "description": "Limitations encountered"
+          },
+          "status": {
+            "$ref": "#/components/schemas/InvestigationStatus",
+            "description": "Current status"
+          },
+          "total_items": {
+            "description": "Total items in scope",
+            "title": "Total Items",
+            "type": "integer"
+          },
+          "updated_at": {
+            "description": "Last updated time",
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "investigation_id",
+          "status",
+          "is_partial",
+          "total_items",
+          "investigated_items",
+          "budgets",
+          "limitations",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "InvestigationStatusResponse",
+        "type": "object"
+      },
+      "ItemIntake": {
+        "additionalProperties": false,
+        "description": "Raw item ingestion schema containing protected answers.\n\nThis model is restricted to the trusted intake and gold-vault storage boundary.\nIt MUST NEVER be returned directly in public API response endpoints.\nExtra fields are forbidden to prevent untyped data injection.",
+        "properties": {
+          "choices": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ChoiceOption"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Ordered options for multiple-choice tasks",
+            "title": "Choices"
+          },
+          "external_id": {
+            "description": "External item identifier",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "External Id",
+            "type": "string"
+          },
+          "gold_answer": {
+            "description": "Protected reference answer text or choice ID",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Gold Answer",
+            "type": "string"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/PublicItemMetadata",
+            "description": "Allowlisted public metadata only; arbitrary or protected metadata is forbidden"
+          },
+          "question": {
+            "description": "Question prompt text",
+            "maxLength": 32768,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          },
+          "task_type": {
+            "$ref": "#/components/schemas/TaskType",
+            "description": "Supported benchmark task type"
+          }
+        },
+        "required": [
+          "external_id",
+          "task_type",
+          "question",
+          "gold_answer"
+        ],
+        "title": "ItemIntake",
+        "type": "object"
+      },
+      "PublicItemMetadata": {
+        "additionalProperties": false,
+        "description": "Allowlisted, strictly typed public item metadata.\n\nCRITICAL BOUNDARY: Extra/arbitrary fields are strictly forbidden to prevent\naccidental leaking of protected answers, vault keys, or internal annotations.",
+        "properties": {
+          "difficulty": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Nominal difficulty rating",
+            "title": "Difficulty"
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Subject domain of the item (e.g. 'chemistry', 'navigation')",
+            "title": "Domain"
+          },
+          "license": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Content license identifier",
+            "title": "License"
+          },
+          "source_reference": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Non-confidential source origin citation",
+            "title": "Source Reference"
+          },
+          "tags": {
+            "description": "Allowlisted categorization tags",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 32,
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "title": "PublicItemMetadata",
+        "type": "object"
+      },
+      "ReportCreateRequest": {
+        "description": "Payload to trigger asynchronous frozen report generation.",
+        "properties": {
+          "investigation_id": {
+            "description": "Target completed investigation ID",
+            "minLength": 1,
+            "title": "Investigation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "investigation_id"
+        ],
+        "title": "ReportCreateRequest",
+        "type": "object"
+      },
+      "ReportStatus": {
+        "description": "Status of an asynchronous report generation job.",
+        "enum": [
+          "queued",
+          "generating",
+          "completed",
+          "failed"
+        ],
+        "title": "ReportStatus",
+        "type": "string"
+      },
+      "ReportStatusResponse": {
+        "description": "Status check response for an asynchronous report export job.",
+        "properties": {
+          "authorized_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Download expiration timestamp if completed",
+            "title": "Authorized Until"
+          },
+          "download_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Signed download URL if completed",
+            "title": "Download Url"
+          },
+          "report_id": {
+            "description": "Report job identifier",
+            "title": "Report Id",
+            "type": "string"
+          },
+          "report_version": {
+            "description": "Report version label",
+            "title": "Report Version",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReportStatus",
+            "description": "Current export status"
+          }
+        },
+        "required": [
+          "report_id",
+          "report_version",
+          "status"
+        ],
+        "title": "ReportStatusResponse",
+        "type": "object"
+      },
+      "RetentionProfile": {
+        "description": "Retention schedule profiles.",
+        "enum": [
+          "pilot_standard_30_90",
+          "custom",
+          "immediate_deletion"
+        ],
+        "title": "RetentionProfile",
+        "type": "string"
+      },
+      "ReviewAction": {
+        "description": "Action taken by a human reviewer on a finding.",
+        "enum": [
+          "confirm",
+          "reject",
+          "request_more_evidence"
+        ],
+        "title": "ReviewAction",
+        "type": "string"
+      },
+      "ReviewCreateRequest": {
+        "description": "Payload to record a human reviewer adjudication decision.\n\nIncludes expected_version for optimistic concurrency conflict detection.",
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/ReviewAction",
+            "description": "Adjudication decision: confirm, reject, or request_more_evidence"
+          },
+          "expected_version": {
+            "description": "Expected current finding version",
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "reason": {
+            "description": "Explanation for decision (required for auditability)",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "action",
+          "reason"
+        ],
+        "title": "ReviewCreateRequest",
+        "type": "object"
+      },
+      "ReviewDecision": {
+        "description": "Immutable audit record of a reviewer decision.",
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/ReviewAction",
+            "description": "Adjudication decision"
+          },
+          "decision_id": {
+            "description": "Unique decision ID",
+            "minLength": 1,
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "expected_version": {
+            "description": "Finding version before this decision",
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "finding_id": {
+            "description": "Target finding ID",
+            "minLength": 1,
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "new_version": {
+            "description": "Finding version after this decision",
+            "minimum": 2.0,
+            "title": "New Version",
+            "type": "integer"
+          },
+          "reason": {
+            "description": "Auditable rationale for the decision",
+            "title": "Reason",
+            "type": "string"
+          },
+          "reviewed_at": {
+            "description": "Timestamp of review",
+            "format": "date-time",
+            "title": "Reviewed At",
+            "type": "string"
+          },
+          "reviewer_id": {
+            "description": "Identity of the human reviewer",
+            "minLength": 1,
+            "title": "Reviewer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_id",
+          "finding_id",
+          "expected_version",
+          "new_version",
+          "reviewer_id",
+          "action",
+          "reason"
+        ],
+        "title": "ReviewDecision",
+        "type": "object"
+      },
+      "SnapshotAvailability": {
+        "description": "Current availability status of an evidence snapshot.",
+        "enum": [
+          "available",
+          "inaccessible",
+          "restricted",
+          "expired"
+        ],
+        "title": "SnapshotAvailability",
+        "type": "string"
+      },
+      "SourceFamily": {
+        "description": "Category of the source where evidence was discovered.",
+        "enum": [
+          "web_search",
+          "code_repository",
+          "academic_archive",
+          "discussion_forum",
+          "other"
+        ],
+        "title": "SourceFamily",
+        "type": "string"
+      },
+      "SourceSnapshot": {
+        "description": "Immutable evidence snapshot reference.",
+        "properties": {
+          "access_limitations": {
+            "description": "Access restrictions or limitations",
+            "items": {
+              "type": "string"
+            },
+            "title": "Access Limitations",
+            "type": "array"
+          },
+          "availability": {
+            "$ref": "#/components/schemas/SnapshotAvailability",
+            "default": "available",
+            "description": "Current availability status of the snapshot"
+          },
+          "content_hash": {
+            "description": "SHA-256 hash of the raw captured content",
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "excerpt_locator": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExcerptLocator"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Precise excerpt locator"
+          },
+          "extraction_version": {
+            "default": "extract_v1.0",
+            "description": "Version of the text extraction pipeline",
+            "title": "Extraction Version",
+            "type": "string"
+          },
+          "final_url": {
+            "description": "Final landing URL retrieved",
+            "title": "Final Url",
+            "type": "string"
+          },
+          "media_type": {
+            "default": "text/html",
+            "description": "MIME media type",
+            "title": "Media Type",
+            "type": "string"
+          },
+          "raw_content_preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Bounded excerpt of the permitted raw content",
+            "title": "Raw Content Preview"
+          },
+          "redirect_chain": {
+            "description": "Ordered list of intermediate redirect URLs",
+            "items": {
+              "type": "string"
+            },
+            "title": "Redirect Chain",
+            "type": "array"
+          },
+          "retrieved_at": {
+            "description": "Timestamp when content was retrieved",
+            "format": "date-time",
+            "title": "Retrieved At",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "description": "Unique evidence snapshot ID",
+            "minLength": 1,
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "source_family": {
+            "$ref": "#/components/schemas/SourceFamily",
+            "description": "Family of the source"
+          },
+          "source_url": {
+            "description": "Initial candidate URL requested",
+            "title": "Source Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "source_url",
+          "final_url",
+          "source_family",
+          "content_hash"
+        ],
+        "title": "SourceSnapshot",
+        "type": "object"
+      },
+      "TaskIdentity": {
+        "description": "Assessment of whether discovered content represents the same evaluation task.",
+        "enum": [
+          "exact",
+          "equivalent",
+          "ambiguous",
+          "different"
+        ],
+        "title": "TaskIdentity",
+        "type": "string"
+      },
+      "TaskType": {
+        "description": "Task types supported by BenchShield.",
+        "enum": [
+          "exact_short_answer",
+          "multiple_choice",
+          "code_execution",
+          "open_ended",
+          "rubric_evaluation",
+          "image_multimodal"
+        ],
+        "title": "TaskType",
+        "type": "string"
+      },
+      "TemporalAssessment": {
+        "description": "Independent temporal classification and supporting timestamps.\n\nA post-cutoff observation does not prove pre-cutoff absence, and missing dates stay unknown.",
+        "properties": {
+          "archive_capture_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Wayback Machine / Web Archive snapshot timestamp",
+            "title": "Archive Capture Time"
+          },
+          "asserted_publication_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Unverified publication timestamp displayed by page",
+            "title": "Asserted Publication Time"
+          },
+          "assessment_id": {
+            "description": "Assessment record ID",
+            "minLength": 1,
+            "title": "Assessment Id",
+            "type": "string"
+          },
+          "commit_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Git commit timestamp if source is a repository",
+            "title": "Commit Time"
+          },
+          "retrieval_time": {
+            "description": "Timestamp when the source was fetched",
+            "format": "date-time",
+            "title": "Retrieval Time",
+            "type": "string"
+          },
+          "supporting_evidence_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Provenance of temporal verification",
+            "title": "Supporting Evidence Note"
+          },
+          "temporal_status": {
+            "$ref": "#/components/schemas/TemporalStatus",
+            "default": "unknown",
+            "description": "Temporal relationship to benchmark cutoff"
+          },
+          "verified_introduction_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Proven earliest public introduction time",
+            "title": "Verified Introduction Time"
+          }
+        },
+        "required": [
+          "assessment_id"
+        ],
+        "title": "TemporalAssessment",
+        "type": "object"
+      },
+      "TemporalStatus": {
+        "description": "Temporal relationship of discovered evidence to the benchmark cutoff.",
+        "enum": [
+          "verified_pre_cutoff",
+          "observed_post_cutoff",
+          "verified_introduced_post_cutoff",
+          "unknown"
+        ],
+        "title": "TemporalStatus",
+        "type": "string"
+      },
+      "VerificationResult": {
+        "description": "Assessment of task identity and answer agreement.\n\nTask identity must be established before answer agreement.",
+        "properties": {
+          "answer_match": {
+            "$ref": "#/components/schemas/AnswerMatch",
+            "description": "Correspondence of answer agreement"
+          },
+          "explanation": {
+            "description": "Granular explanation of verification determination",
+            "title": "Explanation",
+            "type": "string"
+          },
+          "grader_version": {
+            "default": "grader_v1.0",
+            "description": "Version of trusted verification grader",
+            "title": "Grader Version",
+            "type": "string"
+          },
+          "normalization_version": {
+            "default": "norm_v1.0",
+            "description": "Version of normalization algorithm",
+            "title": "Normalization Version",
+            "type": "string"
+          },
+          "task_identity": {
+            "$ref": "#/components/schemas/TaskIdentity",
+            "description": "Correspondence of task/question identity"
+          },
+          "verification_id": {
+            "description": "Verification record ID",
+            "minLength": 1,
+            "title": "Verification Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "verification_id",
+          "task_identity",
+          "answer_match",
+          "explanation"
+        ],
+        "title": "VerificationResult",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Authoritative API contract for BenchShield benchmark exposure audits, evidence reviews, and optional controlled attacker experiments.",
+    "title": "BenchShield Exposure Audit API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/benchmarks": {
+      "post": {
+        "description": "Validate benchmark CSV/JSON items. Returns immutable version ID or row errors without echoing protected answers.",
+        "operationId": "import_benchmark_api_v1_benchmarks_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchmarkImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkImportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Policy blocked or forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Import and validate benchmark",
+        "tags": [
+          "Benchmarks"
+        ]
+      }
+    },
+    "/api/v1/findings/{finding_id}/reviews": {
+      "post": {
+        "description": "Append human review decision with expected finding version; returns 409 on version conflict.",
+        "operationId": "submit_review_api_v1_findings__finding_id__reviews_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "finding_id",
+            "required": true,
+            "schema": {
+              "title": "Finding Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewDecision"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Policy blocked or forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Submit reviewer decision",
+        "tags": [
+          "Reviews"
+        ]
+      }
+    },
+    "/api/v1/investigations": {
+      "post": {
+        "description": "Validate policy and budget, and launch an exposure audit investigation. Requires Idempotency-Key.",
+        "operationId": "launch_investigation_api_v1_investigations_post",
+        "parameters": [
+          {
+            "description": "Unique client idempotency key",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "description": "Unique client idempotency key",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvestigationCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigationStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Policy blocked or forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Launch investigation",
+        "tags": [
+          "Investigations"
+        ]
+      }
+    },
+    "/api/v1/investigations/{investigation_id}": {
+      "get": {
+        "description": "Retrieve investigation state, item counts, partial coverage, budget consumption, and limitations.",
+        "operationId": "get_investigation_api_v1_investigations__investigation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "investigation_id",
+            "required": true,
+            "schema": {
+              "title": "Investigation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigationStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Policy blocked or forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Get investigation status",
+        "tags": [
+          "Investigations"
+        ]
+      }
+    },
+    "/api/v1/investigations/{investigation_id}/cancel": {
+      "post": {
+        "description": "Idempotent cancellation request to signal running workers and halt new task dispatch.",
+        "operationId": "cancel_investigation_api_v1_investigations__investigation_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "investigation_id",
+            "required": true,
+            "schema": {
+              "title": "Investigation Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvestigationCancelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigationCancelResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Policy blocked or forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Cancel investigation",
+        "tags": [
+          "Investigations"
+        ]
+      }
+    },
+    "/api/v1/investigations/{investigation_id}/events": {
+      "get": {
+        "description": "Authenticated text/event-stream SSE stream emitting monotonic public progress events. Event framing: 'id: <id>\\nevent: <type>\\ndata: <json>\\n\\n'. Reconnect using Last-Event-ID header.",
+        "operationId": "get_investigation_events_api_v1_investigations__investigation_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "investigation_id",
+            "required": true,
+            "schema": {
+              "title": "Investigation Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Reconnect cursor ID",
+            "in": "header",
+            "name": "Last-Event-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Reconnect cursor ID",
+              "title": "Last-Event-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "text/event-stream": {
+                "schema": {
+                  "description": "Server-Sent Events progress stream. Each event is framed as:\nid: <monotonic_event_id>\nevent: <event_type>\ndata: <SSEEventEnvelope_JSON>\n\nClients resume playback using the Last-Event-ID HTTP request header.",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Authenticated Server-Sent Events stream emitting real-time progress events."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Policy blocked or forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Investigation not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Cursor expired (snapshot refresh required)"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Contract placeholder only (deferred to B2)"
+          }
+        },
+        "summary": "Stream investigation events",
+        "tags": [
+          "Investigations"
+        ]
+      }
+    },
+    "/api/v1/investigations/{investigation_id}/experiments": {
+      "post": {
+        "description": "Create pinned optional attacker experiment after frozen discovery verification.",
+        "operationId": "launch_experiment_api_v1_investigations__investigation_id__experiments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "investigation_id",
+            "required": true,
+            "schema": {
+              "title": "Investigation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentConfig"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Policy blocked or forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Launch optional controlled experiment",
+        "tags": [
+          "Experiments"
+        ]
+      }
+    },
+    "/api/v1/investigations/{investigation_id}/findings": {
+      "get": {
+        "description": "Paginated list of findings with independent exposure, task identity, answer match, and temporal dimensions.",
+        "operationId": "list_findings_api_v1_investigations__investigation_id__findings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "investigation_id",
+            "required": true,
+            "schema": {
+              "title": "Investigation Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page number",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "Page number",
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items per page",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Items per page",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Size",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Filter by exposure type",
+            "in": "query",
+            "name": "exposure_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ExposureType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by exposure type",
+              "title": "Exposure Type"
+            }
+          },
+          {
+            "description": "Filter by temporal status",
+            "in": "query",
+            "name": "temporal_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TemporalStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by temporal status",
+              "title": "Temporal Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindingListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Policy blocked or forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "List investigation findings",
+        "tags": [
+          "Findings"
+        ]
+      }
+    },
+    "/api/v1/investigations/{investigation_id}/reports": {
+      "post": {
+        "description": "Freeze report inputs and queue an asynchronous export job.",
+        "operationId": "create_report_api_v1_investigations__investigation_id__reports_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "investigation_id",
+            "required": true,
+            "schema": {
+              "title": "Investigation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Policy blocked or forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Create frozen report export",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/api/v1/policies": {
+      "post": {
+        "description": "Store an immutable evaluation policy version containing source and privacy boundaries.",
+        "operationId": "create_policy_api_v1_policies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluationPolicyCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationPolicyVersion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Policy blocked or forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Create evaluation policy",
+        "tags": [
+          "Policies"
+        ]
+      }
+    },
+    "/api/v1/reports/{report_id}": {
+      "get": {
+        "description": "Check export generation status and retrieve authorized download reference.",
+        "operationId": "get_report_api_v1_reports__report_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Policy blocked or forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Version conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable entity validation error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Operation deferred to subsequent implementation phase"
+          }
+        },
+        "summary": "Get report export status",
+        "tags": [
+          "Reports"
+        ]
+      }
+    }
+  }
+}
