@@ -54,6 +54,8 @@ export type ReportStatusResponse = Schema<'ReportStatusResponse'>;
 export type ExperimentCondition = Schema<'ExperimentCondition'>;
 export type ExperimentCreateRequest = Schema<'ExperimentCreateRequest'>;
 export type ExperimentConfig = Schema<'ExperimentConfig'>;
+export type ExperimentResultsResponse = Schema<'ExperimentResultsResponse'>;
+export type AdversarialRun = Schema<'AdversarialRun'>;
 
 // ---------------------------------------------------------------------------
 // Server-Sent Events. Mirrors docs/contracts/events/sse_envelope.json.

@@ -33,7 +33,8 @@ const GOLD = ['Sub-surface thorium reactor', 'Vellan Stream'];
 
     await page.getByRole('button', { name: /alice@corp-alpha.com \(admin\)/ }).click();
     await page.getByText('Connected').waitFor({ timeout: T });
-    const hdr = await page.locator('header').innerText(); check('Login as alice via dev server token', hdr.includes('ws_alpha') && hdr.includes('alice@corp-alpha.com'), hdr.split('\n').slice(0,3).join(' '));
+    const hdrOk = await page.locator('header').filter({ hasText: 'alice@corp-alpha.com' }).filter({ hasText: 'ws_alpha' }).waitFor({ timeout: T }).then(() => true, () => false);
+    check('Login as alice via dev server token', hdrOk, (await page.locator('header').innerText()).replace(/\s+/g, ' ').slice(0, 90));
 
     // Invalid benchmark -> row errors from the real backend
     await page.getByRole('button', { name: 'Load sample with errors' }).click();
@@ -122,7 +123,20 @@ const GOLD = ['Sub-surface thorium reactor', 'Vellan Stream'];
     await shot('09-report');
 
     await tab('Experiments');
-    check('Experiments shows not-available (backend 501)', await page.getByText(/backend phase B4/).isVisible());
+    await page.getByRole('button', { name: 'Launch Experiment' }).click();
+    await page.getByText(/^Experiment exp_/).or(page.getByText('Experiment request failed')).first().waitFor({ timeout: T });
+    if (await page.getByText('Experiment request failed').isVisible()) {
+      check('Experiment launched (B4)', false, (await page.locator('[role=alert]').first().innerText()).replace(/\s+/g, ' ').slice(0, 160));
+    } else {
+      check('Experiment launched (B4)', true, await page.getByText(/^Experiment exp_/).innerText());
+      await page.getByText('Completed runs').waitFor({ timeout: T });
+      await page.waitForFunction(() => !document.body.innerText.includes('No runs recorded yet'), null, { timeout: 60000 }).catch(() => {});
+      const txt = await page.locator('main').innerText();
+      const m = txt.match(/Completed runs\s*(\d+)/);
+      check('Experiment results loaded per condition', !!m, `completed runs=${m && m[1]}`);
+      check('No gold answers in experiment results', !GOLD.some((g) => txt.includes(g)));
+    }
+    await shot('09b-experiments');
 
     const storage = await page.evaluate(() => JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage }));
     check('Browser storage holds no gold answers', !GOLD.some((g) => storage.includes(g)));

@@ -58,6 +58,7 @@ export const mockDb = {
   findingIndex: new Map<string, string>(),
   reviews: new Map<string, ReviewDecision[]>(),
   reports: new Map<string, { status: ReportStatusResponse; content: Record<string, unknown> | null }>(),
+  experiments: new Map<string, Record<string, unknown>[]>(),
   failNextRequestWith401: false,
   counter: 0,
 };
@@ -74,6 +75,7 @@ export function resetMockDb() {
   mockDb.findingIndex.clear();
   mockDb.reviews.clear();
   mockDb.reports.clear();
+  mockDb.experiments.clear();
   mockDb.failNextRequestWith401 = false;
   mockDb.counter = 0;
   for (const s of Object.values(SCENARIOS)) {

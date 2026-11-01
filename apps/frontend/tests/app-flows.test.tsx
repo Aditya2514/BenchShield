@@ -97,9 +97,13 @@ describe('Findings, reviews and reports', () => {
     expect(screen.getByText(/remain completely intact/)).toBeInTheDocument();
   });
 
-  it('says experiments are not implemented instead of faking them', () => {
+  it('launches an experiment and shows results per condition without pooling', async () => {
     render(<App defaultTab="experiments" />);
-    expect(screen.getByText(/backend phase B4/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Launch Experiment/i }));
+    expect(await screen.findByText(/^Experiment exp_mock_/)).toBeInTheDocument();
+    expect(await screen.findByText('Completed runs')).toBeInTheDocument();
+    expect(screen.getAllByText('evaluation_aware').length).toBeGreaterThan(0);
+    expect(screen.queryByText(/exposure score/i)).not.toBeInTheDocument();
   });
 });
 
