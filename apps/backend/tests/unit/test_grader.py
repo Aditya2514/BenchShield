@@ -119,3 +119,24 @@ def test_commit_time_before_cutoff_verifies_pre_cutoff():
 def test_no_timestamps_is_unknown():
     s, _ = assess_temporal(CUTOFF, None, {})
     assert s == TemporalStatus.UNKNOWN
+
+
+def test_preview_masks_answer_only_where_grader_found_it():
+    from benchshield.services.audit_service import (
+        REDACTION_TOKEN,
+        WITHHELD_PREVIEW,
+        safe_preview,
+    )
+
+    page = "Quiz 3. What is the atomic number of carbon? Answer: 6. Next: page 6 of 10."
+    # Answer found on the page: masked in place (the finding reports this exposure).
+    masked = safe_preview(page, "6", "exact")
+    assert "6" not in masked and REDACTION_TOKEN in masked
+
+    # Answer only occurs incidentally: masking would reveal it, so withhold.
+    unrelated = "Travel blog: see page 6 of 10 for the ring tour."
+    assert safe_preview(unrelated, "6", "not_applicable") == WITHHELD_PREVIEW
+    assert safe_preview(unrelated, "6", "mismatch") == WITHHELD_PREVIEW
+
+    # No occurrence at all: preview unchanged.
+    assert safe_preview("nothing here", "6", "mismatch") == "nothing here"

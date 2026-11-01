@@ -96,12 +96,12 @@ export function FindingsView({ investigationId, onNavigate }: { investigationId:
                   const t = getTemporalStatusMeta(f.temporal.temporal_status ?? 'unknown');
                   return (
                     <TableRow key={f.finding_id}>
-                      <TableCell className="font-mono font-bold">{f.external_id}</TableCell>
-                      <TableCell><span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${c.badgeClass}`}>{c.label}</span></TableCell>
+                      <TableCell className="font-mono font-bold whitespace-nowrap">{f.external_id}</TableCell>
+                      <TableCell><span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border whitespace-nowrap ${c.badgeClass}`}>{c.label}</span></TableCell>
                       <TableCell className="font-mono">{f.claim.exposure_type}</TableCell>
                       <TableCell>{f.verification.task_identity}</TableCell>
                       <TableCell>{f.verification.answer_match}</TableCell>
-                      <TableCell><span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${t.badgeClass}`}>{t.label}</span></TableCell>
+                      <TableCell><span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border whitespace-nowrap ${t.badgeClass}`}>{t.label}</span></TableCell>
                       <TableCell className="text-xs">{f.current_reviewer_decision ? `v${f.version}: ${f.current_reviewer_decision}` : 'Unadjudicated'}</TableCell>
                       <TableCell className="text-right"><Button size="sm" variant="secondary" onClick={() => setSelected(f)} icon={<Eye className="w-3.5 h-3.5" aria-hidden="true" />}>Inspect</Button></TableCell>
                     </TableRow>

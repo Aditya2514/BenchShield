@@ -73,6 +73,13 @@ logger = logging.getLogger(__name__)
 METHODOLOGY_VERSION = "audit_v1.0"
 EXTRACTION_VERSION = "extract_v1.0"
 REDACTION_TOKEN = "[REDACTED_REFERENCE_ANSWER]"
+WITHHELD_PREVIEW = (
+    "[Preview withheld: it contains text equal to the protected reference answer "
+    "outside a matched answer. Open the source URL to inspect it.]"
+)
+# Answer matches where the grader found the answer on the page. Masking it there
+# only marks what the finding already reports as exposed.
+_ANSWER_FOUND = {"exact", "normalized", "task_specific"}
 PREVIEW_CHARS = 800
 REPORT_DOWNLOAD_TTL = timedelta(minutes=15)
 
@@ -112,6 +119,20 @@ def _redact(text: str, secret: str) -> str:
         return text
     pattern = re.compile(rf"(?<!\w){re.escape(secret)}(?!\w)", re.IGNORECASE)
     return pattern.sub(REDACTION_TOKEN, text)
+
+
+def safe_preview(text: str, secret: str, answer_match: str) -> str:
+    """Preview that never reveals the gold answer to API readers.
+
+    Masking in place leaks the answer when the grader did not find it as an
+    answer: anyone can diff the masked preview against the public page (e.g.
+    "page [REDACTED] of 10" gives away "6"). In that case the whole preview is
+    withheld instead.
+    """
+    redacted = _redact(text, secret)
+    if redacted != text and answer_match not in _ANSWER_FOUND:
+        return WITHHELD_PREVIEW
+    return redacted
 
 
 def _locate(content: str, question: str) -> ExcerptLocator | None:
@@ -254,7 +275,9 @@ class AuditService:
                 fid = f"fnd_{uuid4().hex[:16]}"
                 locator = _locate(content, item.question)
                 start = max(0, (locator.char_offset_start or 0) - 200) if locator else 0
-                preview = _redact(content[start : start + PREVIEW_CHARS], gold_text)
+                preview = safe_preview(
+                    content[start : start + PREVIEW_CHARS], gold_text, result.answer_match.value
+                )
                 snapshot = SourceSnapshot(
                     snapshot_id=cand.id,
                     source_url=cand.url,
