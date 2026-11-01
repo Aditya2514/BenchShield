@@ -3,6 +3,8 @@ import { Shell, NavTab } from './components/Shell.js';
 import { BenchmarkImport, StagedBenchmark } from './features/benchmarks/BenchmarkImport.js';
 import { PolicyForm } from './features/policies/PolicyForm.js';
 import { InvestigationView } from './features/investigations/InvestigationView.js';
+import { FindingsView } from './features/findings/FindingsView.js';
+import { ReportsView } from './features/reports/ReportsView.js';
 import { SCENARIOS, getActiveScenario, setActiveScenario } from './mocks/scenarios.js';
 import { getTemporalStatusMeta, getClaimStatusMeta } from './types/status.js';
 import { AlertTriangle } from 'lucide-react';
@@ -58,7 +60,23 @@ export default function App({
         />
       )}
 
-      {(activeTab === 'findings' || activeTab === 'experiments' || activeTab === 'reports') && (
+      {activeTab === 'findings' && (
+        <FindingsView
+          key={selectedScenario}
+          initialFindings={scenario.findings}
+          investigation={scenario.investigation}
+        />
+      )}
+
+      {activeTab === 'reports' && (
+        <ReportsView
+          key={selectedScenario}
+          initialReport={scenario.report}
+          investigationId={scenario.investigation.id}
+        />
+      )}
+
+      {activeTab === 'experiments' && (
         <div className="space-y-6">
           {/* Active Scenario Overview Card */}
           <section aria-labelledby="scenario-title" className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">

@@ -57,10 +57,10 @@ export function useInvestigationEvents({
 
     setEvents((prev) => [...prev, event]);
 
-    // Apply incremental state updates
+    // Apply incremental state updates (without reviving a cancelled run)
     if (event.data?.state) {
       setInvestigation((prev) => {
-        if (!prev) return prev;
+        if (!prev || prev.state === 'cancelled') return prev;
         return {
           ...prev,
           state: event.data.state,
@@ -145,6 +145,7 @@ export function useInvestigationEvents({
 
   return {
     investigation,
+    setInvestigation,
     events,
     isConnected,
     cursorExpired,

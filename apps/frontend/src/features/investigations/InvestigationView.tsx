@@ -28,6 +28,7 @@ export function InvestigationView({
 
   const {
     investigation,
+    setInvestigation,
     events,
     isConnected,
     cursorExpired,
@@ -78,6 +79,7 @@ export function InvestigationView({
         method: 'POST',
       });
       if (res.ok) {
+        setInvestigation((prev) => (prev ? { ...prev, state: 'cancelled' } : null));
         await refreshSnapshot();
       }
     } catch (err) {
