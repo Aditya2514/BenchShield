@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Shield,
   Database,
@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   RotateCw,
   ChevronDown,
+  Check,
 } from 'lucide-react';
 
 export type NavTab = 'benchmarks' | 'policies' | 'investigations' | 'findings' | 'experiments' | 'reports';
@@ -37,6 +38,33 @@ export function Shell({
   onSimulateExpiry,
   children,
 }: ShellProps) {
+  const [isScenarioOpen, setIsScenarioOpen] = useState(false);
+  const scenarioRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (scenarioRef.current && !scenarioRef.current.contains(event.target as Node)) {
+        setIsScenarioOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsScenarioOpen(false);
+      }
+    };
+    if (isScenarioOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isScenarioOpen]);
+
+  const selectedScenarioName =
+    scenarioList.find((s) => s.id === selectedScenario)?.name || selectedScenario;
+
   const tabs = [
     { id: 'benchmarks' as NavTab, label: 'Benchmarks', icon: Database },
     { id: 'policies' as NavTab, label: 'Policies', icon: Sliders },
@@ -84,21 +112,83 @@ export function Shell({
             <label htmlFor="scenario-selector" className="text-xs font-semibold text-slate-600">
               Active Mock Scenario:
             </label>
-            <div className="relative inline-flex items-center">
+            <div className="relative inline-flex items-center" ref={scenarioRef}>
+              {/* Native select retained for accessibility and test change events */}
               <select
                 id="scenario-selector"
                 aria-label="Active Mock Scenario:"
                 value={selectedScenario}
                 onChange={(e) => onScenarioChange(e.target.value)}
-                className="appearance-none bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-400 rounded-lg pl-3 pr-8 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all cursor-pointer"
+                className="sr-only"
               >
                 {scenarioList.map((s) => (
-                  <option key={s.id} value={s.id} className="text-slate-800 py-1 bg-white">
+                  <option key={s.id} value={s.id}>
                     {s.name}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-4 h-4 text-slate-500 absolute right-2.5 pointer-events-none" aria-hidden="true" />
+
+              {/* Polished custom select button */}
+              <button
+                type="button"
+                onClick={() => setIsScenarioOpen((prev) => !prev)}
+                aria-haspopup="listbox"
+                aria-expanded={isScenarioOpen}
+                aria-controls="scenario-dropdown-menu"
+                className="flex items-center justify-between gap-3 bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-400 rounded-lg pl-3 pr-2.5 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 transition-all cursor-pointer min-w-[240px] max-w-[340px]"
+              >
+                <span className="truncate text-left text-slate-800">{selectedScenarioName}</span>
+                <ChevronDown
+                  className={`w-4 h-4 text-slate-500 shrink-0 transition-transform duration-200 ${
+                    isScenarioOpen ? 'rotate-180 text-indigo-700' : ''
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
+
+              {/* Styled dropdown menu popup */}
+              {isScenarioOpen && (
+                <div
+                  role="listbox"
+                  id="scenario-dropdown-menu"
+                  aria-label="Mock Scenarios"
+                  className="absolute right-0 top-full mt-1.5 w-80 sm:w-96 bg-white border border-slate-200 rounded-xl shadow-lg z-50 p-1.5 space-y-1"
+                >
+                  <div className="px-2.5 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                    Select Mock Scenario
+                  </div>
+                  {scenarioList.map((s) => {
+                    const isSelected = s.id === selectedScenario;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        onClick={() => {
+                          onScenarioChange(s.id);
+                          setIsScenarioOpen(false);
+                        }}
+                        className={`w-full text-left flex items-start justify-between gap-2.5 p-2.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'bg-indigo-50/90 text-indigo-950 font-semibold ring-1 ring-indigo-200'
+                            : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="truncate text-slate-900 font-semibold">{s.name}</div>
+                          <div className="text-[10px] text-slate-500 font-mono mt-0.5 truncate">
+                            ID: {s.id}
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <Check className="w-4 h-4 text-indigo-700 shrink-0 mt-0.5" aria-hidden="true" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
