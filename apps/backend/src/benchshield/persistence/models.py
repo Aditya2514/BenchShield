@@ -505,3 +505,94 @@ class InvestigationIdempotencyModel(Base):
     response_status = Column(Integer, nullable=False)
     response_body = Column(JSONB, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+
+
+class FindingModel(Base):
+    """Verified (or rejected / needs-review) finding derived from one candidate source (B3)."""
+
+    __tablename__ = "findings"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "id", name="uq_findings_ws_id"),
+        UniqueConstraint("workspace_id", "candidate_source_id", name="uq_findings_ws_candidate"),
+        ForeignKeyConstraint(
+            ["workspace_id", "investigation_id"],
+            ["public.investigations.workspace_id", "public.investigations.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(String(64), nullable=False)
+    investigation_id = Column(String(64), nullable=False, index=True)
+    candidate_source_id = Column(String(64), nullable=False)
+    item_version_id = Column(String(64), nullable=False)
+    external_id = Column(String(256), nullable=False)
+    version = Column(Integer, nullable=False, default=1)
+    exposure_type = Column(String(32), nullable=False)
+    claim_status = Column(String(32), nullable=False)
+    task_identity = Column(String(32), nullable=False)
+    answer_match = Column(String(32), nullable=False)
+    temporal_status = Column(String(48), nullable=False)
+    auto_claim_status = Column(String(32), nullable=False)
+    claim = Column(JSONB, nullable=False)
+    verification = Column(JSONB, nullable=False)
+    temporal = Column(JSONB, nullable=False)
+    snapshot = Column(JSONB, nullable=False)
+    current_reviewer_decision = Column(String(32), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+
+
+class ReviewDecisionModel(Base):
+    """Append-only human reviewer decision."""
+
+    __tablename__ = "review_decisions"
+    __table_args__ = (
+        UniqueConstraint("finding_id", "new_version", name="uq_review_finding_version"),
+        ForeignKeyConstraint(
+            ["workspace_id", "finding_id"],
+            ["public.findings.workspace_id", "public.findings.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(String(64), nullable=False)
+    finding_id = Column(String(64), nullable=False)
+    expected_version = Column(Integer, nullable=False)
+    new_version = Column(Integer, nullable=False)
+    reviewer_id = Column(String(64), nullable=False)
+    action = Column(String(32), nullable=False)
+    reason = Column(Text, nullable=False)
+    reviewed_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+
+
+class ReportModel(Base):
+    """Frozen, versioned audit report."""
+
+    __tablename__ = "reports"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id", "investigation_id", "report_version", name="uq_reports_inv_version"
+        ),
+        ForeignKeyConstraint(
+            ["workspace_id", "investigation_id"],
+            ["public.investigations.workspace_id", "public.investigations.id"],
+            ondelete="CASCADE",
+        ),
+        {"schema": "public"},
+    )
+
+    id = Column(String(64), primary_key=True)
+    workspace_id = Column(String(64), nullable=False)
+    investigation_id = Column(String(64), nullable=False)
+    report_version = Column(String(32), nullable=False)
+    status = Column(String(32), nullable=False)
+    actor_id = Column(String(64), nullable=False)
+    content = Column(JSONB, nullable=True)
+    content_sha256 = Column(String(64), nullable=True)
+    error_message = Column(Text, nullable=True)
+    frozen_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+    completed_at = Column(DateTime(timezone=True), nullable=True)
