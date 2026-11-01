@@ -1,0 +1,129 @@
+{
+  "scenario_id": "2-partial-coverage-outage",
+  "name": "Partial Coverage Audit (Provider Outage)",
+  "description": "Provider outage during search; audit completed with visible partial coverage flags and explicit limitations.",
+  "investigation": {
+    "id": "inv-syn014-partial",
+    "benchmark_version_id": "bm-syn014-v1",
+    "policy_version_id": "pol-syn014-v1",
+    "state": "completed",
+    "partial_coverage": true,
+    "coverage_limitations": [
+      "Provider outage during external web search; 2 planned queries dropped.",
+      "Investigation completed with partial repository-only coverage."
+    ],
+    "counts": {
+      "total_items": 1,
+      "processed_items": 1,
+      "candidate_findings": 1,
+      "verified_findings": 0
+    },
+    "budget_usage": {
+      "queries_executed": 1,
+      "pages_fetched": 1,
+      "spend_usd": 0.40
+    }
+  },
+  "findings": [
+    {
+      "id": "find-syn014-02",
+      "investigation_id": "inv-syn014-partial",
+      "item_id": "SYN-014",
+      "item_version_id": "iv-syn014-01",
+      "claim_status": "needs_review",
+      "exposure_dimension": "question_context",
+      "task_identity": "ambiguous",
+      "answer_match": "mismatch",
+      "temporal_status": "unknown",
+      "attribution": "none",
+      "policy_compliance": "unknown",
+      "evidence": {
+        "snapshot_id": "snap-syn014-s02",
+        "source_url": "https://synthetic-repo.example.com/discussions/topic-k7.html",
+        "retrieval_time": "2026-11-01T12:05:00Z",
+        "content_hash": "sha256-b2c3d4e5f60718293a4b5c6d7e8f90a1",
+        "excerpt_text": "Mentioned station code K7 in passing without reference to multiple-choice question options."
+      },
+      "review_decision": null,
+      "version": 1
+    }
+  ],
+  "report": {
+    "report_id": "rep-syn014-02",
+    "investigation_id": "inv-syn014-partial",
+    "status": "completed",
+    "report_version_id": "R-002",
+    "frozen_at": "2026-11-01T12:15:00Z",
+    "download_url": "/api/v1/reports/rep-syn014-02/download",
+    "download_expires_at": "2026-11-02T12:15:00Z",
+    "reviewer_decisions_count": 0,
+    "unresolved_claims_count": 1,
+    "limitations": [
+      "Partial coverage audit: external search provider encountered outage. Never interpret as clean certification."
+    ]
+  },
+  "events": [
+    {
+      "event_id": "evt-101",
+      "entity_id": "inv-syn014-partial",
+      "type": "investigation.queued",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:00:00Z",
+      "data": {
+        "state": "queued",
+        "total_items": 1,
+        "processed_items": 0,
+        "candidate_findings": 0,
+        "verified_findings": 0,
+        "queries_executed": 0,
+        "pages_fetched": 0,
+        "spend_usd": 0.0,
+        "partial_coverage": false
+      }
+    },
+    {
+      "event_id": "evt-102",
+      "entity_id": "inv-syn014-partial",
+      "type": "investigation.discovering",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:02:00Z",
+      "data": {
+        "state": "discovering",
+        "total_items": 1,
+        "processed_items": 0,
+        "candidate_findings": 1,
+        "verified_findings": 0,
+        "queries_executed": 1,
+        "pages_fetched": 1,
+        "spend_usd": 0.40,
+        "partial_coverage": true,
+        "coverage_limitations": [
+          "Provider outage during external web search; 2 planned queries dropped."
+        ]
+      }
+    },
+    {
+      "event_id": "evt-103",
+      "entity_id": "inv-syn014-partial",
+      "type": "investigation.completed",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:04:00Z",
+      "data": {
+        "state": "completed",
+        "total_items": 1,
+        "processed_items": 1,
+        "candidate_findings": 1,
+        "verified_findings": 0,
+        "queries_executed": 1,
+        "pages_fetched": 1,
+        "spend_usd": 0.40,
+        "partial_coverage": true,
+        "coverage_limitations": [
+          "Provider outage during external web search; 2 planned queries dropped.",
+          "Investigation completed with partial repository-only coverage."
+        ]
+      }
+    }
+  ]
+}
+

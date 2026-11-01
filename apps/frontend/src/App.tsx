@@ -1,0 +1,235 @@
+import { useState } from 'react';
+import { SCENARIOS, getActiveScenario, setActiveScenario } from './mocks/scenarios.js';
+import { getTemporalStatusMeta, getClaimStatusMeta } from './types/status.js';
+import { Shield, AlertTriangle } from 'lucide-react';
+
+export default function App() {
+  const [selectedScenario, setSelectedScenario] = useState<string>('1-successful-audit');
+  const scenario = getActiveScenario();
+
+  const handleScenarioChange = (id: string) => {
+    setSelectedScenario(id);
+    setActiveScenario(id);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+      {/* Header Shell */}
+      <header className="border-b border-slate-800 bg-slate-900/60 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-950 border border-indigo-700/50 rounded-lg text-indigo-400">
+            <Shield className="w-6 h-6" aria-hidden="true" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+              BenchShield
+              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono font-normal">
+                v0.2
+              </span>
+            </h1>
+            <p className="text-xs text-slate-400">Benchmark Exposure Audit System</p>
+          </div>
+        </div>
+
+        {/* Scenario Switcher for Dev / Test */}
+        <div className="flex items-center gap-3">
+          <label htmlFor="scenario-select" className="text-xs font-medium text-slate-400">
+            Active Mock Scenario:
+          </label>
+          <select
+            id="scenario-select"
+            value={selectedScenario}
+            onChange={(e) => handleScenarioChange(e.target.value)}
+            className="text-xs bg-slate-900 border border-slate-700 rounded-md px-3 py-1.5 text-slate-200 focus:ring-2 focus:ring-indigo-500"
+          >
+            {Object.keys(SCENARIOS).map((key) => (
+              <option key={key} value={key}>
+                {SCENARIOS[key].name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-6xl w-full mx-auto p-6 space-y-6">
+        {/* Scenario Overview Card */}
+        <section aria-labelledby="scenario-title" className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-xs font-mono text-indigo-400 uppercase tracking-wider">
+                Scenario Contract Verification
+              </span>
+              <h2 id="scenario-title" className="text-xl font-semibold text-white mt-1">
+                {scenario.name}
+              </h2>
+              <p className="text-sm text-slate-400 mt-1">{scenario.description}</p>
+            </div>
+            <div className="text-right">
+              <span className="text-xs text-slate-500 block">Investigation ID</span>
+              <span className="text-xs font-mono text-slate-300">{scenario.investigation.id}</span>
+            </div>
+          </div>
+
+          {/* Partial Coverage Warning Banner */}
+          {scenario.investigation.partial_coverage && (
+            <div
+              role="alert"
+              className="mt-4 p-4 rounded-lg bg-amber-950/60 border border-amber-700/60 flex items-start gap-3"
+            >
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
+              <div>
+                <h3 className="text-sm font-semibold text-amber-200">
+                  Partial Coverage Audit Warning
+                </h3>
+                <p className="text-xs text-amber-300/90 mt-0.5">
+                  This audit did not cover all planned sources due to provider limitations or outages. Never interpret this partial coverage as an unexposed or clean certification.
+                </p>
+                <ul className="mt-2 space-y-1 text-xs text-amber-400 list-disc list-inside">
+                  {scenario.investigation.coverage_limitations.map((lim: string, idx: number) => (
+                    <li key={idx}>{lim}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Policy Blocked Banner */}
+          {scenario.investigation.state === 'policy_blocked' && (
+            <div
+              role="alert"
+              className="mt-4 p-4 rounded-lg bg-rose-950/60 border border-rose-700/60 flex items-start gap-3"
+            >
+              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
+              <div>
+                <h3 className="text-sm font-semibold text-rose-200">
+                  Audit Execution Halted (policy_blocked)
+                </h3>
+                <p className="text-xs text-rose-300/90 mt-0.5">
+                  {scenario.investigation.failure_reason}
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Independent Dimensions / Findings Table */}
+        <section aria-labelledby="findings-title" className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h2 id="findings-title" className="text-base font-semibold text-white">
+                Independent Finding Dimensions
+              </h2>
+              <p className="text-xs text-slate-400">
+                Independent assessment dimensions per docs/blueprint.md (zero opaque score).
+              </p>
+            </div>
+            <span className="text-xs px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 text-slate-300">
+              Total Findings: {scenario.findings.length}
+            </span>
+          </div>
+
+          {scenario.findings.length === 0 ? (
+            <div className="text-center py-8 text-slate-500 text-sm">
+              No exposure findings in this scenario state.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400">
+                    <th scope="col" className="py-2.5 px-3 font-medium">Item ID</th>
+                    <th scope="col" className="py-2.5 px-3 font-medium">Claim Status</th>
+                    <th scope="col" className="py-2.5 px-3 font-medium">Exposure Type</th>
+                    <th scope="col" className="py-2.5 px-3 font-medium">Task Identity</th>
+                    <th scope="col" className="py-2.5 px-3 font-medium">Answer Match</th>
+                    <th scope="col" className="py-2.5 px-3 font-medium">Temporal Status</th>
+                    <th scope="col" className="py-2.5 px-3 font-medium">Policy</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {scenario.findings.map((finding: any) => {
+                    const tempMeta = getTemporalStatusMeta(finding.temporal_status);
+                    const claimMeta = getClaimStatusMeta(finding.claim_status);
+
+                    return (
+                      <tr key={finding.id} className="hover:bg-slate-800/30 transition-colors">
+                        <td className="py-3 px-3 font-mono text-slate-200 font-semibold">
+                          {finding.item_id}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${claimMeta.badgeClass}`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true" />
+                            {claimMeta.label}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-slate-300 font-mono">
+                          {finding.exposure_dimension}
+                        </td>
+                        <td className="py-3 px-3 text-slate-300">
+                          {finding.task_identity}
+                        </td>
+                        <td className="py-3 px-3 text-slate-300">
+                          {finding.answer_match}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${tempMeta.badgeClass}`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true" />
+                            {tempMeta.label}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded text-[11px] font-medium ${
+                              finding.policy_compliance === 'violated'
+                                ? 'bg-red-950 text-red-300 border border-red-800/50'
+                                : finding.policy_compliance === 'permitted'
+                                ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
+                                : 'bg-slate-800 text-slate-400'
+                            }`}
+                          >
+                            {finding.policy_compliance}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        {/* Ordered SSE Event Stream Preview */}
+        <section aria-labelledby="events-title" className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h2 id="events-title" className="text-sm font-semibold text-white">
+              Ordered SSE Event Stream (Contract Validated)
+            </h2>
+            <span className="text-xs text-slate-500">
+              {scenario.events.length} event(s)
+            </span>
+          </div>
+          <div className="space-y-2">
+            {scenario.events.map((evt: any) => (
+              <div
+                key={evt.event_id}
+                className="flex items-center justify-between text-xs p-2.5 rounded-lg bg-slate-950/70 border border-slate-800 font-mono"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-indigo-400 font-semibold">{evt.event_id}</span>
+                  <span className="text-slate-300">{evt.type}</span>
+                </div>
+                <div className="flex items-center gap-3 text-slate-500">
+                  <span>state: {evt.data.state}</span>
+                  <span>{new Date(evt.time).toLocaleTimeString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+

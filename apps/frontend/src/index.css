@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-surface-base: #020617;
+    --color-surface-card: #0f172a;
+    --color-surface-hover: #1e293b;
+    --color-border-subtle: #334155;
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
+  }
+
+  *:focus-visible {
+    outline: 2px solid #6366f1 !important;
+    outline-offset: 2px !important;
+  }
+}
+

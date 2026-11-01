@@ -1,0 +1,87 @@
+{
+  "scenario_id": "3-policy-blocked",
+  "name": "Investigation Halted by Policy Gate (policy_blocked)",
+  "description": "Orchestrator halted execution due to unapproved external egress route; privacy boundary protected with zero claims asserted.",
+  "investigation": {
+    "id": "inv-syn014-blocked",
+    "benchmark_version_id": "bm-syn014-v1",
+    "policy_version_id": "pol-syn014-v1",
+    "state": "policy_blocked",
+    "partial_coverage": false,
+    "coverage_limitations": [
+      "Execution halted by non-LLM policy gate: destination descriptor not approved for external discovery."
+    ],
+    "counts": {
+      "total_items": 1,
+      "processed_items": 0,
+      "candidate_findings": 0,
+      "verified_findings": 0
+    },
+    "budget_usage": {
+      "queries_executed": 0,
+      "pages_fetched": 0,
+      "spend_usd": 0.0
+    },
+    "failure_reason": "Policy violation: External discovery requested without approved egress descriptor in confidential mode."
+  },
+  "findings": [],
+  "report": null,
+  "events": [
+    {
+      "event_id": "evt-201",
+      "entity_id": "inv-syn014-blocked",
+      "type": "investigation.queued",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:00:00Z",
+      "data": {
+        "state": "queued",
+        "total_items": 1,
+        "processed_items": 0,
+        "candidate_findings": 0,
+        "verified_findings": 0,
+        "queries_executed": 0,
+        "pages_fetched": 0,
+        "spend_usd": 0.0,
+        "partial_coverage": false
+      }
+    },
+    {
+      "event_id": "evt-202",
+      "entity_id": "inv-syn014-blocked",
+      "type": "investigation.validating",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:00:30Z",
+      "data": {
+        "state": "validating",
+        "total_items": 1,
+        "processed_items": 0,
+        "candidate_findings": 0,
+        "verified_findings": 0,
+        "queries_executed": 0,
+        "pages_fetched": 0,
+        "spend_usd": 0.0,
+        "partial_coverage": false
+      }
+    },
+    {
+      "event_id": "evt-203",
+      "entity_id": "inv-syn014-blocked",
+      "type": "investigation.policy_blocked",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:01:00Z",
+      "data": {
+        "state": "policy_blocked",
+        "total_items": 1,
+        "processed_items": 0,
+        "candidate_findings": 0,
+        "verified_findings": 0,
+        "queries_executed": 0,
+        "pages_fetched": 0,
+        "spend_usd": 0.0,
+        "partial_coverage": false,
+        "failure_reason": "Policy violation: External discovery requested without approved egress descriptor in confidential mode."
+      }
+    }
+  ]
+}
+

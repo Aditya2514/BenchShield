@@ -1,0 +1,113 @@
+{
+  "scenario_id": "5-report-generation-failure",
+  "name": "Report Export Failure (Distinct from Investigation)",
+  "description": "Investigation completed successfully with verified findings, but downstream report export worker failed.",
+  "investigation": {
+    "id": "inv-syn014-repfailed",
+    "benchmark_version_id": "bm-syn014-v1",
+    "policy_version_id": "pol-syn014-v1",
+    "state": "completed",
+    "partial_coverage": false,
+    "coverage_limitations": [],
+    "counts": {
+      "total_items": 1,
+      "processed_items": 1,
+      "candidate_findings": 1,
+      "verified_findings": 1
+    },
+    "budget_usage": {
+      "queries_executed": 2,
+      "pages_fetched": 3,
+      "spend_usd": 1.10
+    }
+  },
+  "findings": [
+    {
+      "id": "find-syn014-05",
+      "investigation_id": "inv-syn014-repfailed",
+      "item_id": "SYN-014",
+      "item_version_id": "iv-syn014-01",
+      "claim_status": "verified",
+      "exposure_dimension": "reference_answer",
+      "task_identity": "exact",
+      "answer_match": "task_specific",
+      "temporal_status": "unknown",
+      "attribution": "none",
+      "policy_compliance": "violated",
+      "evidence": {
+        "snapshot_id": "snap-syn014-s05",
+        "source_url": "https://synthetic-repo.example.com/solutions/k7-solution.html",
+        "retrieval_time": "2026-11-01T12:00:00Z",
+        "content_hash": "sha256-c3d4e5f60718293a4b5c6d7e8f90a1b2",
+        "excerpt_text": "Exam Question: Which fictional station has code K7? Answer: East."
+      },
+      "review_decision": {
+        "action": "confirmed",
+        "reason": "Confirmed match in synthetic repository.",
+        "reviewed_at": "2026-11-01T12:20:00Z",
+        "reviewer_id": "rev-maintainer-01"
+      },
+      "version": 2
+    }
+  ],
+  "report": {
+    "report_id": "rep-syn014-05",
+    "investigation_id": "inv-syn014-repfailed",
+    "status": "failed",
+    "report_version_id": null,
+    "frozen_at": null,
+    "download_url": null,
+    "download_expires_at": null,
+    "reviewer_decisions_count": 1,
+    "unresolved_claims_count": 0,
+    "limitations": [
+      "Report generation failed downstream. The investigation data and findings remain completely intact and valid."
+    ],
+    "error_code": "export_failed"
+  },
+  "events": [
+    {
+      "event_id": "evt-401",
+      "entity_id": "inv-syn014-repfailed",
+      "type": "investigation.completed",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:05:00Z",
+      "data": {
+        "state": "completed",
+        "total_items": 1,
+        "processed_items": 1,
+        "candidate_findings": 1,
+        "verified_findings": 1,
+        "queries_executed": 2,
+        "pages_fetched": 3,
+        "spend_usd": 1.10,
+        "partial_coverage": false
+      }
+    },
+    {
+      "event_id": "evt-402",
+      "entity_id": "rep-syn014-05",
+      "type": "report.generating",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:06:00Z",
+      "data": {
+        "state": "generating",
+        "report_id": "rep-syn014-05"
+      }
+    },
+    {
+      "event_id": "evt-403",
+      "entity_id": "rep-syn014-05",
+      "type": "report.export_failed",
+      "schema_version": "1.0.0",
+      "time": "2026-11-01T12:07:00Z",
+      "data": {
+        "state": "failed",
+        "report_id": "rep-syn014-05",
+        "error_code": "export_failed",
+        "failure_reason": "Object storage adapter timeout during PDF/JSON artifact freeze."
+      }
+    }
+  ]
+}
+
